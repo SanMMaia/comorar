@@ -29,9 +29,12 @@ function Rotas() {
 }
 
 function Protegido() {
-  const { casa } = useApp()
+  const { casa, casaPronta } = useApp()
 
   if (!casa) {
+    if (!casaPronta) {
+      return <div className="empty">Carregando…</div>
+    }
     return (
       <Routes>
         <Route path="/onboarding" element={<Onboarding />} />

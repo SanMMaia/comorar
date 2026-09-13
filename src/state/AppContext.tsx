@@ -8,6 +8,7 @@ interface AppState {
   session: Session | null
   loading: boolean
   casa: Casa | null
+  casaPronta: boolean
   moradores: MoradorCompleto[]
   minhaMoradorId: string | null
   refreshCasa: () => Promise<void>
@@ -19,6 +20,7 @@ const AppContext = createContext<AppState>({
   session: null,
   loading: true,
   casa: null,
+  casaPronta: false,
   moradores: [],
   minhaMoradorId: null,
   refreshCasa: async () => {},
@@ -29,6 +31,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null)
   const [loading, setLoading] = useState(true)
   const [casa, setCasa] = useState<Casa | null>(null)
+  const [casaPronta, setCasaPronta] = useState(false)
   const [moradores, setMoradores] = useState<MoradorCompleto[]>([])
 
   useEffect(() => {
@@ -45,6 +48,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const loadCasa = async (uid: string) => {
+    setCasaPronta(false)
     const { data: membros, error } = await supabase
       .from('casa_morador')
       .select('casa_id, criado_em')
@@ -55,6 +59,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (error || !membros?.length) {
       setCasa(null)
       setMoradores([])
+      setCasaPronta(true)
       return
     }
 
@@ -91,6 +96,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     } else {
       setMoradores([])
     }
+    setCasaPronta(true)
   }
 
   const refreshCasa = async () => {
@@ -103,6 +109,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (uid) void loadCasa(uid)
     else {
       setCasa(null)
+      setCasaPronta(false)
       setMoradores([])
     }
   }, [session?.user?.id])
@@ -124,6 +131,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         session,
         loading,
         casa,
+        casaPronta,
         moradores,
         minhaMoradorId,
         refreshCasa,
