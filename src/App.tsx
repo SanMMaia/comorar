@@ -1,0 +1,64 @@
+import { Navigate, Route, Routes } from 'react-router-dom'
+import { AppProvider, useApp } from './state/AppContext'
+import { Layout } from './components/Layout'
+import { Login } from './pages/Login'
+import { Onboarding } from './pages/Onboarding'
+import { Home } from './pages/Home'
+import { NovaDespesa } from './pages/NovaDespesa'
+import { ListaMensal } from './pages/ListaMensal'
+import { Balanco } from './pages/Balanco'
+import { Recorrencias } from './pages/Recorrencias'
+import { Projecao } from './pages/Projecao'
+import { Perfil } from './pages/Perfil'
+
+function Rotas() {
+  const { loading, user } = useApp()
+
+  if (loading) {
+    return <div className="empty">Carregando…</div>
+  }
+  return (
+    <Routes>
+      <Route
+        path="/login"
+        element={user ? <Navigate to="/" replace /> : <Login />}
+      />
+      <Route path="/*" element={user ? <Protegido /> : <Navigate to="/login" replace />} />
+    </Routes>
+  )
+}
+
+function Protegido() {
+  const { casa } = useApp()
+
+  if (!casa) {
+    return (
+      <Routes>
+        <Route path="/onboarding" element={<Onboarding />} />
+        <Route path="*" element={<Navigate to="/onboarding" replace />} />
+      </Routes>
+    )
+  }
+  return (
+    <Routes>
+      <Route element={<Layout />}>
+        <Route path="/" element={<Home />} />
+        <Route path="/nova" element={<NovaDespesa />} />
+        <Route path="/mes" element={<ListaMensal />} />
+        <Route path="/balanco" element={<Balanco />} />
+        <Route path="/recorrencias" element={<Recorrencias />} />
+        <Route path="/projecao" element={<Projecao />} />
+        <Route path="/perfil" element={<Perfil />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Route>
+    </Routes>
+  )
+}
+
+export default function App() {
+  return (
+    <AppProvider>
+      <Rotas />
+    </AppProvider>
+  )
+}

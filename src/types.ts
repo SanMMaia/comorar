@@ -1,0 +1,76 @@
+export type Categoria = 'aluguel' | 'luz' | 'agua' | 'internet' | 'mercado' | 'outro'
+export type TipoRateio = 'igual' | 'percentual' | 'consumo'
+export type StatusDespesa = 'prevista' | 'confirmada' | 'cancelada'
+export type IntervaloRecorrencia = 'mensal' | 'semanal' | 'quinzenal' | 'anual'
+
+export interface Casa {
+  id: string
+  nome: string
+  codigo_convite: string
+  criado_em: string
+}
+
+export interface CasaMorador {
+  id: string
+  casa_id: string
+  user_id: string
+  role: 'owner' | 'member'
+  ativo: boolean
+  criado_em: string
+}
+
+export interface RegraRateio {
+  casa_id: string
+  user_id: string
+  percentual: number
+}
+
+export interface Recorrencia {
+  id: string
+  casa_id: string
+  fornecedor: string
+  descricao: string | null
+  categoria: Categoria
+  valor_previsto: number
+  data_inicio: string
+  dia_vencimento: number | null
+  intervalo: IntervaloRecorrencia
+  tipo_rateio: TipoRateio
+  pagador_padrao: string | null
+  rotativo: boolean
+  ativa: boolean
+  criado_em: string
+}
+
+export interface Despesa {
+  id: string
+  casa_id: string
+  fornecedor: string
+  descricao: string | null
+  valor: number
+  categoria: Categoria
+  pago_por: string | null
+  tipo_rateio: TipoRateio
+  status: StatusDespesa
+  origem_recorrencia_id: string | null
+  data: string
+  comprovante_url: string | null
+  ocr_resultado: Record<string, unknown> | null
+  criado_em: string
+}
+
+export interface Rateio {
+  id: string
+  despesa_id: string
+  morador_id: string
+  valor_rateado: number
+  pago: boolean
+  pago_em: string | null
+  confirmado_por: string | null
+}
+
+export interface MoradorCompleto {
+  user_id: string
+  nome: string
+  email: string
+}
