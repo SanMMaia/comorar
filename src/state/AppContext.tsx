@@ -9,6 +9,7 @@ interface AppState {
   loading: boolean
   casa: Casa | null
   moradores: MoradorCompleto[]
+  minhaMoradorId: string | null
   refreshCasa: () => Promise<void>
   signOut: () => Promise<void>
 }
@@ -19,13 +20,10 @@ const AppContext = createContext<AppState>({
   loading: true,
   casa: null,
   moradores: [],
+  minhaMoradorId: null,
   refreshCasa: async () => {},
   signOut: async () => {},
 })
-
-function nomeDoPerfil(perfil: { nome: string | null; email: string | null }): string {
-  return perfil.nome || (perfil.email?.split('@')[0] ?? 'Morador')
-}
 
 export function AppProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null)
@@ -73,10 +71,20 @@ export function AppProvider({ children }: { children: ReactNode }) {
         p_casa_id: casaRow.id,
       })
       const completo: MoradorCompleto[] = (perfis ?? []).map(
-        (p: { user_id: string; nome: string | null; email: string | null }) => ({
+        (p: {
+          id: string
+          user_id: string | null
+          nome: string | null
+          email: string | null
+          role: string | null
+          tipo: string | null
+        }) => ({
+          id: p.id,
           user_id: p.user_id,
-          nome: nomeDoPerfil(p),
+          nome: p.nome || 'Morador',
           email: p.email ?? '',
+          role: (p.role ?? 'member') === 'owner' ? 'owner' : 'member',
+          tipo: (p.tipo ?? 'usuario') === 'extra' ? 'extra' : 'usuario',
         }),
       )
       setMoradores(completo)
@@ -103,6 +111,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
     await supabase.auth.signOut()
   }
 
+  const minhaMoradorId = (() => {
+    const uid = session?.user?.id
+    if (!uid) return null
+    return moradores.find((m) => m.user_id === uid)?.id ?? null
+  })()
+
   return (
     <AppContext.Provider
       value={{
@@ -111,6 +125,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         loading,
         casa,
         moradores,
+        minhaMoradorId,
         refreshCasa,
         signOut,
       }}
@@ -126,5 +141,5 @@ export function useApp() {
 
 export function nomeMorador(moradores: MoradorCompleto[], id: string | null): string {
   if (!id) return '—'
-  return moradores.find((m) => m.user_id === id)?.nome ?? id.slice(0, 8)
+  return moradores.find((m) => m.id === id)?.nome ?? id.slice(0, 8)
 }

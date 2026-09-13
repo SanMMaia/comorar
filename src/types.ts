@@ -70,7 +70,10 @@ export interface Rateio {
 }
 
 export interface MoradorCompleto {
-  user_id: string
+  id: string
+  user_id: string | null
   nome: string
   email: string
+  role: 'owner' | 'member'
+  tipo: 'usuario' | 'extra'
 }

@@ -10,7 +10,7 @@ const rotas = [
 ]
 
 export function Layout() {
-  const { casa, user, moradores } = useApp()
+  const { casa, minhaMoradorId, moradores } = useApp()
 
   return (
     <>
@@ -18,7 +18,7 @@ export function Layout() {
         <div>
           <h1>{casa?.nome ?? 'Comorar'}</h1>
           <span className="sub">
-            {casa ? nomeMorador(moradores, user?.id ?? null) : 'divisão de despesas'}
+            {casa ? nomeMorador(moradores, minhaMoradorId) : 'divisão de despesas'}
           </span>
         </div>
       </header>

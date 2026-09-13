@@ -5,11 +5,11 @@ import { useDespesas } from '../lib/dados'
 import { formatBR, mesAnoBR } from '../lib/format'
 
 export function Home() {
-  const { casa, user, moradores, loading } = useApp()
+  const { casa, minhaMoradorId, moradores, loading } = useApp()
   const { despesas, carregando } = useDespesas(casa?.id ?? null)
 
   const { totalMes, vcDeve, devemAVoce } = useMemo(() => {
-    const uid = user?.id
+    const uid = minhaMoradorId
     const agora = new Date()
     const fim = new Date(agora.getFullYear(), agora.getMonth() + 1, 0)
     let totalMes = 0
@@ -31,10 +31,10 @@ export function Home() {
       vcDeve: Math.round(vcDeve * 100) / 100,
       devemAVoce: Math.round(devemAVoce * 100) / 100,
     }
-  }, [despesas, user?.id])
+  }, [despesas, minhaMoradorId])
 
   const recentes = useMemo(() => {
-    const uid = user?.id
+    const uid = minhaMoradorId
     return despesas
       .filter((d) => d.status === 'confirmada')
       .slice(0, 5)
@@ -42,7 +42,7 @@ export function Home() {
         const minhaParte = d.rateios.find((r) => r.morador_id === uid)
         return { d, minhaParte }
       })
-  }, [despesas, user?.id])
+  }, [despesas, minhaMoradorId])
 
   if (loading || (casa && carregando)) {
     return <div className="empty">Carregando…</div>

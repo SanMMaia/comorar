@@ -7,7 +7,7 @@ import { formatBR, dataBR, parseCentavos } from '../lib/format'
 import type { Despesa } from '../types'
 
 export function Projecao() {
-  const { casa, user, moradores } = useApp()
+  const { casa, minhaMoradorId, moradores } = useApp()
   const { despesas, recarregar, carregando } = useDespesas(casa?.id ?? null)
   const [abrindo, setAbrindo] = useState<string | null>(null)
   const [valorEdit, setValorEdit] = useState('')
@@ -24,7 +24,7 @@ export function Projecao() {
   const abrir = (d: Despesa) => {
     setAbrindo(d.id)
     setValorEdit(String(d.valor))
-    setPagador(user?.id ?? '')
+    setPagador(minhaMoradorId ?? '')
     setErro('')
   }
 
@@ -46,9 +46,9 @@ export function Projecao() {
         .single()
       if (error) throw error
 
-      const itens = calcularRateio(valorNum, moradores.map((m) => ({ user_id: m.user_id })), {
+      const itens = calcularRateio(valorNum, moradores.map((m) => ({ user_id: m.id })), {
         regra: atualizada.tipo_rateio as Despesa['tipo_rateio'],
-        incluidos: moradores.map((m) => m.user_id),
+        incluidos: moradores.map((m) => m.id),
       })
       const { error: errRateios } = await supabase.from('rateios').insert(
         itens.map((i) => ({
@@ -115,7 +115,7 @@ export function Projecao() {
                 <label>Quem pagou</label>
                 <select value={pagador} onChange={(e) => setPagador(e.target.value)}>
                   {moradores.map((m) => (
-                    <option key={m.user_id} value={m.user_id}>{m.nome}</option>
+                    <option key={m.id} value={m.id}>{m.nome}</option>
                   ))}
                 </select>
                 {erro && <div className="error-box">{erro}</div>}
@@ -134,7 +134,7 @@ export function Projecao() {
       )}
 
       <p className="small muted center mt">
-        {nomeMorador(moradores, user?.id ?? null)} · taxa atual na casa
+        {nomeMorador(moradores, minhaMoradorId)} · taxa atual na casa
       </p>
     </>
   )

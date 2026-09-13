@@ -18,7 +18,7 @@ const labels: Record<Categoria, string> = {
 }
 
 export function NovaDespesa() {
-  const { casa, user, moradores } = useApp()
+  const { casa, minhaMoradorId, moradores } = useApp()
   const { despesas } = useDespesas(casa?.id ?? null)
   const navigate = useNavigate()
 
@@ -26,10 +26,10 @@ export function NovaDespesa() {
   const [descricao, setDescricao] = useState('')
   const [valor, setValor] = useState('')
   const [categoria, setCategoria] = useState<Categoria>('outro')
-  const [pagoPor, setPagoPor] = useState(user?.id ?? '')
+  const [pagoPor, setPagoPor] = useState(minhaMoradorId ?? moradores[0]?.id ?? '')
   const [data, setData] = useState(() => new Date().toISOString().slice(0, 10))
   const [tipoRateio, setTipoRateio] = useState<TipoRateio>('igual')
-  const [incluidos, setIncluidos] = useState<Set<string>>(new Set(moradores.map((m) => m.user_id)))
+  const [incluidos, setIncluidos] = useState<Set<string>>(new Set(moradores.map((m) => m.id)))
   const [percentuais, setPercentuais] = useState<Record<string, string>>({})
   const [erro, setErro] = useState('')
   const [enviando, setEnviando] = useState(false)
@@ -42,7 +42,7 @@ export function NovaDespesa() {
   const saldoMensal = useMemo(() => {
     const p = parseCentavos(valor)
     if (p === null) return null
-    const itens = calcularRateio(p, moradores.map((m) => ({ user_id: m.user_id })), {
+    const itens = calcularRateio(p, moradores.map((m) => ({ user_id: m.id })), {
       regra: tipoRateio,
       percentuais: Object.fromEntries(
         Object.entries(percentuais).map(([k, v]) => [k, Number(v) || 0]),
@@ -69,7 +69,7 @@ export function NovaDespesa() {
   const submit = async (e: FormEvent) => {
     e.preventDefault()
     setErro('')
-    const pagoPorId = pagoPor || user?.id
+    const pagoPorId = pagoPor || minhaMoradorId
     const valorNum = parseCentavos(valor)
     if (!fornecedor.trim()) return setErro('Informe o fornecedor')
     if (valorNum === null || valorNum <= 0) return setErro('Informe um valor válido')
@@ -80,7 +80,7 @@ export function NovaDespesa() {
 
     const itens = calcularRateio(
       valorNum,
-      moradores.map((m) => ({ user_id: m.user_id })),
+      moradores.map((m) => ({ user_id: m.id })),
       {
         regra: tipoRateio,
         percentuais: Object.fromEntries(
@@ -177,7 +177,7 @@ export function NovaDespesa() {
           <label htmlFor="pagoPor">Quem pagou</label>
           <select id="pagoPor" value={pagoPor} onChange={(e) => setPagoPor(e.target.value)}>
             {moradores.map((m) => (
-              <option key={m.user_id} value={m.user_id}>
+              <option key={m.id} value={m.id}>
                 {m.nome}
               </option>
             ))}
@@ -201,11 +201,11 @@ export function NovaDespesa() {
       {tipoRateio === 'consumo' && (
         <div className="card mt">
           {moradores.map((m) => (
-            <label key={m.user_id} style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 400, margin: 4 }}>
+            <label key={m.id} style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 400, margin: 4 }}>
               <input
                 type="checkbox"
-                checked={incluidos.has(m.user_id)}
-                onChange={() => toggleIncluido(m.user_id)}
+                checked={incluidos.has(m.id)}
+                onChange={() => toggleIncluido(m.id)}
                 style={{ width: 'auto' }}
               />
               {m.nome}
@@ -217,7 +217,7 @@ export function NovaDespesa() {
       {tipoRateio === 'percentual' && (
         <div className="card mt">
           {moradores.map((m) => (
-            <div className="row" key={m.user_id} style={{ margin: '6px 0' }}>
+            <div className="row" key={m.id} style={{ margin: '6px 0' }}>
               <span className="small">{m.nome}</span>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                 <input
@@ -225,8 +225,8 @@ export function NovaDespesa() {
                   inputMode="numeric"
                   style={{ width: 80 }}
                   placeholder="0"
-                  value={percentuais[m.user_id] ?? ''}
-                  onChange={(e) => setPercentual(m.user_id, e.target.value)}
+                  value={percentuais[m.id] ?? ''}
+                  onChange={(e) => setPercentual(m.id, e.target.value)}
                 />
                 <span className="muted">%</span>
               </div>

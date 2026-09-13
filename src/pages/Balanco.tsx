@@ -6,7 +6,7 @@ import { formatBR } from '../lib/format'
 import { supabase } from '../lib/supabase'
 
 export function Balanco() {
-  const { casa, user, moradores } = useApp()
+  const { casa, user, minhaMoradorId, moradores } = useApp()
   const { despesas, recarregar, carregando } = useDespesas(casa?.id ?? null)
   const [liquidando, setLiquidando] = useState<string | null>(null)
   const [erro, setErro] = useState('')
@@ -18,15 +18,14 @@ export function Balanco() {
     return { meusSaldos: saldos, transferencias: t }
   }, [despesas])
 
-  const uid = user?.id ?? ''
-  const meuSaldo = meusSaldos[uid] ?? 0
+  const meuSaldo = minhaMoradorId ? (meusSaldos[minhaMoradorId] ?? 0) : 0
 
   const liquidar = async (rateioId: string) => {
     setLiquidando(rateioId)
     setErro('')
     const { error } = await supabase
       .from('rateios')
-      .update({ pago: true, pago_em: new Date().toISOString(), confirmado_por: uid })
+      .update({ pago: true, pago_em: new Date().toISOString(), confirmado_por: user?.id ?? null })
       .eq('id', rateioId)
     if (error) setErro(error.message)
     await recarregar()

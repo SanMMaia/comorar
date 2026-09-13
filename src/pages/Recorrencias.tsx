@@ -11,7 +11,7 @@ const labelsCat: Record<Categoria, string> = {
 }
 
 export function Recorrencias() {
-  const { casa, moradores, user } = useApp()
+  const { casa, moradores, minhaMoradorId } = useApp()
   const [recorrencias, setRecorrencias] = useState<Recorrencia[]>([])
   const [modoForm, setModoForm] = useState(false)
   const [erro, setErro] = useState('')
@@ -24,7 +24,7 @@ export function Recorrencias() {
   const [dia, setDia] = useState('10')
   const [intervalo, setIntervalo] = useState<IntervaloRecorrencia>('mensal')
   const [tipoRateio, setTipoRateio] = useState<TipoRateio>('igual')
-  const [pagador, setPagador] = useState(user?.id ?? '')
+  const [pagador, setPagador] = useState(minhaMoradorId ?? '')
   const [dataInicio, setDataInicio] = useState(() => new Date().toISOString().slice(0, 10))
 
   const carregar = useCallback(async () => {
@@ -168,7 +168,7 @@ export function Recorrencias() {
           <select id="pagador" value={pagador} onChange={(e) => setPagador(e.target.value)}>
             <option value="">Definir na confirmação</option>
             {moradores.map((m) => (
-              <option key={m.user_id} value={m.user_id}>{m.nome}</option>
+              <option key={m.id} value={m.id}>{m.nome}</option>
             ))}
           </select>
 
