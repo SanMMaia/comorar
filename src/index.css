@@ -86,31 +86,6 @@ label {
   padding-bottom: 68px;
 }
 
-.app-header {
-  position: sticky;
-  top: 0;
-  z-index: 10;
-  background: var(--surface);
-  border-bottom: 1px solid var(--border);
-  padding: 14px 16px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  view-transition-name: vt-header;
-}
-
-.app-header h1 {
-  font-size: 18px;
-  margin: 0;
-  color: var(--text);
-}
-
-.app-header .sub {
-  font-size: 12px;
-  color: var(--text-muted);
-}
-
 .content {
   flex: 1;
   padding: 16px 16px calc(88px + env(safe-area-inset-bottom));
@@ -511,8 +486,6 @@ details.opcoes .opcoes-corpo {
   animation: vt-sair 220ms ease reverse;
 }
 
-::view-transition-old(vt-header),
-::view-transition-new(vt-header),
 ::view-transition-old(vt-nav),
 ::view-transition-new(vt-nav) {
   animation: none;

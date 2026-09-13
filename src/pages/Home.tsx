@@ -63,6 +63,7 @@ export function Home() {
 
   return (
     <>
+      <h1 style={{ fontSize: 20, margin: '0 0 8px' }}>Resumo</h1>
       <div className="card saldo-card">
         <div className="linha">{mesAnoBR(new Date())} · gasto total</div>
         <div className="valor mono">{formatBR(totalMes)}</div>

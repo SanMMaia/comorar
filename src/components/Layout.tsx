@@ -1,5 +1,4 @@
 import { NavLink, Outlet } from 'react-router-dom'
-import { useApp, nomeMorador } from '../state/AppContext'
 
 const rotas = [
   { to: '/', label: 'Resumo', icon: '🏠', end: true },
@@ -10,19 +9,8 @@ const rotas = [
 ]
 
 export function Layout() {
-  const { casa, minhaMoradorId, moradores } = useApp()
-
   return (
     <>
-      <header className="app-header">
-        <div>
-          <h1>{casa?.nome ?? 'Comorar'}</h1>
-          <span className="sub">
-            {casa ? nomeMorador(moradores, minhaMoradorId) : 'divisão de despesas'}
-          </span>
-        </div>
-      </header>
-
       <main className="content">
         <Outlet />
       </main>
