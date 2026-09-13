@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+import { Link } from 'react-router-dom'
 import { useApp, nomeMorador } from '../state/AppContext'
 import { useDespesas } from '../lib/dados'
 import { formatBR, dataBR, mesAnoBR } from '../lib/format'
@@ -42,7 +43,7 @@ export function ListaMensal() {
         <div className="empty">Nenhuma despesa neste mês ainda.</div>
       ) : (
         doMes.map((d) => (
-          <div className="card" key={d.id}>
+          <Link to={`/despesa/${d.id}`} key={d.id} className="card link-card">
             <div className="row">
               <div>
                 <strong>{d.fornecedor}</strong>
@@ -65,7 +66,7 @@ export function ListaMensal() {
                 )}
               </div>
             </div>
-          </div>
+          </Link>
         ))
       )}
     </>

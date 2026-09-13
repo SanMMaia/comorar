@@ -1,11 +1,12 @@
-import { useMemo, useState, type FormEvent } from 'react'
+import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useApp } from '../state/AppContext'
 import { useDespesas } from '../lib/dados'
 import { calcularRateio } from '../lib/rateio'
+import { subirComprovante } from '../lib/comprovante'
 import { formatBR, parseCentavos } from '../lib/format'
-import type { Categoria, TipoRateio } from '../types'
+import type { Categoria, RegraRateio, TipoRateio } from '../types'
 
 const categorias: Categoria[] = ['aluguel', 'luz', 'agua', 'internet', 'mercado', 'outro']
 const labels: Record<Categoria, string> = {
@@ -33,6 +34,33 @@ export function NovaDespesa() {
   const [percentuais, setPercentuais] = useState<Record<string, string>>({})
   const [erro, setErro] = useState('')
   const [enviando, setEnviando] = useState(false)
+  const [comprovante, setComprovante] = useState<File | null>(null)
+  const comprovanteUrl = useMemo(
+    () => (comprovante ? URL.createObjectURL(comprovante) : null),
+    [comprovante],
+  )
+  const inputFoto = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    if (!casa) return
+    supabase
+      .from('regras_rateio')
+      .select('*')
+      .eq('casa_id', casa.id)
+      .then(({ data }) => {
+        if (!data?.length) return
+        const porUsuario = new Map((data as RegraRateio[]).map((r) => [r.user_id, String(r.percentual)]))
+        setPercentuais((prev) => {
+          const completo = { ...prev }
+          for (const m of moradores) {
+            if (m.user_id && porUsuario.has(m.user_id)) {
+              completo[m.id] = porUsuario.get(m.user_id)!
+            }
+          }
+          return completo
+        })
+      })
+  }, [casa, moradores])
 
   const fornecedoresHistoricos = useMemo(
     () => Array.from(new Set(despesas.map((d) => d.fornecedor))).sort(),
@@ -93,6 +121,11 @@ export function NovaDespesa() {
 
     setEnviando(true)
     try {
+      let comprovante_url: string | null = null
+      if (comprovante) {
+        comprovante_url = await subirComprovante(casa.id, comprovante)
+      }
+
       const { data: despesa, error } = await supabase
         .from('despesas')
         .insert({
@@ -105,6 +138,7 @@ export function NovaDespesa() {
           tipo_rateio: tipoRateio,
           status: 'confirmada',
           data,
+          comprovante_url,
         })
         .select('id')
         .single()
@@ -188,6 +222,30 @@ export function NovaDespesa() {
           <input id="data" type="date" required value={data} onChange={(e) => setData(e.target.value)} />
         </div>
       </div>
+
+      <label htmlFor="comprovante">Comprovante / boleto (opcional)</label>
+      <input
+        ref={inputFoto}
+        id="comprovante"
+        type="file"
+        accept="image/*"
+        onChange={(e) => setComprovante(e.target.files?.[0] ?? null)}
+      />
+      {comprovanteUrl && (
+        <div className="card mt" style={{ padding: 10 }}>
+          <img src={comprovanteUrl} alt="Comprovante" style={{ width: '100%', borderRadius: 8, display: 'block' }} />
+          <button
+            type="button"
+            className="btn btn-sm btn-secondary mt"
+            onClick={() => {
+              setComprovante(null)
+              if (inputFoto.current) inputFoto.current.value = ''
+            }}
+          >
+            Remover foto
+          </button>
+        </div>
+      )}
 
       <label>Como dividir?</label>
       <div className="field-row">

@@ -10,6 +10,7 @@ import { Balanco } from './pages/Balanco'
 import { Recorrencias } from './pages/Recorrencias'
 import { Projecao } from './pages/Projecao'
 import { Perfil } from './pages/Perfil'
+import { DespesaDetalhe } from './pages/DespesaDetalhe'
 
 function Rotas() {
   const { loading, user } = useApp()
@@ -49,6 +50,7 @@ function Protegido() {
         <Route path="/recorrencias" element={<Recorrencias />} />
         <Route path="/projecao" element={<Projecao />} />
         <Route path="/perfil" element={<Perfil />} />
+        <Route path="/despesa/:id" element={<DespesaDetalhe />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>

@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { useApp, nomeMorador } from '../state/AppContext'
 import { useDespesas } from '../lib/dados'
 import { calcularRateio } from '../lib/rateio'
+import { subirComprovante } from '../lib/comprovante'
 import { formatBR, dataBR, parseCentavos } from '../lib/format'
 import type { Despesa } from '../types'
 
@@ -14,6 +15,12 @@ export function Projecao() {
   const [pagador, setPagador] = useState('')
   const [erro, setErro] = useState('')
   const [enviando, setEnviando] = useState(false)
+  const [comprovante, setComprovante] = useState<File | null>(null)
+  const inputFoto = useRef<HTMLInputElement>(null)
+  const comprovanteUrl = useMemo(
+    () => (comprovante ? URL.createObjectURL(comprovante) : null),
+    [comprovante],
+  )
 
   const previstas = despesas
     .filter((d) => d.status === 'prevista')
@@ -26,6 +33,7 @@ export function Projecao() {
     setValorEdit(String(d.valor))
     setPagador(minhaMoradorId ?? '')
     setErro('')
+    setComprovante(null)
   }
 
   const confirmar = async (d: Despesa) => {
@@ -34,12 +42,17 @@ export function Projecao() {
     if (valorNum === null || valorNum <= 0) return setErro('Valor inválido')
     setEnviando(true)
     try {
+      let comprovante_url: string | null = null
+      if (casa && comprovante) {
+        comprovante_url = await subirComprovante(casa.id, comprovante)
+      }
       const { data: atualizada, error } = await supabase
         .from('despesas')
         .update({
           status: 'confirmada',
           valor: valorNum,
           pago_por: pagador || null,
+          comprovante_url,
         })
         .eq('id', d.id)
         .select('id, tipo_rateio, valor')
@@ -118,6 +131,20 @@ export function Projecao() {
                     <option key={m.id} value={m.id}>{m.nome}</option>
                   ))}
                 </select>
+                <label>Anexar boleto/comprovante (opcional)</label>
+                <input
+                  ref={inputFoto}
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => setComprovante(e.target.files?.[0] ?? null)}
+                />
+                {comprovanteUrl && (
+                  <img
+                    src={comprovanteUrl}
+                    alt="Comprovante"
+                    style={{ width: '100%', borderRadius: 8, marginTop: 8, display: 'block' }}
+                  />
+                )}
                 {erro && <div className="error-box">{erro}</div>}
                 <div className="row mt">
                   <button type="button" className="btn btn-secondary" onClick={() => cancelar(d.id)}>
