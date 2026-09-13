@@ -2,11 +2,11 @@ import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useApp } from '../state/AppContext'
-import { useDespesas } from '../lib/dados'
+import { useDespesas, type DespesaComRateios } from '../lib/dados'
 import { calcularRateio } from '../lib/rateio'
 import { subirComprovante } from '../lib/comprovante'
 import { formatBR, dataBR, parseCentavos } from '../lib/format'
-import type { Categoria, Despesa, RegraRateio, TipoRateio } from '../types'
+import type { Categoria, Despesa, Recorrencia, RegraRateio, TipoRateio } from '../types'
 
 const categorias: Categoria[] = ['aluguel', 'luz', 'agua', 'internet', 'mercado', 'outro']
 const labels: Record<Categoria, string> = {
@@ -16,6 +16,24 @@ const labels: Record<Categoria, string> = {
   internet: 'Internet',
   mercado: 'Mercado',
   outro: 'Outro',
+}
+
+function melhorPrevista(lista: DespesaComRateios[], nome: string, alvo: Date): Despesa | null {
+  const f = nome.trim().toLowerCase()
+  const candidatas = lista.filter(
+    (d) => d.status === 'prevista' && d.fornecedor.trim().toLowerCase() === f,
+  )
+  if (candidatas.length === 0) return null
+  const doMes = candidatas.filter((d) => {
+    const dt = new Date(d.data)
+    return dt.getMonth() === alvo.getMonth() && dt.getFullYear() === alvo.getFullYear()
+  })
+  const pool = doMes.length > 0 ? doMes : candidatas
+  return pool.reduce<Despesa | null>((melhor, d) => {
+    const dist = Math.abs(new Date(d.data).getTime() - alvo.getTime())
+    if (!melhor) return d
+    return Math.abs(new Date(melhor.data).getTime() - alvo.getTime()) <= dist ? melhor : d
+  }, null)
 }
 
 export function NovaDespesa() {
@@ -63,30 +81,44 @@ export function NovaDespesa() {
       })
   }, [casa, moradores])
 
-  const fornecedoresHistoricos = useMemo(
-    () => Array.from(new Set(despesas.map((d) => d.fornecedor))).sort(),
-    [despesas],
-  )
+  const [recorrencias, setRecorrencias] = useState<Recorrencia[]>([])
+  useEffect(() => {
+    if (!casa) return
+    supabase
+      .from('recorrencias')
+      .select('*')
+      .eq('casa_id', casa.id)
+      .then(({ data }) => setRecorrencias((data ?? []) as Recorrencia[]))
+  }, [casa])
 
-  const previstaMatch = useMemo(() => {
-    const f = fornecedor.trim().toLowerCase()
-    if (!f) return null
-    const alvo = new Date(data)
-    const candidatas = despesas.filter(
-      (d) => d.status === 'prevista' && d.fornecedor.trim().toLowerCase() === f,
-    )
-    if (candidatas.length === 0) return null
-    const doMes = candidatas.filter((d) => {
-      const dt = new Date(d.data)
-      return dt.getMonth() === alvo.getMonth() && dt.getFullYear() === alvo.getFullYear()
-    })
-    const pool = doMes.length > 0 ? doMes : candidatas
-    return pool.reduce<Despesa | null>((melhor, d) => {
-      const dist = Math.abs(new Date(d.data).getTime() - alvo.getTime())
-      if (!melhor) return d
-      return Math.abs(new Date(melhor.data).getTime() - alvo.getTime()) <= dist ? melhor : d
-    }, null)
-  }, [despesas, fornecedor, data])
+  const [menuFornecedor, setMenuFornecedor] = useState(false)
+
+  const opcoesFornecedores = useMemo(() => {
+    const mapa = new Map<string, string>()
+    for (const d of despesas) mapa.set(d.fornecedor.trim().toLowerCase(), d.fornecedor.trim())
+    for (const r of recorrencias) mapa.set(r.fornecedor.trim().toLowerCase(), r.fornecedor.trim())
+    const lista = Array.from(mapa.values()).sort((a, b) => a.localeCompare(b, 'pt-BR'))
+    const termo = fornecedor.trim().toLowerCase()
+    return termo ? lista.filter((o) => o.toLowerCase().includes(termo)) : lista
+  }, [despesas, recorrencias, fornecedor])
+
+  const escolherFornecedor = (nome: string) => {
+    setMenuFornecedor(false)
+    setFornecedor(nome)
+    const rec = recorrencias.find((r) => r.fornecedor.trim().toLowerCase() === nome.toLowerCase())
+    if (rec) {
+      setCategoria(rec.categoria)
+      setTipoRateio(rec.tipo_rateio)
+      if (rec.pagador_padrao) setPagoPor(rec.pagador_padrao)
+      const pm = melhorPrevista(despesas, rec.fornecedor, new Date())
+      if (pm) setData(pm.data)
+    }
+  }
+
+  const previstaMatch = useMemo(
+    () => melhorPrevista(despesas, fornecedor, new Date(data)),
+    [despesas, fornecedor, data],
+  )
 
   const saldoMensal = useMemo(() => {
     const p = parseCentavos(valor)
@@ -216,19 +248,43 @@ export function NovaDespesa() {
       <h1 style={{ fontSize: 20 }}>Nova despesa</h1>
 
       <label htmlFor="fornecedor">Fornecedor</label>
-      <input
-        id="fornecedor"
-        list="fornecedores"
-        required
-        value={fornecedor}
-        onChange={(e) => setFornecedor(e.target.value)}
-        placeholder="Ex.: Enel, Supermercado Extra"
-      />
-      <datalist id="fornecedores">
-        {fornecedoresHistoricos.map((f) => (
-          <option key={f} value={f} />
-        ))}
-      </datalist>
+      <div className="combobox">
+        <input
+          id="fornecedor"
+          required
+          value={fornecedor}
+          onChange={(e) => setFornecedor(e.target.value)}
+          onClick={() => setMenuFornecedor(true)}
+          onFocus={() => setMenuFornecedor(true)}
+          placeholder="Ex.: Enel, Supermercado Extra"
+        />
+        <button
+          type="button"
+          className="combobox-arrow"
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={() => setMenuFornecedor((v) => !v)}
+          aria-label="Listar fornecedores"
+        >
+          ▾
+        </button>
+        {menuFornecedor && opcoesFornecedores.length > 0 && (
+          <div className="combobox-menu">
+            {opcoesFornecedores.map((o) => (
+              <button
+                type="button"
+                key={o}
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => escolherFornecedor(o)}
+              >
+                {o}
+                {recorrencias.some((r) => r.fornecedor.trim().toLowerCase() === o.toLowerCase()) && (
+                  <span className="small muted" style={{ float: 'right' }}>recorrente</span>
+                )}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
 
       <label htmlFor="descricao">Descrição (opcional)</label>
       <input

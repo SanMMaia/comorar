@@ -178,6 +178,58 @@ a.card {
   text-align: left;
 }
 
+.combobox {
+  position: relative;
+}
+
+.combobox input {
+  padding-right: 36px;
+}
+
+.combobox-arrow {
+  position: absolute;
+  right: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 14px;
+  cursor: pointer;
+  padding: 6px 8px;
+}
+
+.combobox-menu {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  max-height: 240px;
+  overflow-y: auto;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+}
+
+.combobox-menu button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 10px 12px;
+  background: none;
+  border: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.combobox-menu button:hover,
+.combobox-menu button:focus {
+  background: var(--accent-soft);
+}
+
 .card + .card {
   margin-top: 12px;
 }
