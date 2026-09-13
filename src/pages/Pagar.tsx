@@ -55,10 +55,19 @@ export function Pagar() {
   const proximas = useMemo(() => {
     const hoje = new Date()
     hoje.setHours(0, 0, 0, 0)
-    return despesas
-      .filter((d) => d.status === 'prevista' && new Date(d.data) >= hoje)
-      .sort((a, b) => a.data.localeCompare(b.data))
-      .slice(0, 15)
+    const porRec = new Map<string, typeof despesas>()
+    for (const d of despesas) {
+      if (d.status !== 'prevista' || new Date(d.data) < hoje) continue
+      const chave = d.origem_recorrencia_id ?? `avulsa:${d.id}`
+      if (!porRec.has(chave)) porRec.set(chave, [])
+      porRec.get(chave)!.push(d)
+    }
+    const lista: typeof despesas = []
+    for (const grupo of porRec.values()) {
+      grupo.sort((a, b) => a.data.localeCompare(b.data))
+      lista.push(grupo[0])
+    }
+    return lista.sort((a, b) => a.data.localeCompare(b.data))
   }, [despesas])
 
   const recDe = (d: { origem_recorrencia_id: string | null }) =>
@@ -414,87 +423,90 @@ export function Pagar() {
 
       {proximas.length === 0 ? (
         <div className="empty">
-          Nenhuma conta prevista para pagar. Cadastre{' '}
+          Nenhuma conta a pagar. Cadastre{' '}
           <button type="button" className="btn btn-sm btn-secondary" onClick={() => navigate('/projecao')}>
             contas recorrentes
           </button>
         </div>
       ) : (
-        proximas.map((d) => {
-          const rec = recDe(d)
-          const aberta = pagandoId === d.id
-          return (
-            <div className="card mt" key={d.id}>
-              <div className="row">
-                <div>
-                  <strong>{d.fornecedor}</strong>
-                  <div className="small muted">
-                    {labels[d.categoria]} · {dataBR(d.data)}
-                  </div>
-                  {rec && <div className="small muted">recorrente · dia {rec.dia_vencimento ?? '—'}</div>}
-                </div>
-                <div style={{ textAlign: 'right' }}>
-                  <strong className="mono">{formatBR(d.valor)}</strong>
-                  <div className="small muted">previsto</div>
-                </div>
+        <div className="grid3 mt">
+          {proximas.map((d) => {
+            const rec = recDe(d)
+            return (
+              <div className="card grid-card" key={d.id}>
+                <strong className="grid-titulo" title={d.fornecedor}>{d.fornecedor}</strong>
+                <span className="small muted">{labels[d.categoria]}</span>
+                <span className="mono grid-valor">{formatBR(d.valor)}</span>
+                <span className="small muted">{dataBR(d.data)}</span>
+                {rec && <span className="badge">recorrente</span>}
+                <button type="button" className="btn btn-sm btn-primary mt" onClick={() => abrirPagamento(d)}>
+                  Pagar
+                </button>
               </div>
+            )
+          })}
+        </div>
+      )}
 
-              <div className="mt" style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-                {aberta ? (
+      {pagandoId &&
+        (() => {
+          const d = proximas.find((p) => p.id === pagandoId)
+          if (!d) return null
+          return (
+            <div className="overlay" onClick={() => setPagandoId(null)}>
+              <div className="sheet" onClick={(e) => e.stopPropagation()}>
+                <div className="row">
+                  <div>
+                    <strong>{d.fornecedor}</strong>
+                    <div className="small muted">
+                      previsto {formatBR(d.valor)} · {dataBR(d.data)}
+                    </div>
+                  </div>
                   <button type="button" className="btn btn-sm btn-secondary" onClick={() => setPagandoId(null)}>
                     Fechar
                   </button>
-                ) : (
-                  <button type="button" className="btn btn-sm btn-primary" onClick={() => abrirPagamento(d)}>
-                    Pagar
-                  </button>
-                )}
-              </div>
-
-              {aberta && (
-                <div className="mt">
-                  <label>Valor real do boleto</label>
-                  <input inputMode="decimal" value={valorReal} onChange={(e) => setValorReal(e.target.value)} />
-
-                  <label>Quem pagou</label>
-                  <select value={quemPagou} onChange={(e) => setQuemPagou(e.target.value)}>
-                    {moradores.map((m) => (
-                      <option key={m.id} value={m.id}>{m.nome}</option>
-                    ))}
-                  </select>
-
-                  <label>Comprovante (opcional)</label>
-                  <input
-                    ref={inputFoto}
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => setComprovante(e.target.files?.[0] ?? null)}
-                  />
-                  {comprovanteUrl && (
-                    <img src={comprovanteUrl} alt="Comprovante" style={{ width: '100%', borderRadius: 8, marginTop: 8, display: 'block' }} />
-                  )}
-
-                  {erro && <div className="error-box">{erro}</div>}
-
-                  <div className="row mt">
-                    <button type="button" className="btn btn-sm btn-secondary" onClick={() => ignorar(d.id)}>
-                      Ignorar mês
-                    </button>
-                    <button
-                      type="button"
-                      className="btn btn-primary"
-                      disabled={enviando}
-                      onClick={() => confirmarPagamento(d)}
-                    >
-                      {enviando ? '…' : 'Confirmar pagamento'}
-                    </button>
-                  </div>
                 </div>
-              )}
+
+                <label>Valor real do boleto</label>
+                <input inputMode="decimal" value={valorReal} onChange={(e) => setValorReal(e.target.value)} />
+
+                <label>Quem pagou</label>
+                <select value={quemPagou} onChange={(e) => setQuemPagou(e.target.value)}>
+                  {moradores.map((m) => (
+                    <option key={m.id} value={m.id}>{m.nome}</option>
+                  ))}
+                </select>
+
+                <label>Comprovante (opcional)</label>
+                <input
+                  ref={inputFoto}
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => setComprovante(e.target.files?.[0] ?? null)}
+                />
+                {comprovanteUrl && (
+                  <img src={comprovanteUrl} alt="Comprovante" style={{ width: '100%', borderRadius: 8, marginTop: 8, display: 'block' }} />
+                )}
+
+                {erro && <div className="error-box">{erro}</div>}
+
+                <div className="row mt">
+                  <button type="button" className="btn btn-sm btn-secondary" onClick={() => ignorar(d.id)}>
+                    Ignorar mês
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-primary"
+                    disabled={enviando}
+                    onClick={() => confirmarPagamento({ id: d.id, tipo_rateio: d.tipo_rateio, valor: d.valor })}
+                  >
+                    {enviando ? '…' : 'Confirmar pagamento'}
+                  </button>
+                </div>
+              </div>
             </div>
           )
-        })
-      )}
+        })()}
 
       <p className="small muted center mt">
         Gerencie recorrências (editar, datas, ignorar) em{' '}

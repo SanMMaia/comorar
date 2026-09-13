@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase'
 import { useApp } from '../state/AppContext'
 import { useDespesas } from '../lib/dados'
 import { gerarPrevistas } from '../lib/recorrencia'
-import { formatBR, dataBR, parseCentavos } from '../lib/format'
+import { formatBR, dataBR, mesAnoBR, parseCentavos } from '../lib/format'
 import type { Categoria, Despesa, IntervaloRecorrencia, Recorrencia, TipoRateio } from '../types'
 
 const categorias: Categoria[] = ['aluguel', 'luz', 'agua', 'internet', 'mercado', 'outro']
@@ -150,6 +150,39 @@ export function Projecao() {
         .sort((a, b) => a.data.localeCompare(b.data)),
     [despesas],
   )
+
+  const chaveMes = (data: string) => data.slice(0, 7)
+
+  const previstasPorMes = useMemo(() => {
+    const grupos = new Map<string, { total: number; lancamentos: Despesa[] }>()
+    for (const d of previstas) {
+      const chave = chaveMes(d.data)
+      const grupo = grupos.get(chave)
+      if (grupo) {
+        grupo.total += d.valor
+        grupo.lancamentos.push(d)
+      } else {
+        grupos.set(chave, { total: d.valor, lancamentos: [d] })
+      }
+    }
+    return grupos
+  }, [previstas])
+
+  const [mesesAbertos, setMesesAbertos] = useState<Set<string>>(() => {
+    const hoje = new Date()
+    const atual = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}`
+    const proximo = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 1)
+    const seguinte = `${proximo.getFullYear()}-${String(proximo.getMonth() + 1).padStart(2, '0')}`
+    return new Set([atual, seguinte])
+  })
+
+  const alternarMes = (chave: string) =>
+    setMesesAbertos((prev) => {
+      const next = new Set(prev)
+      if (next.has(chave)) next.delete(chave)
+      else next.add(chave)
+      return next
+    })
 
   const lancamentosDe = (recId: string) =>
     despesas
@@ -405,26 +438,46 @@ export function Projecao() {
       {previstas.length === 0 ? (
         <div className="empty">Nenhuma previsão ativa. Crie ou edite uma recorrência acima para gerar.</div>
       ) : (
-        previstas.map((d) => (
-          <div className="card" key={d.id}>
-            <div className="row">
-              <div>
-                <strong>{d.fornecedor}</strong>
-                <div className="small muted">
-                  {labelsCat[d.categoria]} · {dataBR(d.data)} · valor previsto
+        Array.from(previstasPorMes.entries()).map(([chave, grupo]) => {
+          const aberto = mesesAbertos.has(chave)
+          const [ano, mes] = chave.split('-').map(Number)
+          return (
+            <div className="card" key={chave} style={{ padding: 0 }}>
+              <button type="button" className="link-row" style={{ padding: 14 }} onClick={() => alternarMes(chave)}>
+                <div className="row">
+                  <div style={{ textAlign: 'left' }}>
+                    <strong>{mesAnoBR(new Date(ano, mes - 1, 1))}</strong>
+                    <div className="small muted">
+                      {aberto ? '▾' : '▸'} {grupo.lancamentos.length} conta(s)
+                    </div>
+                  </div>
+                  <div style={{ textAlign: 'right' }}>
+                    <strong className="mono">{formatBR(grupo.total)}</strong>
+                  </div>
                 </div>
-              </div>
-              <div style={{ textAlign: 'right' }}>
-                <strong className="mono">{formatBR(d.valor)}</strong>
-                <div className="small mt">
-                  <button type="button" className="btn btn-sm btn-secondary" onClick={() => ignorarMes(d)}>
-                    Ignorar mês
-                  </button>
+              </button>
+
+              {aberto && (
+                <div style={{ padding: '0 14px 8px' }}>
+                  {grupo.lancamentos.map((d) => (
+                    <div className="row" key={d.id} style={{ padding: '6px 0', borderTop: '1px solid var(--border)' }}>
+                      <div className="small">
+                        <strong>{d.fornecedor}</strong>
+                        <span className="muted"> · {dataBR(d.data)}</span>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <strong className="mono small">{formatBR(d.valor)}</strong>
+                        <button type="button" className="btn btn-sm btn-secondary" onClick={() => ignorarMes(d)}>
+                          Ignorar
+                        </button>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              </div>
+              )}
             </div>
-          </div>
-        ))
+          )
+        })
       )}
     </>
   )
