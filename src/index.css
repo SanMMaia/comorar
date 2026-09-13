@@ -335,6 +335,29 @@ a.card {
   cursor: not-allowed;
 }
 
+.seg {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 4px;
+}
+
+.seg button {
+  padding: 8px;
+  border-radius: 9px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.seg .seg-on {
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+}
+
 .field-row {
   display: flex;
   gap: 10px;

@@ -5,7 +5,7 @@ import { useApp } from '../state/AppContext'
 import { useDespesas } from '../lib/dados'
 import { calcularRateio } from '../lib/rateio'
 import { subirComprovante } from '../lib/comprovante'
-import { formatBR, dataBR, parseCentavos } from '../lib/format'
+import { formatBR, dataBR, mesAnoBR, parseCentavos } from '../lib/format'
 import type { Categoria, Recorrencia, RegraRateio, TipoRateio } from '../types'
 
 const categorias: Categoria[] = ['aluguel', 'luz', 'agua', 'internet', 'mercado', 'outro']
@@ -52,23 +52,41 @@ export function Pagar() {
     return m
   }, [moradores, regramap])
 
-  const proximas = useMemo(() => {
-    const hoje = new Date()
-    hoje.setHours(0, 0, 0, 0)
-    const porRec = new Map<string, typeof despesas>()
-    for (const d of despesas) {
-      if (d.status !== 'prevista' || new Date(d.data) < hoje) continue
-      const chave = d.origem_recorrencia_id ?? `avulsa:${d.id}`
-      if (!porRec.has(chave)) porRec.set(chave, [])
-      porRec.get(chave)!.push(d)
+  const todasPrevistas = useMemo(
+    () =>
+      despesas
+        .filter((d) => d.status === 'prevista')
+        .sort((a, b) => a.data.localeCompare(b.data)),
+    [despesas],
+  )
+
+  const chaveMes = (data: string) => data.slice(0, 7)
+
+  const chaveAtual = useMemo(() => {
+    const agora = new Date()
+    return `${agora.getFullYear()}-${String(agora.getMonth() + 1).padStart(2, '0')}`
+  }, [])
+
+  const doMes = useMemo(
+    () => todasPrevistas.filter((d) => chaveMes(d.data) === chaveAtual),
+    [todasPrevistas, chaveAtual],
+  )
+
+  const futuras = useMemo(
+    () => todasPrevistas.filter((d) => chaveMes(d.data) > chaveAtual),
+    [todasPrevistas, chaveAtual],
+  )
+
+  const futurasPorMes = useMemo(() => {
+    const grupos = new Map<string, typeof todasPrevistas>()
+    for (const d of futuras) {
+      const chave = chaveMes(d.data)
+      const g = grupos.get(chave)
+      if (g) g.push(d)
+      else grupos.set(chave, [d])
     }
-    const lista: typeof despesas = []
-    for (const grupo of porRec.values()) {
-      grupo.sort((a, b) => a.data.localeCompare(b.data))
-      lista.push(grupo[0])
-    }
-    return lista.sort((a, b) => a.data.localeCompare(b.data))
-  }, [despesas])
+    return grupos
+  }, [futuras])
 
   const recDe = (d: { origem_recorrencia_id: string | null }) =>
     recorrencias.find((r) => r.id === d.origem_recorrencia_id)
@@ -153,6 +171,7 @@ export function Pagar() {
   }
 
   const [avulsa, setAvulsa] = useState(false)
+  const [visao, setVisao] = useState<'mes' | 'futuras'>('mes')
 
   const [fornecedor, setFornecedor] = useState('')
   const [descricao, setDescricao] = useState('')
@@ -271,15 +290,30 @@ export function Pagar() {
 
   return (
     <>
-      <h1 style={{ fontSize: 20 }}>Pagar</h1>
-
-      <div className="row mt">
-        <h2 style={{ fontSize: 15, margin: 0 }}>Próximas contas</h2>
-        <button type="button" className="btn btn-primary btn-sm" onClick={() => setAvulsa((v) => !v)}>
+      <div className="row">
+        <h1 style={{ fontSize: 20, margin: 0 }}>Pagar</h1>
+        <button type="button" className="btn btn-sm btn-primary" onClick={() => setAvulsa((v) => !v)}>
           {avulsa ? 'Fechar' : '+ Avulsa'}
         </button>
       </div>
-      <p className="small muted">Toque na conta pagar para confirmar o pagamento do mês.</p>
+
+      <div className="seg mt">
+        <button
+          type="button"
+          className={visao === 'mes' ? 'seg-on' : ''}
+          onClick={() => setVisao('mes')}
+        >
+          Este mês
+        </button>
+        <button
+          type="button"
+          className={visao === 'futuras' ? 'seg-on' : ''}
+          onClick={() => setVisao('futuras')}
+        >
+          Próximas
+        </button>
+      </div>
+      <p className="small muted">Pague as contas do mês. Para adiantar uma conta futura, use a aba Próximas.</p>
 
       {avulsa && (
         <form className="card mt" onSubmit={salvarAvulsa}>
@@ -419,36 +453,73 @@ export function Pagar() {
         </form>
       )}
 
-      {proximas.length === 0 ? (
+      {visao === 'mes' ? (
+        doMes.length === 0 ? (
+          <div className="empty">
+            <strong>Nada a pagar neste mês.</strong>
+            <button type="button" className="btn btn-sm btn-secondary mt" onClick={() => setVisao('futuras')}>
+              Ver próximas
+            </button>
+          </div>
+        ) : (
+          <div className="grid3 mt">
+            {doMes.map((d) => {
+              const rec = recDe(d)
+              return (
+                <div className="card grid-card" key={d.id}>
+                  <strong className="grid-titulo" title={d.fornecedor}>{d.fornecedor}</strong>
+                  <span className="small muted">{labels[d.categoria]}</span>
+                  <span className="mono grid-valor">{formatBR(d.valor)}</span>
+                  <span className="small muted">{dataBR(d.data)}</span>
+                  {rec && <span className="badge">recorrente</span>}
+                  <button type="button" className="btn btn-sm btn-primary mt" onClick={() => abrirPagamento(d)}>
+                    Pagar
+                  </button>
+                </div>
+              )
+            })}
+          </div>
+        )
+      ) : futurasPorMes.size === 0 ? (
         <div className="empty">
-          Nenhuma conta a pagar. Cadastre{' '}
-          <button type="button" className="btn btn-sm btn-secondary" onClick={() => navigate('/projecao')}>
-            contas recorrentes
+          <strong>Nenhuma conta futura.</strong>
+          <button type="button" className="btn btn-sm btn-secondary mt" onClick={() => navigate('/projecao')}>
+            Gerenciar em Contas
           </button>
         </div>
       ) : (
-        <div className="grid3 mt">
-          {proximas.map((d) => {
-            const rec = recDe(d)
-            return (
-              <div className="card grid-card" key={d.id}>
-                <strong className="grid-titulo" title={d.fornecedor}>{d.fornecedor}</strong>
-                <span className="small muted">{labels[d.categoria]}</span>
-                <span className="mono grid-valor">{formatBR(d.valor)}</span>
-                <span className="small muted">{dataBR(d.data)}</span>
-                {rec && <span className="badge">recorrente</span>}
-                <button type="button" className="btn btn-sm btn-primary mt" onClick={() => abrirPagamento(d)}>
-                  Pagar
-                </button>
+        Array.from(futurasPorMes.entries()).map(([chave, grupo]) => {
+          const [ano, mes] = chave.split('-').map(Number)
+          return (
+            <div className="card mt" key={chave} style={{ padding: 0 }}>
+              <div className="row" style={{ padding: 12 }}>
+                <strong>{mesAnoBR(new Date(ano, mes - 1, 1))}</strong>
+                <span className="small muted">
+                  {grupo.length} conta(s) · <strong className="mono">{formatBR(grupo.reduce((a, b) => a + b.valor, 0))}</strong>
+                </span>
               </div>
-            )
-          })}
-        </div>
+              {grupo.map((d) => (
+                <div className="row" key={d.id} style={{ padding: '10px 12px', borderTop: '1px solid var(--border)' }}>
+                  <div className="small">
+                    <strong>{d.fornecedor}</strong>
+                    <span className="muted"> · {dataBR(d.data)}</span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <strong className="mono small">{formatBR(d.valor)}</strong>
+                    <button type="button" className="btn btn-sm btn-primary" onClick={() => abrirPagamento(d)}>
+                      Pagar
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )
+        })
       )}
 
       {pagandoId &&
         (() => {
-          const d = proximas.find((p) => p.id === pagandoId)
+          const d = todasPrevistas.find((p) => p.id === pagandoId)
           if (!d) return null
           return (
             <div className="overlay" onClick={() => setPagandoId(null)}>
