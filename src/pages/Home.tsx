@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { useApp, nomeMorador } from '../state/AppContext'
 import { useDespesas } from '../lib/dados'
-import { formatBR, mesAnoBR } from '../lib/format'
+import { formatBR, dataBR, mesAnoBR } from '../lib/format'
 
 export function Home() {
   const { casa, minhaMoradorId, moradores, loading } = useApp()
@@ -32,6 +32,19 @@ export function Home() {
       devemAVoce: Math.round(devemAVoce * 100) / 100,
     }
   }, [despesas, minhaMoradorId])
+
+  const previstasMes = useMemo(() => {
+    const agora = new Date()
+    return despesas
+      .filter((d) => {
+        if (d.status !== 'prevista') return false
+        const dt = new Date(d.data)
+        return dt.getMonth() === agora.getMonth() && dt.getFullYear() === agora.getFullYear()
+      })
+      .sort((a, b) => a.data.localeCompare(b.data))
+  }, [despesas])
+
+  const totalPrevisto = useMemo(() => previstasMes.reduce((a, b) => a + b.valor, 0), [previstasMes])
 
   const recentes = useMemo(() => {
     const uid = minhaMoradorId
@@ -66,6 +79,31 @@ export function Home() {
           </div>
         </div>
       </div>
+
+      {previstasMes.length > 0 && (
+        <>
+          <div className="row mt-lg">
+            <h2 style={{ fontSize: 16, margin: 0 }}>Contas do mês (previstas)</h2>
+            <strong className="mono">{formatBR(totalPrevisto)}</strong>
+          </div>
+          <p className="small muted">Confirmou o pagamento? Lance em nova despesa que a previsão é convertida.</p>
+          {previstasMes.map((d) => (
+            <div className="card" key={d.id}>
+              <div className="row">
+                <div>
+                  <strong>{d.fornecedor}</strong>
+                  <div className="small muted">
+                    {d.categoria} · {dataBR(d.data)}
+                  </div>
+                </div>
+                <div style={{ textAlign: 'right' }}>
+                  <strong className="mono">{formatBR(d.valor)}</strong>
+                </div>
+              </div>
+            </div>
+          ))}
+        </>
+      )}
 
       <div className="row mt-lg">
         <h2 style={{ fontSize: 16, margin: 0 }}>Últimas despesas</h2>

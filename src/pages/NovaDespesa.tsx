@@ -5,7 +5,7 @@ import { useApp } from '../state/AppContext'
 import { useDespesas } from '../lib/dados'
 import { calcularRateio } from '../lib/rateio'
 import { subirComprovante } from '../lib/comprovante'
-import { formatBR, parseCentavos } from '../lib/format'
+import { formatBR, dataBR, parseCentavos } from '../lib/format'
 import type { Categoria, RegraRateio, TipoRateio } from '../types'
 
 const categorias: Categoria[] = ['aluguel', 'luz', 'agua', 'internet', 'mercado', 'outro']
@@ -40,6 +40,7 @@ export function NovaDespesa() {
     [comprovante],
   )
   const inputFoto = useRef<HTMLInputElement>(null)
+  const [usarPrevisao, setUsarPrevisao] = useState(true)
 
   useEffect(() => {
     if (!casa) return
@@ -66,6 +67,20 @@ export function NovaDespesa() {
     () => Array.from(new Set(despesas.map((d) => d.fornecedor))).sort(),
     [despesas],
   )
+
+  const previstaMatch = useMemo(() => {
+    const f = fornecedor.trim().toLowerCase()
+    if (!f) return null
+    const alvo = new Date(data)
+    return (
+      despesas.find((d) => {
+        if (d.status !== 'prevista') return false
+        if (d.fornecedor.trim().toLowerCase() !== f) return false
+        const dt = new Date(d.data)
+        return dt.getMonth() === alvo.getMonth() && dt.getFullYear() === alvo.getFullYear()
+      }) ?? null
+    )
+  }, [despesas, fornecedor, data])
 
   const saldoMensal = useMemo(() => {
     const p = parseCentavos(valor)
@@ -124,6 +139,33 @@ export function NovaDespesa() {
       let comprovante_url: string | null = null
       if (comprovante) {
         comprovante_url = await subirComprovante(casa.id, comprovante)
+      }
+
+      if (previstaMatch && usarPrevisao) {
+        const { error } = await supabase
+          .from('despesas')
+          .update({
+            status: 'confirmada',
+            valor: valorNum,
+            pago_por: pagoPorId,
+            comprovante_url,
+            tipo_rateio: tipoRateio,
+            descricao: descricao.trim() || previstaMatch.descricao,
+          })
+          .eq('id', previstaMatch.id)
+        if (error) throw error
+        const rows = itens.map((i) => ({
+          despesa_id: previstaMatch.id,
+          morador_id: i.morador_id,
+          valor_rateado: i.valor_rateado,
+          pago: i.morador_id === pagoPorId,
+          pago_em: i.morador_id === pagoPorId ? new Date().toISOString() : null,
+          confirmado_por: i.morador_id === pagoPorId ? (user?.id ?? null) : null,
+        }))
+        const { error: errRateios } = await supabase.from('rateios').insert(rows)
+        if (errRateios) throw errRateios
+        navigate(`/despesa/${previstaMatch.id}`)
+        return
       }
 
       const { data: despesa, error } = await supabase
@@ -248,6 +290,21 @@ export function NovaDespesa() {
             Remover foto
           </button>
         </div>
+      )}
+
+      {previstaMatch && (
+        <label className="card mt" style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 400, cursor: 'pointer' }}>
+          <input
+            type="checkbox"
+            style={{ width: 'auto' }}
+            checked={usarPrevisao}
+            onChange={(e) => setUsarPrevisao(e.target.checked)}
+          />
+          <span className="small">
+            Confirmar a previsão <strong>{previstaMatch.fornecedor}</strong> de {dataBR(previstaMatch.data)} (
+            {formatBR(previstaMatch.valor)} previstos) em vez de criar outra despesa
+          </span>
+        </label>
       )}
 
       <label>Como dividir?</label>
