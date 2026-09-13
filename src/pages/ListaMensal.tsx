@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useApp, nomeMorador } from '../state/AppContext'
 import { useDespesas } from '../lib/dados'
@@ -17,58 +17,102 @@ const labelsCat: Record<Categoria, string> = {
 export function ListaMensal() {
   const { casa, moradores } = useApp()
   const { despesas, carregando } = useDespesas(casa?.id ?? null)
+  const hoje = new Date()
+  const [mes, setMes] = useState(hoje.getMonth())
+  const [ano, setAno] = useState(hoje.getFullYear())
 
-  const doMes = useMemo(() => {
-    const agora = new Date()
-    const fim = new Date(agora.getFullYear(), agora.getMonth() + 1, 0)
-    return despesas.filter((d) => {
-      if (d.status !== 'confirmada') return false
+  const voltarMes = () => {
+    if (mes === 0) {
+      setMes(11)
+      setAno((a) => a - 1)
+    } else {
+      setMes((m) => m - 1)
+    }
+  }
+  const avancarMes = () => {
+    if (mes === 11) {
+      setMes(0)
+      setAno((a) => a + 1)
+    } else {
+      setMes((m) => m + 1)
+    }
+  }
+
+  const { doMes, total, totalPrevisto } = useMemo(() => {
+    const lista = despesas.filter((d) => {
+      if (d.status === 'cancelada') return false
       const dt = new Date(d.data)
-      return dt <= fim && dt.getMonth() === agora.getMonth() && dt.getFullYear() === agora.getFullYear()
+      return dt.getMonth() === mes && dt.getFullYear() === ano
     })
-  }, [despesas])
+    return {
+      doMes: lista,
+      total: lista.filter((d) => d.status === 'confirmada').reduce((a, b) => a + b.valor, 0),
+      totalPrevisto: lista.filter((d) => d.status === 'prevista').reduce((a, b) => a + b.valor, 0),
+    }
+  }, [despesas, mes, ano])
 
-  const total = useMemo(() => doMes.reduce((a, b) => a + b.valor, 0), [doMes])
+  const mesIndex = ano * 12 + mes
+  const hojeIndex = hoje.getFullYear() * 12 + hoje.getMonth()
 
   if (carregando) return <div className="empty">Carregando…</div>
 
   return (
     <>
       <div className="row">
-        <h1 style={{ fontSize: 20, margin: 0 }}>{mesAnoBR(new Date())}</h1>
-        <strong className="mono">{formatBR(total)}</strong>
+        <button type="button" className="btn btn-secondary btn-sm" onClick={voltarMes}>←</button>
+        <div style={{ textAlign: 'center' }}>
+          <h1 style={{ fontSize: 18, margin: 0 }}>{mesAnoBR(new Date(ano, mes, 1))}</h1>
+          <div className="small muted">
+            {formatBR(total)}{totalPrevisto > 0 ? ` · ${formatBR(totalPrevisto)} previstos` : ''}
+          </div>
+        </div>
+        <button
+          type="button"
+          className="btn btn-secondary btn-sm"
+          onClick={avancarMes}
+          disabled={mesIndex >= hojeIndex + 12}
+        >
+          →
+        </button>
       </div>
 
       {doMes.length === 0 ? (
-        <div className="empty">Nenhuma despesa neste mês ainda.</div>
+        <div className="empty">Nenhum lançamento neste mês.</div>
       ) : (
-        doMes.map((d) => (
-          <Link to={`/despesa/${d.id}`} key={d.id} className="card link-card">
-            <div className="row">
-              <div>
-                <strong>{d.fornecedor}</strong>
-                <div className="small muted">
-                  {labelsCat[d.categoria]} · {dataBR(d.data)}
-                </div>
-                <div className="small muted">
-                  {nomeMorador(moradores, d.pago_por)} pagou
-                  {d.descricao ? ` · ${d.descricao}` : ''}
-                </div>
-              </div>
-              <div style={{ textAlign: 'right' }}>
-                <strong className="mono">{formatBR(d.valor)}</strong>
-                {d.rateios.some((r) => !r.pago) && (
-                  <div className="small">
-                    <span className="badge badge-warn">
-                      {d.rateios.filter((r) => !r.pago).length} pendente(s)
-                    </span>
+        doMes
+          .sort((a, b) => a.data.localeCompare(b.data))
+          .map((d) => (
+            <Link to={`/despesa/${d.id}`} key={d.id} className="card link-card">
+              <div className="row">
+                <div>
+                  <strong>{d.fornecedor}</strong>
+                  <div className="small muted">
+                    {labelsCat[d.categoria]} · {dataBR(d.data)}
                   </div>
-                )}
+                  {d.status === 'confirmada' && (
+                    <div className="small muted">
+                      {nomeMorador(moradores, d.pago_por)} pagou
+                      {d.descricao ? ` · ${d.descricao}` : ''}
+                    </div>
+                  )}
+                </div>
+                <div style={{ textAlign: 'right' }}>
+                  <strong className="mono">{formatBR(d.valor)}</strong>
+                  <div className="small mt">
+                    {d.status === 'confirmada' && d.rateios.some((r) => !r.pago) && (
+                      <span className="badge badge-warn">
+                        {d.rateios.filter((r) => !r.pago).length} pendente(s)
+                      </span>
+                    )}
+                    {d.status === 'prevista' && <span className="badge badge-warn">previsto</span>}
+                  </div>
+                </div>
               </div>
-            </div>
-          </Link>
-        ))
+            </Link>
+          ))
       )}
+
+      <div style={{ height: 8 }} />
     </>
   )
 }

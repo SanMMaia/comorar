@@ -7,7 +7,6 @@ import { Home } from './pages/Home'
 import { NovaDespesa } from './pages/NovaDespesa'
 import { ListaMensal } from './pages/ListaMensal'
 import { Balanco } from './pages/Balanco'
-import { Recorrencias } from './pages/Recorrencias'
 import { Projecao } from './pages/Projecao'
 import { Perfil } from './pages/Perfil'
 import { DespesaDetalhe } from './pages/DespesaDetalhe'
@@ -47,8 +46,8 @@ function Protegido() {
         <Route path="/nova" element={<NovaDespesa />} />
         <Route path="/mes" element={<ListaMensal />} />
         <Route path="/balanco" element={<Balanco />} />
-        <Route path="/recorrencias" element={<Recorrencias />} />
         <Route path="/projecao" element={<Projecao />} />
+        <Route path="/recorrencias" element={<Navigate to="/projecao" replace />} />
         <Route path="/perfil" element={<Perfil />} />
         <Route path="/despesa/:id" element={<DespesaDetalhe />} />
         <Route path="*" element={<Navigate to="/" replace />} />

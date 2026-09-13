@@ -19,7 +19,7 @@ const labels: Record<Categoria, string> = {
 }
 
 export function NovaDespesa() {
-  const { casa, minhaMoradorId, moradores } = useApp()
+  const { casa, user, minhaMoradorId, moradores } = useApp()
   const { despesas } = useDespesas(casa?.id ?? null)
   const navigate = useNavigate()
 
@@ -148,6 +148,9 @@ export function NovaDespesa() {
         despesa_id: despesa.id,
         morador_id: i.morador_id,
         valor_rateado: i.valor_rateado,
+        pago: i.morador_id === pagoPorId,
+        pago_em: i.morador_id === pagoPorId ? new Date().toISOString() : null,
+        confirmado_por: i.morador_id === pagoPorId ? (user?.id ?? null) : null,
       }))
       const { error: errRateios } = await supabase.from('rateios').insert(rateioRows)
       if (errRateios) throw errRateios

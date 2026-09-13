@@ -166,6 +166,18 @@ a.card {
   display: block;
 }
 
+.link-row {
+  display: block;
+  width: 100%;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+}
+
 .card + .card {
   margin-top: 12px;
 }

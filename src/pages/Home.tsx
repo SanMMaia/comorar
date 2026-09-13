@@ -103,7 +103,7 @@ export function Home() {
       )}
 
       <p className="center small muted mt">
-        Cadastre <Link to="/recorrencias">recorrências</Link> e veja as{' '}
+        Cadastre <Link to="/projecao">contas recorrentes</Link> e veja as{' '}
         <Link to="/projecao">próximas contas</Link> automaticamente.
       </p>
     </>
