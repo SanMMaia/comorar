@@ -92,6 +92,13 @@ export function DespesaAvulsa() {
     return itens.reduce((a, b) => a + b.valor_rateado, 0)
   }, [valor, tipoRateio, percentuais, incluidos, moradores])
 
+  const infoRateio = useMemo(() => {
+    const v = parseCentavos(valor)
+    if (v === null || v <= 0 || saldoMensal === null) return null
+    const pct = Math.round((saldoMensal / v) * 1000) / 10
+    return { saldo: saldoMensal, valor: v, pct, falta: v - saldoMensal }
+  }, [valor, saldoMensal])
+
   const toggleIncluido = (id: string) => {
     setIncluidos((prev) => {
       const next = new Set(prev)
@@ -302,12 +309,33 @@ export function DespesaAvulsa() {
           </div>
         </details>
 
-        <div className="card mt" style={{ background: 'var(--accent-soft)', border: 'none' }}>
-          <div className="row">
-            <span className="small">Rateio</span>
-            <strong>{saldoMensal !== null ? formatBR(saldoMensal) : '—'}</strong>
+        {infoRateio && (
+          <div
+            className="card mt"
+            style={{
+              background: infoRateio.pct >= 99.95 ? 'var(--ok-soft)' : 'var(--warn-soft)',
+              border: 'none',
+            }}
+          >
+            <div className="row">
+              <span className="small">Rateio</span>
+              {infoRateio.pct >= 99.95 ? (
+                <strong style={{ color: 'var(--ok)' }}>
+                  {formatBR(infoRateio.saldo)} · 100%
+                </strong>
+              ) : (
+                <strong style={{ color: 'var(--warn)' }}>
+                  {formatBR(infoRateio.saldo)} de {formatBR(infoRateio.valor)} ({infoRateio.pct}%)
+                </strong>
+              )}
+            </div>
+            {infoRateio.pct < 99.95 && (
+              <div className="small" style={{ color: 'var(--warn)', marginTop: 4 }}>
+                Falta ratear {formatBR(infoRateio.falta)}
+              </div>
+            )}
           </div>
-        </div>
+        )}
 
         {erro && <div className="error-box">{erro}</div>}
 
