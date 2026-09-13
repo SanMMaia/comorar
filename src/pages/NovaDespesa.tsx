@@ -6,7 +6,7 @@ import { useDespesas } from '../lib/dados'
 import { calcularRateio } from '../lib/rateio'
 import { subirComprovante } from '../lib/comprovante'
 import { formatBR, dataBR, parseCentavos } from '../lib/format'
-import type { Categoria, RegraRateio, TipoRateio } from '../types'
+import type { Categoria, Despesa, RegraRateio, TipoRateio } from '../types'
 
 const categorias: Categoria[] = ['aluguel', 'luz', 'agua', 'internet', 'mercado', 'outro']
 const labels: Record<Categoria, string> = {
@@ -72,14 +72,20 @@ export function NovaDespesa() {
     const f = fornecedor.trim().toLowerCase()
     if (!f) return null
     const alvo = new Date(data)
-    return (
-      despesas.find((d) => {
-        if (d.status !== 'prevista') return false
-        if (d.fornecedor.trim().toLowerCase() !== f) return false
-        const dt = new Date(d.data)
-        return dt.getMonth() === alvo.getMonth() && dt.getFullYear() === alvo.getFullYear()
-      }) ?? null
+    const candidatas = despesas.filter(
+      (d) => d.status === 'prevista' && d.fornecedor.trim().toLowerCase() === f,
     )
+    if (candidatas.length === 0) return null
+    const doMes = candidatas.filter((d) => {
+      const dt = new Date(d.data)
+      return dt.getMonth() === alvo.getMonth() && dt.getFullYear() === alvo.getFullYear()
+    })
+    const pool = doMes.length > 0 ? doMes : candidatas
+    return pool.reduce<Despesa | null>((melhor, d) => {
+      const dist = Math.abs(new Date(d.data).getTime() - alvo.getTime())
+      if (!melhor) return d
+      return Math.abs(new Date(melhor.data).getTime() - alvo.getTime()) <= dist ? melhor : d
+    }, null)
   }, [despesas, fornecedor, data])
 
   const saldoMensal = useMemo(() => {
