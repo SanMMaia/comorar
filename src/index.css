@@ -112,7 +112,7 @@ label {
 
 .content {
   flex: 1;
-  padding: 16px;
+  padding: 16px 16px calc(88px + env(safe-area-inset-bottom));
 }
 
 .bottom-nav {
