@@ -4,7 +4,7 @@ import { Layout } from './components/Layout'
 import { Login } from './pages/Login'
 import { Onboarding } from './pages/Onboarding'
 import { Home } from './pages/Home'
-import { NovaDespesa } from './pages/NovaDespesa'
+import { Pagar } from './pages/Pagar'
 import { ListaMensal } from './pages/ListaMensal'
 import { Balanco } from './pages/Balanco'
 import { Projecao } from './pages/Projecao'
@@ -46,7 +46,7 @@ function Protegido() {
     <Routes>
       <Route element={<Layout />}>
         <Route path="/" element={<Home />} />
-        <Route path="/nova" element={<NovaDespesa />} />
+        <Route path="/nova" element={<Pagar />} />
         <Route path="/mes" element={<ListaMensal />} />
         <Route path="/balanco" element={<Balanco />} />
         <Route path="/projecao" element={<Projecao />} />

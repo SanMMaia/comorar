@@ -86,7 +86,7 @@ export function Home() {
             <h2 style={{ fontSize: 16, margin: 0 }}>Contas do mês (previstas)</h2>
             <strong className="mono">{formatBR(totalPrevisto)}</strong>
           </div>
-          <p className="small muted">Confirmou o pagamento? Lance em nova despesa que a previsão é convertida.</p>
+          <p className="small muted">Pagou? Use <strong>Pagar</strong> e a previsão é convertida em despesa confirmada.</p>
           {previstasMes.map((d) => (
             <div className="card" key={d.id}>
               <div className="row">
@@ -107,13 +107,13 @@ export function Home() {
 
       <div className="row mt-lg">
         <h2 style={{ fontSize: 16, margin: 0 }}>Últimas despesas</h2>
-        <Link to="/nova" className="btn btn-primary btn-sm">+ Nova despesa</Link>
+        <Link to="/nova" className="btn btn-primary btn-sm">Pagar</Link>
       </div>
 
       {recentes.length === 0 ? (
         <div className="empty">
           <p>Nenhuma despesa ainda.</p>
-          <Link to="/nova" className="btn btn-primary btn-sm mt">Lançar a primeira</Link>
+          <Link to="/nova" className="btn btn-primary btn-sm mt">Pagar a primeira</Link>
         </div>
       ) : (
         recentes.map(({ d, minhaParte }) => (
