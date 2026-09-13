@@ -5,7 +5,7 @@ import { useApp } from '../state/AppContext'
 import { useDespesas } from '../lib/dados'
 import { calcularRateio } from '../lib/rateio'
 import { subirComprovante } from '../lib/comprovante'
-import { formatBR, parseCentavos } from '../lib/format'
+import { parseCentavos } from '../lib/format'
 import type { Categoria, Recorrencia, RegraRateio, TipoRateio } from '../types'
 
 const categorias: Categoria[] = ['aluguel', 'luz', 'agua', 'internet', 'mercado', 'outro']
@@ -78,26 +78,6 @@ export function DespesaAvulsa() {
     const termo = fornecedor.trim().toLowerCase()
     return termo ? lista.filter((o) => o.toLowerCase().includes(termo)) : lista
   }, [despesas, recorrencias, fornecedor])
-
-  const saldoMensal = useMemo(() => {
-    const p = parseCentavos(valor)
-    if (p === null) return null
-    const itens = calcularRateio(p, moradores.map((m) => ({ user_id: m.id })), {
-      regra: tipoRateio,
-      percentuais: Object.fromEntries(
-        Object.entries(percentuais).map(([k, v]) => [k, Number(v) || 0]),
-      ),
-      incluidos: Array.from(incluidos),
-    })
-    return itens.reduce((a, b) => a + b.valor_rateado, 0)
-  }, [valor, tipoRateio, percentuais, incluidos, moradores])
-
-  const infoRateio = useMemo(() => {
-    const v = parseCentavos(valor)
-    if (v === null || v <= 0 || saldoMensal === null) return null
-    const pct = Math.round((saldoMensal / v) * 1000) / 10
-    return { saldo: saldoMensal, valor: v, pct, falta: v - saldoMensal }
-  }, [valor, saldoMensal])
 
   const toggleIncluido = (id: string) => {
     setIncluidos((prev) => {
@@ -308,34 +288,6 @@ export function DespesaAvulsa() {
             )}
           </div>
         </details>
-
-        {infoRateio && (
-          <div
-            className="card mt"
-            style={{
-              background: infoRateio.pct >= 99.95 ? 'var(--ok-soft)' : 'var(--warn-soft)',
-              border: 'none',
-            }}
-          >
-            <div className="row">
-              <span className="small">Rateio</span>
-              {infoRateio.pct >= 99.95 ? (
-                <strong style={{ color: 'var(--ok)' }}>
-                  {formatBR(infoRateio.saldo)} · 100%
-                </strong>
-              ) : (
-                <strong style={{ color: 'var(--warn)' }}>
-                  {formatBR(infoRateio.saldo)} de {formatBR(infoRateio.valor)} ({infoRateio.pct}%)
-                </strong>
-              )}
-            </div>
-            {infoRateio.pct < 99.95 && (
-              <div className="small" style={{ color: 'var(--warn)', marginTop: 4 }}>
-                Falta ratear {formatBR(infoRateio.falta)}
-              </div>
-            )}
-          </div>
-        )}
 
         {erro && <div className="error-box">{erro}</div>}
 
