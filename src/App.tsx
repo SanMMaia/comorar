@@ -1,4 +1,5 @@
-import { Navigate, Route, Routes } from 'react-router-dom'
+import { useEffect } from 'react'
+import { Navigate, Route, Routes, useLocation, useNavigationType } from 'react-router-dom'
 import { AppProvider, useApp } from './state/AppContext'
 import { Layout } from './components/Layout'
 import { Login } from './pages/Login'
@@ -65,9 +66,22 @@ function Protegido() {
   )
 }
 
+function SincronizarDirecao() {
+  const navigationType = useNavigationType()
+  const location = useLocation()
+
+  useEffect(() => {
+    document.documentElement.dataset.direction =
+      navigationType === 'POP' ? 'back' : 'forward'
+  }, [navigationType, location])
+
+  return null
+}
+
 export default function App() {
   return (
     <AppProvider>
+      <SincronizarDirecao />
       <Rotas />
     </AppProvider>
   )

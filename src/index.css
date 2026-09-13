@@ -495,12 +495,20 @@ details.opcoes .opcoes-corpo {
   line-height: 1;
 }
 
-::view-transition-old(root) {
+[data-direction="forward"]::view-transition-old(root) {
   animation: vt-sair 220ms ease;
 }
 
-::view-transition-new(root) {
+[data-direction="forward"]::view-transition-new(root) {
   animation: vt-entrar 280ms ease;
+}
+
+[data-direction="back"]::view-transition-old(root) {
+  animation: vt-entrar 280ms ease reverse;
+}
+
+[data-direction="back"]::view-transition-new(root) {
+  animation: vt-sair 220ms ease reverse;
 }
 
 ::view-transition-old(vt-header),
@@ -533,9 +541,9 @@ details.opcoes .opcoes-corpo {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  ::view-transition-old(root),
-  ::view-transition-new(root) {
-    animation: none;
+  *::view-transition-old(root),
+  *::view-transition-new(root) {
+    animation: none !important;
   }
 }
 

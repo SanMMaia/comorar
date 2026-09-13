@@ -29,7 +29,26 @@ export default defineConfig({
         ],
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,svg,png,ico,woff2}'],
+        globPatterns: ['**/*.{js,css,svg,png,ico,woff2}'],
+        navigateFallback: null,
+        cleanupOutdatedCaches: true,
+        runtimeCaching: [
+          {
+            urlPattern: ({ request }) => request.mode === 'navigate',
+            handler: 'NetworkFirst',
+            options: {
+              networkTimeoutSeconds: 4,
+              cacheName: 'pages',
+            },
+          },
+          {
+            urlPattern: /\.(?:js|css|svg|png|ico|woff2)$/,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'assets',
+            },
+          },
+        ],
       },
     }),
   ],
