@@ -33,6 +33,7 @@ export interface Recorrencia {
   categoria: Categoria
   valor_previsto: number
   data_inicio: string
+  data_fim: string | null
   dia_vencimento: number | null
   intervalo: IntervaloRecorrencia
   tipo_rateio: TipoRateio

@@ -14,6 +14,7 @@ const base: Recorrencia = {
   categoria: 'luz',
   valor_previsto: 182.5,
   data_inicio: '2026-01-10',
+  data_fim: null,
   dia_vencimento: 10,
   intervalo: 'mensal',
   tipo_rateio: 'igual',
@@ -46,6 +47,20 @@ describe('gerarDatasPrevisao — mensal', () => {
     )
     // vencimento é dia 10; o primeiro vencimento válido após 15/fev é 10/mar
     expect(datas.map(iso)).toEqual(['2026-03-10', '2026-04-10'])
+  })
+  it('data_fim limita as datas geradas (encerra a recorrência)', () => {
+    const datas = gerarDatasPrevisao(
+      { ...base, data_fim: '2026-02-10' },
+      new Date('2026-12-31T00:00:00Z'),
+    )
+    expect(datas.map(iso)).toEqual(['2026-01-10', '2026-02-10'])
+  })
+  it('data_fim vazia (null) gera até o horizonte', () => {
+    const datas = gerarDatasPrevisao(
+      { ...base, data_fim: null },
+      new Date('2026-04-30T00:00:00Z'),
+    )
+    expect(datas.length).toBeGreaterThan(3)
   })
   it('dia 31 cai no último dia em meses curtos', () => {
     const rec = { ...base, dia_vencimento: 31, data_inicio: '2026-01-31' }

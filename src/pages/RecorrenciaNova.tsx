@@ -35,6 +35,7 @@ export function RecorrenciaNova() {
           categoria: form.categoria,
           valor_previsto: valorNum,
           data_inicio: form.dataInicio,
+          data_fim: form.dataFim.trim() || null,
           dia_vencimento: Number(form.dia),
           intervalo: form.intervalo,
           tipo_rateio: form.tipoRateio,

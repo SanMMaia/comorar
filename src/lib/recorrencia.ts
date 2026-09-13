@@ -21,10 +21,14 @@ export function isMesmoDia(a: Date, b: Date): boolean {
  * não são geradas.
  */
 export function gerarDatasPrevisao(
-  rec: Pick<Recorrencia, 'data_inicio' | 'dia_vencimento' | 'intervalo'>,
+  rec: Pick<Recorrencia, 'data_inicio' | 'data_fim' | 'dia_vencimento' | 'intervalo'>,
   ate: Date,
 ): Date[] {
   const inicio = new Date(rec.data_inicio + 'T00:00:00.000Z')
+  if (rec.data_fim) {
+    const fim = new Date(rec.data_fim + 'T00:00:00.000Z')
+    if (fim < ate) ate = fim // recorrência encerrada antes do horizonte
+  }
   const datas: Date[] = []
 
   switch (rec.intervalo) {

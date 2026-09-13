@@ -101,6 +101,8 @@ export function Projecao() {
                   <strong>{r.fornecedor}</strong>
                   <div className="small muted">
                     {labelsCat[r.categoria]} · dia {r.dia_vencimento ?? '—'} · {labelsIntervalo[r.intervalo]}
+                    {r.data_fim &&
+                      ` · até ${new Date(r.data_fim + 'T00:00:00').toLocaleDateString('pt-BR')}`}
                   </div>
                 </div>
                 <div style={{ textAlign: 'right' }}>

@@ -94,6 +94,7 @@ export function RecorrenciaDetalhe() {
           categoria: formEdit.categoria,
           valor_previsto: parseCentavos(formEdit.valor)!,
           data_inicio: formEdit.dataInicio,
+          data_fim: formEdit.dataFim.trim() || null,
           dia_vencimento: Number(formEdit.dia),
           intervalo: formEdit.intervalo,
           tipo_rateio: formEdit.tipoRateio,
