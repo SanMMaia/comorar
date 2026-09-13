@@ -15,9 +15,6 @@ export function CamposForm({
       <label>Fornecedor</label>
       <input id="fornecedor" required value={f.fornecedor} onChange={(e) => onChange({ fornecedor: e.target.value })} placeholder="Ex.: Enel" />
 
-      <label>Descrição (opcional)</label>
-      <input value={f.descricao} onChange={(e) => onChange({ descricao: e.target.value })} />
-
       <div className="field-row">
         <div>
           <label>Valor previsto</label>
@@ -47,23 +44,31 @@ export function CamposForm({
         </div>
       </div>
 
-      <label>Como dividir?</label>
-      <select value={f.tipoRateio} onChange={(e) => onChange({ tipoRateio: e.target.value as TipoRateio })}>
-        <option value="igual">Igual para todos</option>
-        <option value="percentual">Por percentual fixo</option>
-        <option value="consumo">Só quem consumiu</option>
-      </select>
-
-      <label>Quem paga por padrão</label>
-      <select value={f.pagador} onChange={(e) => onChange({ pagador: e.target.value })}>
-        <option value="">Definir depois</option>
-        {moradores.map((m) => (
-          <option key={m.id} value={m.id}>{m.nome}</option>
-        ))}
-      </select>
-
       <label>Começa em</label>
       <input type="date" required value={f.dataInicio} onChange={(e) => onChange({ dataInicio: e.target.value })} />
+
+      <details className="opcoes">
+        <summary>Mais opções</summary>
+        <div className="opcoes-corpo">
+          <label>Descrição (opcional)</label>
+          <input value={f.descricao} onChange={(e) => onChange({ descricao: e.target.value })} />
+
+          <label>Como dividir?</label>
+          <select value={f.tipoRateio} onChange={(e) => onChange({ tipoRateio: e.target.value as TipoRateio })}>
+            <option value="igual">Igual para todos</option>
+            <option value="percentual">Por percentual fixo</option>
+            <option value="consumo">Só quem consumiu</option>
+          </select>
+
+          <label>Quem paga por padrão</label>
+          <select value={f.pagador} onChange={(e) => onChange({ pagador: e.target.value })}>
+            <option value="">Definir depois</option>
+            {moradores.map((m) => (
+              <option key={m.id} value={m.id}>{m.nome}</option>
+            ))}
+          </select>
+        </div>
+      </details>
     </>
   )
 }

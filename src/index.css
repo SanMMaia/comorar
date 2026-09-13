@@ -367,6 +367,52 @@ a.card {
   flex: 1;
 }
 
+details.opcoes {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  margin-top: 14px;
+  background: var(--surface);
+}
+
+details.opcoes > summary {
+  list-style: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 12px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  color: var(--text);
+  user-select: none;
+}
+
+details.opcoes > summary::-webkit-details-marker {
+  display: none;
+}
+
+details.opcoes > summary::after {
+  content: '▾';
+  transition: transform 0.15s ease;
+  color: var(--text-muted);
+}
+
+details.opcoes[open] > summary::after {
+  transform: rotate(180deg);
+}
+
+details.opcoes > summary:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+details.opcoes .opcoes-corpo {
+  padding: 2px 12px 12px;
+  border-top: 1px solid var(--border);
+}
+
 .row {
   display: flex;
   align-items: center;

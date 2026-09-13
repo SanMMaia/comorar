@@ -213,18 +213,20 @@ export function DespesaAvulsa() {
           )}
         </div>
 
-        <label>Descrição (opcional)</label>
-        <input value={descricao} onChange={(e) => setDescricao(e.target.value)} placeholder="Ex.: Compras da semana" />
-
-        <label>Valor</label>
-        <input required inputMode="decimal" value={valor} onChange={(e) => setValor(e.target.value)} placeholder="0,00" />
-
-        <label>Categoria</label>
-        <select value={categoria} onChange={(e) => setCategoria(e.target.value as Categoria)}>
-          {categorias.map((c) => (
-            <option key={c} value={c}>{labels[c]}</option>
-          ))}
-        </select>
+        <div className="field-row">
+          <div>
+            <label>Valor</label>
+            <input required inputMode="decimal" value={valor} onChange={(e) => setValor(e.target.value)} placeholder="0,00" />
+          </div>
+          <div>
+            <label>Categoria</label>
+            <select value={categoria} onChange={(e) => setCategoria(e.target.value as Categoria)}>
+              {categorias.map((c) => (
+                <option key={c} value={c}>{labels[c]}</option>
+              ))}
+            </select>
+          </div>
+        </div>
 
         <div className="field-row">
           <div>
@@ -286,11 +288,19 @@ export function DespesaAvulsa() {
           </div>
         )}
 
-        <label>Comprovante (opcional)</label>
-        <input ref={inputFoto} type="file" accept="image/*" onChange={(e) => setComprovante(e.target.files?.[0] ?? null)} />
-        {comprovanteUrl && (
-          <img src={comprovanteUrl} alt="Comprovante" style={{ width: '100%', borderRadius: 8, marginTop: 8, display: 'block' }} />
-        )}
+        <details className="opcoes">
+          <summary>Mais opções</summary>
+          <div className="opcoes-corpo">
+            <label>Descrição (opcional)</label>
+            <input value={descricao} onChange={(e) => setDescricao(e.target.value)} placeholder="Ex.: Compras da semana" />
+
+            <label>Comprovante (opcional)</label>
+            <input ref={inputFoto} type="file" accept="image/*" onChange={(e) => setComprovante(e.target.files?.[0] ?? null)} />
+            {comprovanteUrl && (
+              <img src={comprovanteUrl} alt="Comprovante" style={{ width: '100%', borderRadius: 8, marginTop: 8, display: 'block' }} />
+            )}
+          </div>
+        </details>
 
         <div className="card mt" style={{ background: 'var(--accent-soft)', border: 'none' }}>
           <div className="row">
