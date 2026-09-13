@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useNavigate, useParams, Link } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useApp, nomeMorador } from '../state/AppContext'
 import { urlComprovante, removerComprovante } from '../lib/comprovante'
@@ -79,6 +79,12 @@ export function DespesaDetalhe() {
 
   return (
     <>
+      <div className="nav-back">
+        <button type="button" onClick={() => navigate(-1)}>
+          <span aria-hidden>‹</span> Voltar
+        </button>
+      </div>
+
       <div className="row">
         <h1 style={{ fontSize: 20, margin: 0 }}>{despesa.fornecedor}</h1>
         {despesa.status === 'prevista' && <span className="badge badge-warn">prevista</span>}
@@ -137,14 +143,11 @@ export function DespesaDetalhe() {
 
       {erro && <div className="error-box mt">{erro}</div>}
 
-      <div className="row mt-lg">
-        <Link to="/mes" className="btn btn-secondary">Voltar</Link>
-        {souOwner && despesa.status !== 'cancelada' && (
-          <button type="button" className="btn btn-danger" onClick={excluir}>
-            Excluir despesa
-          </button>
-        )}
-      </div>
+      {souOwner && despesa.status !== 'cancelada' && (
+        <button type="button" className="btn btn-danger mt-lg" onClick={excluir}>
+          Excluir despesa
+        </button>
+      )}
     </>
   )
 }

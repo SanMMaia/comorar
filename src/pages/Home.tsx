@@ -88,7 +88,7 @@ export function Home() {
           </div>
           <p className="small muted">Pagou? Use <strong>Pagar</strong> e a previsão é convertida em despesa confirmada.</p>
           {previstasMes.map((d) => (
-            <div className="card" key={d.id}>
+            <Link to={`/despesa/${d.id}`} viewTransition key={d.id} className="card link-card">
               <div className="row">
                 <div>
                   <strong>{d.fornecedor}</strong>
@@ -99,25 +99,26 @@ export function Home() {
                 <div style={{ textAlign: 'right' }}>
                   <strong className="mono">{formatBR(d.valor)}</strong>
                 </div>
+                <span className="small muted">›</span>
               </div>
-            </div>
+            </Link>
           ))}
         </>
       )}
 
       <div className="row mt-lg">
         <h2 style={{ fontSize: 16, margin: 0 }}>Últimas despesas</h2>
-        <Link to="/nova" className="btn btn-primary btn-sm">Pagar</Link>
+        <Link to="/nova" viewTransition className="btn btn-primary btn-sm">Pagar</Link>
       </div>
 
       {recentes.length === 0 ? (
         <div className="empty">
           <p>Nenhuma despesa ainda.</p>
-          <Link to="/nova" className="btn btn-primary btn-sm mt">Pagar a primeira</Link>
+          <Link to="/nova" viewTransition className="btn btn-primary btn-sm mt">Pagar a primeira</Link>
         </div>
       ) : (
         recentes.map(({ d, minhaParte }) => (
-          <Link to={`/despesa/${d.id}`} key={d.id} className="card link-card">
+          <Link to={`/despesa/${d.id}`} viewTransition key={d.id} className="card link-card">
             <div className="row">
               <div>
                 <strong>{d.fornecedor}</strong>
@@ -135,14 +136,15 @@ export function Home() {
                       : '—'}
                 </div>
               </div>
+              <span className="small muted">›</span>
             </div>
           </Link>
         ))
       )}
 
       <p className="center small muted mt">
-        Cadastre <Link to="/projecao">contas recorrentes</Link> e veja as{' '}
-        <Link to="/projecao">próximas contas</Link> automaticamente.
+        Cadastre <Link to="/projecao" viewTransition>contas recorrentes</Link> e veja as{' '}
+        <Link to="/projecao" viewTransition>próximas contas</Link> automaticamente.
       </p>
     </>
   )

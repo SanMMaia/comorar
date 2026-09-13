@@ -13,7 +13,6 @@ export function Perfil() {
   const [percentuais, setPercentuais] = useState<Record<string, string>>({})
   const [salvo, setSalvo] = useState(false)
 
-  const [modoConvidar, setModoConvidar] = useState(false)
   const [msgCopia, setMsgCopia] = useState(false)
 
   const [novoNome, setNovoNome] = useState('')
@@ -154,19 +153,14 @@ export function Perfil() {
         <button
           type="button"
           className={`btn btn-primary btn-sm mt ${souOwner ? '' : 'btn-secondary'}`}
-          onClick={() => {
-            setModoConvidar((v) => !v)
-            void compartilhar()
-          }}
+          onClick={() => void compartilhar()}
         >
-          {modoConvidar ? 'Fechar' : 'Convidar morador'}
+          Convidar morador
         </button>
-        {modoConvidar && (
-          <p className="small muted mt" style={{ marginBottom: 0 }}>
-            Envie o código <strong>{casa.codigo_convite}</strong> para outra pessoa. Ela entra em{' '}
-            <strong>Onboarding → “Já tenho código”</strong> no app.
-          </p>
-        )}
+        <p className="small muted mt" style={{ marginBottom: 0 }}>
+          Envie o código <strong>{casa.codigo_convite}</strong> para outra pessoa. Ela entra em{' '}
+          <strong>Onboarding → “Já tenho código”</strong> no app.
+        </p>
       </div>
 
       <h2 style={{ fontSize: 15, marginTop: 20 }}>Moradores</h2>

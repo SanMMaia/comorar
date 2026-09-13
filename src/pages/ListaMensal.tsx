@@ -82,7 +82,7 @@ export function ListaMensal() {
         doMes
           .sort((a, b) => a.data.localeCompare(b.data))
           .map((d) => (
-            <Link to={`/despesa/${d.id}`} key={d.id} className="card link-card">
+            <Link to={`/despesa/${d.id}`} viewTransition key={d.id} className="card link-card">
               <div className="row">
                 <div>
                   <strong>{d.fornecedor}</strong>
@@ -107,6 +107,7 @@ export function ListaMensal() {
                     {d.status === 'prevista' && <span className="badge badge-warn">previsto</span>}
                   </div>
                 </div>
+                <span className="small muted">›</span>
               </div>
             </Link>
           ))

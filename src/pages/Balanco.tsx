@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useApp, nomeMorador } from '../state/AppContext'
 import { useDespesas, obrigacoesDe } from '../lib/dados'
 import { saldosPorPessoa, compactarTransferencias } from '../lib/balanco'
@@ -71,10 +72,17 @@ export function Balanco() {
         .map((d) => (
           <div className="card" key={d.id}>
             <div className="row">
-              <div>
-                <strong>{d.fornecedor}</strong>
-                <div className="small muted">{nomeMorador(moradores, d.pago_por)} pagou</div>
-              </div>
+              <Link
+                to={`/despesa/${d.id}`}
+                viewTransition
+                style={{ color: 'inherit', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 6 }}
+              >
+                <div>
+                  <strong>{d.fornecedor}</strong>
+                  <div className="small muted">{nomeMorador(moradores, d.pago_por)} pagou</div>
+                </div>
+              </Link>
+              <span className="small muted">›</span>
             </div>
             {d.rateios
               .filter((r) => !r.pago)
