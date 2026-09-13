@@ -8,6 +8,8 @@ import { Pagar } from './pages/Pagar'
 import { ListaMensal } from './pages/ListaMensal'
 import { Balanco } from './pages/Balanco'
 import { Projecao } from './pages/Projecao'
+import { RecorrenciaDetalhe } from './pages/RecorrenciaDetalhe'
+import { RecorrenciaNova } from './pages/RecorrenciaNova'
 import { Perfil } from './pages/Perfil'
 import { DespesaDetalhe } from './pages/DespesaDetalhe'
 
@@ -50,6 +52,8 @@ function Protegido() {
         <Route path="/mes" element={<ListaMensal />} />
         <Route path="/balanco" element={<Balanco />} />
         <Route path="/projecao" element={<Projecao />} />
+        <Route path="/recorrencia/nova" element={<RecorrenciaNova />} />
+        <Route path="/recorrencia/:id" element={<RecorrenciaDetalhe />} />
         <Route path="/recorrencias" element={<Navigate to="/projecao" replace />} />
         <Route path="/perfil" element={<Perfil />} />
         <Route path="/despesa/:id" element={<DespesaDetalhe />} />

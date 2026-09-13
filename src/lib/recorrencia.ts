@@ -1,3 +1,4 @@
+import { supabase } from './supabase'
 import type { Recorrencia } from '../types'
 
 /** Data válida de vencimento: dia > último dia do mês vira o último dia. */
@@ -78,4 +79,32 @@ export function gerarPrevistas(
     fornecedor: rec.fornecedor,
     descricao: rec.descricao,
   }))
+}
+
+/**
+ * Substitui as previsões futuras da recorrência a partir de hoje,
+ * cobrindo um horizonte de 12 meses.
+ */
+export async function gravarPrevistas(casaId: string, rec: Recorrencia): Promise<void> {
+  const horizonte = new Date()
+  horizonte.setMonth(horizonte.getMonth() + 12)
+  const hojeInicio = new Date()
+  hojeInicio.setHours(0, 0, 0, 0)
+  const linhas = gerarPrevistas(rec, horizonte)
+    .filter((p) => p.data >= hojeInicio)
+    .map((p) => ({
+      casa_id: casaId,
+      fornecedor: p.fornecedor,
+      descricao: p.descricao,
+      valor: p.valor_previsto,
+      categoria: p.categoria,
+      tipo_rateio: rec.tipo_rateio,
+      status: 'prevista' as const,
+      origem_recorrencia_id: rec.id,
+      data: p.data.toISOString().slice(0, 10),
+    }))
+  if (linhas.length) {
+    const { error } = await supabase.from('despesas').insert(linhas)
+    if (error) throw error
+  }
 }

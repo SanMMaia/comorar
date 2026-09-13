@@ -76,6 +76,7 @@ export function Pagar() {
   const [pagandoId, setPagandoId] = useState<string | null>(null)
   const [valorReal, setValorReal] = useState('')
   const [quemPagou, setQuemPagou] = useState('')
+  const [tipoRateioPag, setTipoRateioPag] = useState<TipoRateio>('igual')
   const [comprovante, setComprovante] = useState<File | null>(null)
   const comprovanteUrl = useMemo(
     () => (comprovante ? URL.createObjectURL(comprovante) : null),
@@ -85,19 +86,16 @@ export function Pagar() {
   const [erro, setErro] = useState('')
   const [enviando, setEnviando] = useState(false)
 
-  const abrirPagamento = (d: { id: string; valor: number; origem_recorrencia_id: string | null }) => {
+  const abrirPagamento = (d: { id: string; valor: number; tipo_rateio: TipoRateio; origem_recorrencia_id: string | null }) => {
     setPagandoId(d.id)
     setValorReal(String(d.valor))
     setQuemPagou(recDe(d)?.pagador_padrao ?? minhaMoradorId ?? '')
+    setTipoRateioPag(d.tipo_rateio)
     setComprovante(null)
     setErro('')
   }
 
-  const confirmarPagamento = async (d: {
-    id: string
-    tipo_rateio: TipoRateio
-    valor: number
-  }) => {
+  const confirmarPagamento = async (d: { id: string }) => {
     setErro('')
     const valorNum = parseCentavos(valorReal)
     if (valorNum === null || valorNum <= 0) return setErro('Valor inválido')
@@ -121,7 +119,7 @@ export function Pagar() {
       if (errUpd) throw errUpd
 
       const itens = calcularRateio(valorNum, moradores.map((m) => ({ user_id: m.id })), {
-        regra: d.tipo_rateio,
+        regra: tipoRateioPag,
         percentuais: Object.fromEntries(
           Object.entries(percentuaisPorMorador).map(([k, v]) => [k, Number(v) || 0]),
         ),
@@ -471,11 +469,22 @@ export function Pagar() {
                 <input inputMode="decimal" value={valorReal} onChange={(e) => setValorReal(e.target.value)} />
 
                 <label>Quem pagou</label>
-                <select value={quemPagou} onChange={(e) => setQuemPagou(e.target.value)}>
-                  {moradores.map((m) => (
-                    <option key={m.id} value={m.id}>{m.nome}</option>
-                  ))}
-                </select>
+                <div className="field-row">
+                  <div style={{ flex: 2 }}>
+                    <select value={quemPagou} onChange={(e) => setQuemPagou(e.target.value)}>
+                      {moradores.map((m) => (
+                        <option key={m.id} value={m.id}>{m.nome}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div style={{ flex: 3 }}>
+                    <select value={tipoRateioPag} onChange={(e) => setTipoRateioPag(e.target.value as TipoRateio)}>
+                      <option value="igual">Igual todos</option>
+                      <option value="percentual">Por percentual</option>
+                      <option value="consumo">Só quem usa</option>
+                    </select>
+                  </div>
+                </div>
 
                 <label>Comprovante (opcional)</label>
                 <input
@@ -498,7 +507,7 @@ export function Pagar() {
                     type="button"
                     className="btn btn-primary"
                     disabled={enviando}
-                    onClick={() => confirmarPagamento({ id: d.id, tipo_rateio: d.tipo_rateio, valor: d.valor })}
+                    onClick={() => confirmarPagamento({ id: d.id })}
                   >
                     {enviando ? '…' : 'Confirmar pagamento'}
                   </button>
