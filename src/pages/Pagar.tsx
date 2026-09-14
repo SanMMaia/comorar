@@ -6,6 +6,7 @@ import { useDespesas } from '../lib/dados'
 import { calcularRateio } from '../lib/rateio'
 import { subirComprovante, removerComprovante, urlComprovante } from '../lib/comprovante'
 import { lerComprovante } from '../lib/ocr'
+import { lerQrDaImagem, parsePixCopiaECola, type PixExtraido } from '../lib/pix'
 import type { ResultadoOCR } from '../lib/ocr'
 import { formatBR, dataBR, mesAnoBR, parseCentavos } from '../lib/format'
 import type { Recorrencia, RegraRateio, TipoRateio } from '../types'
@@ -109,6 +110,8 @@ export function Pagar() {
   const [boletoOcrDados, setBoletoOcrDados] = useState<ResultadoOCR | null>(null)
   const [boletoErro, setBoletoErro] = useState('')
   const [boletoEnviando, setBoletoEnviando] = useState(false)
+  const [boletoPix, setBoletoPix] = useState<PixExtraido | null>(null)
+  const [boletoPixTexto, setBoletoPixTexto] = useState<string | null>(null)
   const inputBoleto = useRef<HTMLInputElement>(null)
   const inputBoletoCamera = useRef<HTMLInputElement>(null)
 
@@ -148,6 +151,11 @@ export function Pagar() {
     setComprovante(arquivo)
     if (arquivo) {
       setOcrDados(null)
+      void lerQrDaImagem(arquivo).then((texto) => {
+        if (!texto) return
+        const pix = parsePixCopiaECola(texto)
+        if (pix.valor) setValorReal(String(pix.valor).replace('.', ','))
+      })
       void processarBoleto(arquivo)
     } else {
       setOcrStatus('ocioso')
@@ -162,6 +170,8 @@ export function Pagar() {
     setBoletoOcrStatus('ocioso')
     setBoletoOcrDados(null)
     setBoletoErro('')
+    setBoletoPix(null)
+    setBoletoPixTexto(null)
     setBoletoUrlExistente(null)
     if (d.boleto_url) setBoletoUrlExistente(await urlComprovante(d.boleto_url))
   }
@@ -169,6 +179,8 @@ export function Pagar() {
   const fecharBoleto = () => {
     if (boletoPath) void removerComprovante(boletoPath)
     setBoletoPath(null)
+    setBoletoPix(null)
+    setBoletoPixTexto(null)
     setBoletoId(null)
   }
 
@@ -179,6 +191,16 @@ export function Pagar() {
       setBoletoOcrDados(null)
       setBoletoOcrStatus('processando')
       setBoletoErro('')
+      setBoletoPix(null)
+      setBoletoPixTexto(null)
+      void lerQrDaImagem(arquivo).then((texto) => {
+        if (!texto) return
+        const pix = parsePixCopiaECola(texto)
+        if (pix.valor || pix.nome || pix.txid) {
+          setBoletoPix(pix)
+          setBoletoPixTexto(texto)
+        }
+      })
       void (async () => {
         if (!casa) return
         try {
@@ -213,9 +235,17 @@ export function Pagar() {
       const d = todasPrevistas.find((p) => p.id === boletoId)
       const updates: Record<string, unknown> = {}
       if (boletoPath) updates.boleto_url = boletoPath
-      if (boletoOcrDados?.valor && boletoOcrDados.valor > 0) updates.valor = boletoOcrDados.valor
+      const valorFinal = boletoOcrDados?.valor ?? boletoPix?.valor
+      if (valorFinal && valorFinal > 0) updates.valor = valorFinal
       if (boletoOcrDados?.data) updates.data = boletoOcrDados.data
-      updates.ocr_resultado = boletoOcrDados ?? null
+      const ocrFinal: Record<string, unknown> = boletoOcrDados ? { ...boletoOcrDados } : {}
+      if (boletoPix) {
+        ocrFinal.pix = boletoPixTexto
+        ocrFinal.pix_valor = boletoPix.valor ?? null
+        ocrFinal.pix_nome = boletoPix.nome ?? null
+        ocrFinal.pix_txid = boletoPix.txid ?? null
+      }
+      updates.ocr_resultado = Object.keys(ocrFinal).length > 0 ? ocrFinal : null
 
       const { error: errUpd } = await supabase.from('despesas').update(updates).eq('id', boletoId)
       if (errUpd) throw errUpd
@@ -555,8 +585,8 @@ export function Pagar() {
                 </div>
 
                 <p className="small muted mt">
-                  Anexe a foto ou scan do boleto (antes de pagar). Se o padrão ler valor e vencimento, a previsão é
-                  atualizada.
+                  Anexe a foto ou scan do boleto (antes de pagar). Se tiver QR Pix, o valor é lido do código; o OCR
+                  complementa com vencimento. A previsão é atualizada ao salvar.
                 </p>
 
                 {d.boleto_url && !boletoArquivo && (
@@ -602,6 +632,15 @@ export function Pagar() {
                   />
                 )}
                 {boletoOcrStatus === 'processando' && <p className="small muted mt">🔎 Lendo boleto…</p>}
+                {boletoPix && (
+                  <p className="small muted mt">
+                    ✓ QR Pix lido
+                    {boletoPix.valor ? (
+                      <strong className="mono"> · valor {formatBR(boletoPix.valor)}</strong>
+                    ) : null}
+                    {boletoPix.nome ? <> · {boletoPix.nome}</> : null}
+                  </p>
+                )}
                 {boletoOcrStatus === 'ok' && boletoOcrDados && (
                   <div className="card mt" style={{ padding: 8 }}>
                     <div className="small">
