@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
+import { useEffect, useMemo, useRef, useState, type ChangeEvent, type FormEvent } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useApp } from '../state/AppContext'
@@ -74,7 +74,21 @@ export function DespesaAvulsa() {
     [comprovante],
   )
   const inputFoto = useRef<HTMLInputElement>(null)
+  const inputFotoCamera = useRef<HTMLInputElement>(null)
   const [erro, setErro] = useState('')
+
+  const aoEscolherArquivo = (e: ChangeEvent<HTMLInputElement>) => {
+    const arquivo = e.target.files?.[0] ?? null
+    setComprovante(arquivo)
+    if (arquivo) {
+      setRemoverAnexo(false)
+      setOcrDados(null)
+      void processarOCR(arquivo)
+    } else {
+      setOcrStatus('ocioso')
+    }
+    e.target.value = ''
+  }
 
   const [menuFornecedor, setMenuFornecedor] = useState(false)
   const opcoesFornecedores = useMemo(() => {
@@ -404,22 +418,23 @@ export function DespesaAvulsa() {
             <input value={descricao} onChange={(e) => setDescricao(e.target.value)} placeholder="Ex.: Compras da semana" />
 
             <label>Comprovante (opcional)</label>
-            <input
-              ref={inputFoto}
-              type="file"
-              accept="image/*"
-              onChange={(e) => {
-                const arquivo = e.target.files?.[0] ?? null
-                setComprovante(arquivo)
-                if (arquivo) {
-                  setRemoverAnexo(false)
-                  setOcrDados(null)
-                  void processarOCR(arquivo)
-                } else {
-                  setOcrStatus('ocioso')
-                }
-              }}
-            />
+            <div className="row">
+              <input ref={inputFoto} type="file" accept="image/*" hidden onChange={aoEscolherArquivo} />
+              <input
+                ref={inputFotoCamera}
+                type="file"
+                accept="image/*"
+                capture="environment"
+                hidden
+                onChange={aoEscolherArquivo}
+              />
+              <button type="button" className="btn btn-sm btn-secondary" onClick={() => inputFoto.current?.click()}>
+                Importar
+              </button>
+              <button type="button" className="btn btn-sm btn-secondary" onClick={() => inputFotoCamera.current?.click()}>
+                Tirar foto
+              </button>
+            </div>
             {comprovanteUrl && (
               <img src={comprovanteUrl} alt="Comprovante" style={{ width: '100%', borderRadius: 8, marginTop: 8, display: 'block' }} />
             )}
