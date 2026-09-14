@@ -4,7 +4,9 @@ import { supabase } from '../lib/supabase'
 import { useApp } from '../state/AppContext'
 import { useDespesas } from '../lib/dados'
 import { calcularRateio } from '../lib/rateio'
-import { subirComprovante } from '../lib/comprovante'
+import { subirComprovante, removerComprovante } from '../lib/comprovante'
+import { lerComprovante } from '../lib/ocr'
+import type { ResultadoOCR } from '../lib/ocr'
 import { formatBR, dataBR, mesAnoBR, parseCentavos } from '../lib/format'
 import type { Recorrencia, RegraRateio, TipoRateio } from '../types'
 import { labelCategoria } from '../lib/categorias'
@@ -93,13 +95,52 @@ export function Pagar() {
   const inputFoto = useRef<HTMLInputElement>(null)
   const [erro, setErro] = useState('')
   const [enviando, setEnviando] = useState(false)
+  const [vencimento, setVencimento] = useState('')
+  const [comprovantePath, setComprovantePath] = useState<string | null>(null)
+  const [ocrStatus, setOcrStatus] = useState<'ocioso' | 'processando' | 'ok' | 'falha'>('ocioso')
+  const [ocrDados, setOcrDados] = useState<ResultadoOCR | null>(null)
 
-  const abrirPagamento = (d: { id: string; valor: number; tipo_rateio: TipoRateio; origem_recorrencia_id: string | null }) => {
+  const processarBoleto = async (arquivo: File) => {
+    if (!casa) return
+    setOcrStatus('processando')
+    setErro('')
+    try {
+      let path = comprovantePath
+      if (!path) {
+        path = await subirComprovante(casa.id, arquivo)
+        setComprovantePath(path)
+      }
+      const dados = await lerComprovante(path)
+      if (!dados) {
+        setOcrStatus('falha')
+        return
+      }
+      setOcrDados(dados)
+      if (dados.valor && dados.valor > 0) setValorReal(String(dados.valor).replace('.', ','))
+      if (dados.data) setVencimento(dados.data)
+      setOcrStatus('ok')
+    } catch (err) {
+      console.error('OCR do boleto falhou:', err)
+      setOcrStatus('falha')
+    }
+  }
+
+  const fecharModal = () => {
+    if (comprovantePath) void removerComprovante(comprovantePath)
+    setComprovantePath(null)
+    setPagandoId(null)
+  }
+
+  const abrirPagamento = (d: { id: string; valor: number; tipo_rateio: TipoRateio; origem_recorrencia_id: string | null; data: string }) => {
     setPagandoId(d.id)
     setValorReal(String(d.valor))
+    setVencimento(d.data.slice(0, 10))
     setQuemPagou(recDe(d)?.pagador_padrao ?? minhaMoradorId ?? '')
     setTipoRateioPag(d.tipo_rateio)
     setComprovante(null)
+    setComprovantePath(null)
+    setOcrStatus('ocioso')
+    setOcrDados(null)
     setErro('')
   }
 
@@ -107,21 +148,25 @@ export function Pagar() {
     setErro('')
     const valorNum = parseCentavos(valorReal)
     if (valorNum === null || valorNum <= 0) return setErro('Valor inválido')
+    if (!vencimento) return setErro('Vencimento do boleto?')
     if (!casa) return
     const pagadorId = quemPagou || minhaMoradorId
     if (!pagadorId) return setErro('Quem pagou?')
     setEnviando(true)
     try {
       let comprovante_url: string | null = null
-      if (comprovante) comprovante_url = await subirComprovante(casa.id, comprovante)
+      if (comprovantePath) comprovante_url = comprovantePath
+      else if (comprovante) comprovante_url = await subirComprovante(casa.id, comprovante)
 
       const { error: errUpd } = await supabase
         .from('despesas')
         .update({
           status: 'confirmada',
           valor: valorNum,
+          data: vencimento,
           pago_por: pagadorId,
           comprovante_url,
+          ocr_resultado: ocrDados,
         })
         .eq('id', d.id)
       if (errUpd) throw errUpd
@@ -156,6 +201,8 @@ export function Pagar() {
 
   const ignorar = async (id: string) => {
     await supabase.from('despesas').update({ status: 'cancelada' }).eq('id', id)
+    if (comprovantePath) await removerComprovante(comprovantePath)
+    setComprovantePath(null)
     setPagandoId(null)
     await recarregar()
   }
@@ -264,7 +311,7 @@ export function Pagar() {
           const d = todasPrevistas.find((p) => p.id === pagandoId)
           if (!d) return null
           return (
-            <div className="overlay" onClick={() => setPagandoId(null)}>
+            <div className="overlay" onClick={fecharModal}>
               <div className="sheet" onClick={(e) => e.stopPropagation()}>
                 <div className="row">
                   <div>
@@ -273,13 +320,16 @@ export function Pagar() {
                       previsto {formatBR(d.valor)} · {dataBR(d.data)}
                     </div>
                   </div>
-                  <button type="button" className="btn btn-sm btn-secondary" onClick={() => setPagandoId(null)}>
+                  <button type="button" className="btn btn-sm btn-secondary" onClick={fecharModal}>
                     Fechar
                   </button>
                 </div>
 
                 <label>Valor real do boleto</label>
                 <input inputMode="decimal" value={valorReal} onChange={(e) => setValorReal(e.target.value)} />
+
+                <label>Vencimento real do boleto</label>
+                <input type="date" value={vencimento} onChange={(e) => setVencimento(e.target.value)} />
 
                 <label>Quem pagou</label>
                 <div className="field-row">
@@ -304,10 +354,39 @@ export function Pagar() {
                   ref={inputFoto}
                   type="file"
                   accept="image/*"
-                  onChange={(e) => setComprovante(e.target.files?.[0] ?? null)}
+                  onChange={(e) => {
+                    const arquivo = e.target.files?.[0] ?? null
+                    setComprovante(arquivo)
+                    if (arquivo) {
+                      setOcrDados(null)
+                      void processarBoleto(arquivo)
+                    } else {
+                      setOcrStatus('ocioso')
+                    }
+                  }}
                 />
                 {comprovanteUrl && (
                   <img src={comprovanteUrl} alt="Comprovante" style={{ width: '100%', borderRadius: 8, marginTop: 8, display: 'block' }} />
+                )}
+                {ocrStatus === 'processando' && (
+                  <p className="small muted mt">🔎 Lendo boleto…</p>
+                )}
+                {ocrStatus === 'ok' && (
+                  <p className="small muted mt">✓ Valor e vencimento preenchidos do boleto — confira.</p>
+                )}
+                {ocrStatus === 'falha' && (
+                  <div className="mt">
+                    <p className="small muted">Não foi possível ler o boleto — preencha manualmente.</p>
+                    {comprovante && (
+                      <button
+                        type="button"
+                        className="btn btn-sm btn-secondary mt"
+                        onClick={() => void processarBoleto(comprovante)}
+                      >
+                        Tentar novamente
+                      </button>
+                    )}
+                  </div>
                 )}
 
                 {erro && <div className="error-box">{erro}</div>}
