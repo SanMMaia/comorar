@@ -86,29 +86,38 @@ export function gerarPrevistas(
 }
 
 /**
- * Substitui as previsões futuras da recorrência a partir de hoje,
- * cobrindo um horizonte de 12 meses.
+ * Garante as previsões de uma recorrência: gera desde `data_inicio`
+ * (meses que já passaram também são criados, para o histórico) até um
+ * horizonte de 12 meses. Lançamentos que já existem na mesma data
+ * (pagos ou ignorados) são preservados.
  */
 export async function gravarPrevistas(casaId: string, rec: Recorrencia): Promise<void> {
   const horizonte = new Date()
   horizonte.setMonth(horizonte.getMonth() + 12)
-  const hojeInicio = new Date()
-  hojeInicio.setHours(0, 0, 0, 0)
-  const linhas = gerarPrevistas(rec, horizonte)
-    .filter((p) => p.data >= hojeInicio)
-    .map((p) => ({
-      casa_id: casaId,
-      fornecedor: p.fornecedor,
-      descricao: p.descricao,
-      valor: p.valor_previsto,
-      categoria: p.categoria,
-      tipo_rateio: rec.tipo_rateio,
-      status: 'prevista' as const,
-      origem_recorrencia_id: rec.id,
-      data: p.data.toISOString().slice(0, 10),
-    }))
-  if (linhas.length) {
-    const { error } = await supabase.from('despesas').insert(linhas)
-    if (error) throw error
-  }
+  const linhas = gerarPrevistas(rec, horizonte).map((p) => ({
+    casa_id: casaId,
+    fornecedor: p.fornecedor,
+    descricao: p.descricao,
+    valor: p.valor_previsto,
+    categoria: p.categoria,
+    tipo_rateio: rec.tipo_rateio,
+    status: 'prevista' as const,
+    origem_recorrencia_id: rec.id,
+    data: p.data.toISOString().slice(0, 10),
+  }))
+  if (!linhas.length) return
+
+  const { data: existentes, error: errExistentes } = await supabase
+    .from('despesas')
+    .select('data')
+    .eq('origem_recorrencia_id', rec.id)
+    .eq('casa_id', casaId)
+  if (errExistentes) throw errExistentes
+
+  const datasExistentes = new Set((existentes ?? []).map((e) => e.data as string))
+  const novas = linhas.filter((l) => !datasExistentes.has(l.data))
+  if (!novas.length) return
+
+  const { error } = await supabase.from('despesas').insert(novas)
+  if (error) throw error
 }
