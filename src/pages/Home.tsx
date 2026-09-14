@@ -11,15 +11,13 @@ export function Home() {
 
   const { totalMes, vcDeve, devemAVoce } = useMemo(() => {
     const uid = minhaMoradorId
-    const agora = new Date()
-    const fim = new Date(agora.getFullYear(), agora.getMonth() + 1, 0)
+    const chaveAtual = new Date().toISOString().slice(0, 7)
     let totalMes = 0
     let vcDeve = 0
     let devemAVoce = 0
     for (const d of despesas) {
       if (d.status !== 'confirmada') continue
-      const dataD = new Date(d.data)
-      if (dataD > fim || dataD.getMonth() !== agora.getMonth() || dataD.getFullYear() !== agora.getFullYear()) continue
+      if (d.data.slice(0, 7) !== chaveAtual) continue
       totalMes += d.valor
       const aberto = d.rateios.filter((r) => !r.pago)
       for (const r of aberto) {
@@ -35,13 +33,9 @@ export function Home() {
   }, [despesas, minhaMoradorId])
 
   const previstasMes = useMemo(() => {
-    const agora = new Date()
+    const chaveAtual = new Date().toISOString().slice(0, 7)
     return despesas
-      .filter((d) => {
-        if (d.status !== 'prevista') return false
-        const dt = new Date(d.data)
-        return dt.getMonth() === agora.getMonth() && dt.getFullYear() === agora.getFullYear()
-      })
+      .filter((d) => d.status === 'prevista' && d.data.slice(0, 7) === chaveAtual)
       .sort((a, b) => a.data.localeCompare(b.data))
   }, [despesas])
 

@@ -30,10 +30,10 @@ export function ListaMensal() {
   }
 
   const { doMes, total, totalPrevisto } = useMemo(() => {
+    const chave = `${ano}-${String(mes + 1).padStart(2, '0')}`
     const lista = despesas.filter((d) => {
       if (d.status === 'cancelada') return false
-      const dt = new Date(d.data)
-      return dt.getMonth() === mes && dt.getFullYear() === ano
+      return d.data.slice(0, 7) === chave
     })
     return {
       doMes: lista,

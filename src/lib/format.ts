@@ -12,11 +12,11 @@ export function parseCentavos(texto: string): number | null {
 }
 
 export function dataBR(data: Date | string): string {
-  const d = typeof data === 'string' ? new Date(data) : data
+  const d = typeof data === 'string' ? new Date(`${data}T12:00:00`) : data
   return d.toLocaleDateString('pt-BR')
 }
 
 export function mesAnoBR(data: Date | string): string {
-  const d = typeof data === 'string' ? new Date(data) : data
+  const d = typeof data === 'string' ? new Date(`${data}T12:00:00`) : data
   return d.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
 }

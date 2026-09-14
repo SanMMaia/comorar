@@ -68,6 +68,31 @@ export function DespesaDetalhe() {
     navigate('/mes')
   }
 
+  const desfazerPagamento = async () => {
+    if (!despesa) return
+    if (!window.confirm(`Desfazer o pagamento de "${despesa.fornecedor}"? A despesa volta a ser prevista e o rateio é apagado.`)) return
+    setErro('')
+    try {
+      const { error: errRateios } = await supabase.from('rateios').delete().eq('despesa_id', despesa.id)
+      if (errRateios) throw errRateios
+      if (despesa.comprovante_url) await removerComprovante(despesa.comprovante_url)
+      const { error: errUpd } = await supabase
+        .from('despesas')
+        .update({ status: 'prevista', pago_por: null, comprovante_url: null, ocr_resultado: null })
+        .eq('id', despesa.id)
+      if (errUpd) throw errUpd
+      const { data } = await supabase
+        .from('despesas')
+        .select('*, rateios(*)')
+        .eq('id', id!)
+        .single()
+      if (data) setDespesa(data as unknown as Detalhe)
+      setFoto(null)
+    } catch (err) {
+      setErro(err instanceof Error ? err.message : 'Erro ao desfazer o pagamento')
+    }
+  }
+
   const anexarBoleto = async (file: File) => {
     if (!despesa || !casa) return
     setErro('')
@@ -206,6 +231,12 @@ export function DespesaDetalhe() {
       >
         ✎ Editar despesa
       </Link>
+
+      {despesa.status === 'confirmada' && despesa.origem_recorrencia_id && (
+        <button type="button" className="btn btn-secondary mt" onClick={() => void desfazerPagamento()}>
+          ↩ Desfazer pagamento
+        </button>
+      )}
 
       {souOwner && despesa.status !== 'cancelada' && (
         <button type="button" className="btn btn-danger mt" onClick={excluir}>
