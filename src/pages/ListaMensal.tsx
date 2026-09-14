@@ -67,12 +67,6 @@ export function ListaMensal() {
         </button>
       </div>
 
-      <div className="row mt">
-        <Link to="/despesa/nova" viewTransition className="btn btn-sm btn-primary">
-          + Nova despesa
-        </Link>
-      </div>
-
       {doMes.length === 0 ? (
         <div className="empty">Nenhum lançamento neste mês.</div>
       ) : (

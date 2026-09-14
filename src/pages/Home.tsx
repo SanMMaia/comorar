@@ -64,12 +64,7 @@ export function Home() {
 
   return (
     <>
-      <div className="row" style={{ marginBottom: 8 }}>
-        <h1 style={{ fontSize: 20, margin: 0 }}>Resumo</h1>
-        <Link to="/despesa/nova" viewTransition className="btn btn-sm btn-primary">
-          + Nova despesa
-        </Link>
-      </div>
+      <h1 style={{ fontSize: 20, margin: '0 0 8px' }}>Resumo</h1>
       <div className="card saldo-card">
         <div className="linha">{mesAnoBR(new Date())} · gasto total</div>
         <div className="valor mono">{formatBR(totalMes)}</div>
