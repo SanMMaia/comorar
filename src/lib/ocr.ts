@@ -17,10 +17,14 @@ async function chamar(path: string): Promise<ResultadoLeitura> {
   if (error) {
     console.error('OCR falhou:', error)
     const e = error as unknown as { context?: Record<string, unknown>; message?: string }
-    const mensagem =
+    const mensagemRaw =
       (e.context && typeof e.context.mensagem === 'string' ? e.context.mensagem : null) ??
       e.message ??
       'Erro ao chamar o leitor de boleto.'
+    const mensagem =
+      /Failed to send a request|fetch/i.test(mensagemRaw)
+        ? 'Não foi possível chegar no leitor de boleto — verifique sua conexão e tente novamente.'
+        : mensagemRaw
     return { ok: false, mensagem }
   }
   if (!data || data.ok !== true || !data.dados || typeof data.dados !== 'object') {
