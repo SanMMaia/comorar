@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabase'
 import { useApp } from '../state/AppContext'
 import { useDespesas } from '../lib/dados'
 import { calcularRateio } from '../lib/rateio'
-import { subirComprovante, removerComprovante } from '../lib/comprovante'
+import { subirComprovante, removerComprovante, urlComprovante } from '../lib/comprovante'
 import { lerComprovante } from '../lib/ocr'
 import type { ResultadoOCR } from '../lib/ocr'
 import { formatBR, dataBR, mesAnoBR, parseCentavos } from '../lib/format'
@@ -101,6 +101,17 @@ export function Pagar() {
   const [ocrStatus, setOcrStatus] = useState<'ocioso' | 'processando' | 'ok' | 'falha'>('ocioso')
   const [ocrDados, setOcrDados] = useState<ResultadoOCR | null>(null)
 
+  const [boletoId, setBoletoId] = useState<string | null>(null)
+  const [boletoArquivo, setBoletoArquivo] = useState<File | null>(null)
+  const [boletoPath, setBoletoPath] = useState<string | null>(null)
+  const [boletoUrlExistente, setBoletoUrlExistente] = useState<string | null>(null)
+  const [boletoOcrStatus, setBoletoOcrStatus] = useState<'ocioso' | 'processando' | 'ok' | 'falha'>('ocioso')
+  const [boletoOcrDados, setBoletoOcrDados] = useState<ResultadoOCR | null>(null)
+  const [boletoErro, setBoletoErro] = useState('')
+  const [boletoEnviando, setBoletoEnviando] = useState(false)
+  const inputBoleto = useRef<HTMLInputElement>(null)
+  const inputBoletoCamera = useRef<HTMLInputElement>(null)
+
   const processarBoleto = async (arquivo: File) => {
     if (!casa) return
     setOcrStatus('processando')
@@ -142,6 +153,94 @@ export function Pagar() {
       setOcrStatus('ocioso')
     }
     e.target.value = ''
+  }
+
+  const abrirBoleto = async (d: { id: string; boleto_url: string | null }) => {
+    setBoletoId(d.id)
+    setBoletoArquivo(null)
+    setBoletoPath(null)
+    setBoletoOcrStatus('ocioso')
+    setBoletoOcrDados(null)
+    setBoletoErro('')
+    setBoletoUrlExistente(null)
+    if (d.boleto_url) setBoletoUrlExistente(await urlComprovante(d.boleto_url))
+  }
+
+  const fecharBoleto = () => {
+    if (boletoPath) void removerComprovante(boletoPath)
+    setBoletoPath(null)
+    setBoletoId(null)
+  }
+
+  const aoEscolherBoleto = (e: ChangeEvent<HTMLInputElement>) => {
+    const arquivo = e.target.files?.[0] ?? null
+    setBoletoArquivo(arquivo)
+    if (arquivo) {
+      setBoletoOcrDados(null)
+      setBoletoOcrStatus('processando')
+      setBoletoErro('')
+      void (async () => {
+        if (!casa) return
+        try {
+          let path = boletoPath
+          if (!path) {
+            path = await subirComprovante(casa.id, arquivo)
+            setBoletoPath(path)
+          }
+          const dados = await lerComprovante(path)
+          if (!dados) {
+            setBoletoOcrStatus('falha')
+            return
+          }
+          setBoletoOcrDados(dados)
+          setBoletoOcrStatus('ok')
+        } catch (err) {
+          console.error('OCR do boleto falhou:', err)
+          setBoletoOcrStatus('falha')
+        }
+      })()
+    } else {
+      setBoletoOcrStatus('ocioso')
+    }
+    e.target.value = ''
+  }
+
+  const salvarBoleto = async () => {
+    if (!boletoId || !casa) return
+    setBoletoErro('')
+    setBoletoEnviando(true)
+    try {
+      const d = todasPrevistas.find((p) => p.id === boletoId)
+      const updates: Record<string, unknown> = {}
+      if (boletoPath) updates.boleto_url = boletoPath
+      if (boletoOcrDados?.valor && boletoOcrDados.valor > 0) updates.valor = boletoOcrDados.valor
+      if (boletoOcrDados?.data) updates.data = boletoOcrDados.data
+      updates.ocr_resultado = boletoOcrDados ?? null
+
+      const { error: errUpd } = await supabase.from('despesas').update(updates).eq('id', boletoId)
+      if (errUpd) throw errUpd
+      if (d?.boleto_url && boletoPath && d.boleto_url !== boletoPath) void removerComprovante(d.boleto_url)
+      setBoletoId(null)
+      setBoletoPath(null)
+      await recarregar()
+    } catch (err) {
+      setBoletoErro(err instanceof Error ? err.message : 'Erro ao salvar boleto')
+    } finally {
+      setBoletoEnviando(false)
+    }
+  }
+
+  const removerBoleto = async () => {
+    if (!boletoId) return
+    const d = todasPrevistas.find((p) => p.id === boletoId)
+    if (d?.boleto_url) void removerComprovante(d.boleto_url)
+    const { error } = await supabase.from('despesas').update({ boleto_url: null }).eq('id', boletoId)
+    if (error) {
+      setBoletoErro(error.message)
+      return
+    }
+    setBoletoId(null)
+    await recarregar()
   }
 
   const abrirPagamento = (d: { id: string; valor: number; tipo_rateio: TipoRateio; origem_recorrencia_id: string | null; data: string }) => {
@@ -271,10 +370,18 @@ export function Pagar() {
                   <span className="small muted">{labelCategoria(d.categoria, casa?.categorias)}</span>
                   <span className="mono grid-valor">{formatBR(d.valor)}</span>
                   <span className="small muted">{dataBR(d.data)}</span>
-                  {rec && <span className="badge">recorrente</span>}
-                  <button type="button" className="btn btn-sm btn-primary mt" onClick={() => abrirPagamento(d)}>
-                    Pagar
-                  </button>
+                  <div className="row" style={{ flexWrap: 'wrap', gap: 4 }}>
+                    {rec && <span className="badge">recorrente</span>}
+                    {d.boleto_url && <span className="badge">boleto anexado</span>}
+                  </div>
+                  <div className="row" style={{ gap: 4, marginTop: 8 }}>
+                    <button type="button" className="btn btn-sm btn-secondary" style={{ flex: 1 }} onClick={() => void abrirBoleto(d)}>
+                      Boleto
+                    </button>
+                    <button type="button" className="btn btn-sm btn-primary" style={{ flex: 1 }} onClick={() => abrirPagamento(d)}>
+                      Pagar
+                    </button>
+                  </div>
                 </div>
               )
             })}
@@ -308,6 +415,9 @@ export function Pagar() {
                     </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                     <strong className="mono small">{formatBR(d.valor)}</strong>
+                    <button type="button" className="btn btn-sm btn-secondary" onClick={() => void abrirBoleto(d)}>
+                      Boleto
+                    </button>
                     <button type="button" className="btn btn-sm btn-primary" onClick={() => abrirPagamento(d)}>
                       Pagar
                     </button>
@@ -417,6 +527,110 @@ export function Pagar() {
                     onClick={() => confirmarPagamento({ id: d.id })}
                   >
                     {enviando ? '…' : 'Confirmar pagamento'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )
+        })()}
+
+      {boletoId &&
+        (() => {
+          const d = todasPrevistas.find((p) => p.id === boletoId)
+          if (!d) return null
+          const boletoUrlNova = boletoArquivo ? URL.createObjectURL(boletoArquivo) : null
+          return (
+            <div className="overlay" onClick={fecharBoleto}>
+              <div className="sheet" onClick={(e) => e.stopPropagation()}>
+                <div className="row">
+                  <div>
+                    <strong>Boleto</strong>
+                    <div className="small muted">
+                      {d.fornecedor} · previsão de {formatBR(d.valor)} em {dataBR(d.data)}
+                    </div>
+                  </div>
+                  <button type="button" className="btn btn-sm btn-secondary" onClick={fecharBoleto}>
+                    Fechar
+                  </button>
+                </div>
+
+                <p className="small muted mt">
+                  Anexe a foto ou scan do boleto (antes de pagar). Se o padrão ler valor e vencimento, a previsão é
+                  atualizada.
+                </p>
+
+                {d.boleto_url && !boletoArquivo && (
+                  <div className="card mt" style={{ padding: 8 }}>
+                    <div className="small">Boleto salvo:</div>
+                    {boletoUrlExistente && (
+                      <img
+                        src={boletoUrlExistente}
+                        alt="Boleto salvo"
+                        style={{ width: '100%', borderRadius: 6, display: 'block', margin: '6px 0' }}
+                      />
+                    )}
+                    <button type="button" className="btn btn-sm btn-secondary" onClick={() => void removerBoleto()}>
+                      Remover boleto
+                    </button>
+                  </div>
+                )}
+
+                <label className="mt">Anexar/atualizar boleto</label>
+                <div className="row">
+                  <input ref={inputBoleto} type="file" accept="image/*" hidden onChange={aoEscolherBoleto} />
+                  <input
+                    ref={inputBoletoCamera}
+                    type="file"
+                    accept="image/*"
+                    capture="environment"
+                    hidden
+                    onChange={aoEscolherBoleto}
+                  />
+                  <button type="button" className="btn btn-sm btn-secondary" onClick={() => inputBoleto.current?.click()}>
+                    Importar
+                  </button>
+                  <button type="button" className="btn btn-sm btn-secondary" onClick={() => inputBoletoCamera.current?.click()}>
+                    Tirar foto
+                  </button>
+                </div>
+
+                {boletoUrlNova && (
+                  <img
+                    src={boletoUrlNova}
+                    alt="Boleto novo"
+                    style={{ width: '100%', borderRadius: 8, marginTop: 8, display: 'block' }}
+                  />
+                )}
+                {boletoOcrStatus === 'processando' && <p className="small muted mt">🔎 Lendo boleto…</p>}
+                {boletoOcrStatus === 'ok' && boletoOcrDados && (
+                  <div className="card mt" style={{ padding: 8 }}>
+                    <div className="small">
+                      ✓ Lido: valor <strong className="mono">{formatBR(boletoOcrDados.valor ?? d.valor)}</strong>
+                      {boletoOcrDados.data && (
+                        <>
+                          {' '}· vence em <strong>{dataBR(boletoOcrDados.data)}</strong>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                )}
+                {boletoOcrStatus === 'falha' && (
+                  <p className="small muted mt">Não foi possível ler o boleto — você ainda pode salvar o anexo.</p>
+                )}
+
+                {boletoErro && <div className="error-box">{boletoErro}</div>}
+
+                <div className="row mt">
+                  <button type="button" className="btn btn-sm btn-secondary" onClick={fecharBoleto}>
+                    Descartar
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-primary"
+                    disabled={boletoEnviando || !boletoArquivo}
+                    onClick={() => void salvarBoleto()}
+                  >
+                    {boletoEnviando ? '…' : 'Salvar boleto e atualizar previsão'}
                   </button>
                 </div>
               </div>

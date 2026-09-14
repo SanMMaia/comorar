@@ -62,6 +62,7 @@ export interface Despesa {
   origem_recorrencia_id: string | null
   data: string
   comprovante_url: string | null
+  boleto_url: string | null
   ocr_resultado: Record<string, unknown> | null
   criado_em: string
 }
