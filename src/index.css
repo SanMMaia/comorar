@@ -129,6 +129,43 @@ label {
   line-height: 1;
 }
 
+.nav-action {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  font-size: 10px;
+  color: var(--text-muted);
+  padding: 6px 10px;
+  border-radius: 8px;
+  text-decoration: none;
+}
+
+.nav-action .icon {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  margin-top: -14px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+  font-size: 24px;
+  font-weight: 500;
+  line-height: 1;
+  box-shadow: 0 2px 8px rgb(0 0 0 / 0.18);
+  transition: transform 0.15s ease;
+}
+
+.nav-action:active .icon {
+  transform: scale(0.92);
+}
+
+.nav-action.active {
+  color: var(--accent);
+  font-weight: 700;
+}
+
 .card {
   background: var(--surface);
   border: 1px solid var(--border);

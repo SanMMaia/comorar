@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useApp, nomeMorador } from '../state/AppContext'
 import type { RegraRateio } from '../types'
@@ -162,6 +162,16 @@ export function Perfil() {
           <strong>Onboarding → “Já tenho código”</strong> no app.
         </p>
       </div>
+
+      <Link to="/perfil/contas" viewTransition className="card mt" style={{ display: 'block' }}>
+        <div className="row">
+          <div>
+            <strong>Contas recorrentes</strong>
+            <div className="small muted">Gerencie recorrências e lançamentos previstos</div>
+          </div>
+          <span className="small muted" aria-hidden>›</span>
+        </div>
+      </Link>
 
       <h2 style={{ fontSize: 15, marginTop: 20 }}>Moradores</h2>
       {moradores.map((m) => (

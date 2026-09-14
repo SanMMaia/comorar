@@ -81,6 +81,11 @@ export function Projecao() {
 
   return (
     <>
+      <div className="nav-back">
+        <Link to="/perfil" viewTransition>
+          <span aria-hidden>‹</span> Voltar
+        </Link>
+      </div>
       <div className="row">
         <h1 style={{ fontSize: 20, margin: 0 }}>Contas recorrentes</h1>
         <Link to="/recorrencia/nova" viewTransition className="btn btn-primary btn-sm">

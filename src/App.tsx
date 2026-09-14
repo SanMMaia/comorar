@@ -53,10 +53,11 @@ function Protegido() {
         <Route path="/nova" element={<Pagar />} />
         <Route path="/mes" element={<ListaMensal />} />
         <Route path="/balanco" element={<Balanco />} />
-        <Route path="/projecao" element={<Projecao />} />
+        <Route path="/projecao" element={<Navigate to="/perfil/contas" replace />} />
+      <Route path="/perfil/contas" element={<Projecao />} />
         <Route path="/recorrencia/nova" element={<RecorrenciaNova />} />
         <Route path="/recorrencia/:id" element={<RecorrenciaDetalhe />} />
-        <Route path="/recorrencias" element={<Navigate to="/projecao" replace />} />
+        <Route path="/recorrencias" element={<Navigate to="/perfil/contas" replace />} />
         <Route path="/perfil" element={<Perfil />} />
         <Route path="/despesa/nova" element={<DespesaAvulsa />} />
         <Route path="/despesa/:id" element={<DespesaDetalhe />} />

@@ -109,7 +109,7 @@ export function Home() {
 
       <div className="row mt-lg">
         <h2 style={{ fontSize: 16, margin: 0 }}>Últimas despesas</h2>
-        <Link to="/nova" viewTransition className="btn btn-primary btn-sm">Pagar</Link>
+        <span className="small muted">toque em + Pagar para lançar</span>
       </div>
 
       {recentes.length === 0 ? (
