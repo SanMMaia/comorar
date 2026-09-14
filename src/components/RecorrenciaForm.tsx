@@ -44,28 +44,37 @@ export function CamposForm({
         </div>
       </div>
 
-      <label>Começa em</label>
-      <input type="date" required value={f.dataInicio} onChange={(e) => onChange({ dataInicio: e.target.value })} />
-
-      <label>
-        Termina em <span style={{ color: 'var(--text-muted)' }}>(opcional)</span>
-      </label>
-      <div className="row" style={{ gap: 6 }}>
-        <input
-          type="date"
-          value={f.dataFim}
-          min={f.dataInicio}
-          onChange={(e) => onChange({ dataFim: e.target.value })}
-        />
-        {f.dataFim && (
-          <button
-            type="button"
-            className="btn-secondary btn-sm"
-            onClick={() => onChange({ dataFim: '' })}
-          >
-            Remover
-          </button>
-        )}
+      <div className="field-row">
+        <div>
+          <label>Começa em</label>
+          <input
+            type="date"
+            required
+            value={f.dataInicio}
+            onChange={(e) => onChange({ dataInicio: e.target.value })}
+          />
+        </div>
+        <div>
+          <label>
+            Termina em <span style={{ color: 'var(--text-muted)' }}>(opc.)</span>
+          </label>
+          <input
+            type="date"
+            value={f.dataFim}
+            min={f.dataInicio}
+            onChange={(e) => onChange({ dataFim: e.target.value })}
+          />
+          {f.dataFim && (
+            <button
+              type="button"
+              className="btn-secondary btn-sm"
+              style={{ marginTop: 4 }}
+              onClick={() => onChange({ dataFim: '' })}
+            >
+              Remover
+            </button>
+          )}
+        </div>
       </div>
 
       <details className="opcoes">
