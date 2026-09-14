@@ -15,7 +15,7 @@ export function Layout() {
       </main>
 
       <nav className="bottom-nav">
-        {rotas.slice(0, 3).map((r) => (
+        {rotas.slice(0, 2).map((r) => (
           <NavLink
             key={r.to}
             to={r.to}
@@ -34,7 +34,7 @@ export function Layout() {
           <span className="icon">+</span>
           Pagar
         </NavLink>
-        {rotas.slice(3).map((r) => (
+        {rotas.slice(2).map((r) => (
           <NavLink
             key={r.to}
             to={r.to}
