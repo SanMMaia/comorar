@@ -79,8 +79,16 @@ function SincronizarDirecao() {
   const location = useLocation()
 
   useEffect(() => {
-    document.documentElement.dataset.direction =
-      navigationType === 'POP' ? 'back' : 'forward'
+    const html = document.documentElement
+    const tabRecente = html.dataset.direcaoTab &&
+      Date.now() - Number(html.dataset.direcaoTab) < 600
+    if (tabRecente) {
+      const t = window.setTimeout(() => {
+        if (html.dataset.direction === 'tab') html.dataset.direction = 'forward'
+      }, 650)
+      return () => window.clearTimeout(t)
+    }
+    html.dataset.direction = navigationType === 'POP' ? 'back' : 'forward'
   }, [navigationType, location])
 
   return null

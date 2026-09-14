@@ -1,4 +1,4 @@
-import { NavLink, Outlet } from 'react-router-dom'
+import { NavLink, Outlet, useLocation } from 'react-router-dom'
 
 const rotas = [
   { to: '/', label: 'Resumo', icon: '🏠', end: true },
@@ -8,6 +8,18 @@ const rotas = [
 ]
 
 export function Layout() {
+  const { pathname } = useLocation()
+
+  const reTap = (event: React.MouseEvent, to: string) => {
+    if (pathname === to) {
+      event.preventDefault()
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+      return
+    }
+    document.documentElement.dataset.direction = 'tab'
+    document.documentElement.dataset.direcaoTab = String(Date.now())
+  }
+
   return (
     <>
       <main className="content">
@@ -20,6 +32,8 @@ export function Layout() {
             key={r.to}
             to={r.to}
             end={r.end}
+            viewTransition
+            onClick={(e) => reTap(e, r.to)}
             className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}
           >
             <span className="icon">{r.icon}</span>
@@ -39,6 +53,8 @@ export function Layout() {
             key={r.to}
             to={r.to}
             end={r.end}
+            viewTransition
+            onClick={(e) => reTap(e, r.to)}
             className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}
           >
             <span className="icon">{r.icon}</span>

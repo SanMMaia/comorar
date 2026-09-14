@@ -31,6 +31,8 @@ body {
   margin: 0;
   background: var(--bg);
   min-height: 100svh;
+  touch-action: manipulation;
+  overscroll-behavior: contain;
 }
 
 #root {
@@ -94,7 +96,7 @@ img {
 
 .content {
   flex: 1;
-  padding: 16px 16px calc(88px + env(safe-area-inset-bottom));
+  padding: calc(16px + env(safe-area-inset-top)) 16px calc(88px + env(safe-area-inset-bottom));
 }
 
 .bottom-nav {
@@ -355,6 +357,29 @@ a.card {
   cursor: not-allowed;
 }
 
+.btn-secondary:active { background: #e3e8eb; }
+
+.nav-item:active { background: var(--accent-soft); }
+
+a:active, .link-row:active, .link-card:active, a.card:active { opacity: 0.82; }
+
+@media (display-mode: standalone) and (pointer: coarse) {
+  *,
+  *::before,
+  *::after {
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    user-select: none;
+  }
+
+  input,
+  textarea,
+  select {
+    -webkit-user-select: text;
+    user-select: text;
+  }
+}
+
 .seg {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -537,6 +562,14 @@ details.opcoes .opcoes-corpo {
   animation: vt-sair 220ms ease reverse;
 }
 
+[data-direction="tab"]::view-transition-old(root) {
+  animation: vt-some 200ms ease;
+}
+
+[data-direction="tab"]::view-transition-new(root) {
+  animation: vt-chega 200ms ease;
+}
+
 ::view-transition-old(vt-nav),
 ::view-transition-new(vt-nav) {
   animation: none;
@@ -561,6 +594,24 @@ details.opcoes .opcoes-corpo {
   to {
     transform: translateX(-20%);
     opacity: 0.7;
+  }
+}
+
+@keyframes vt-some {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0.25;
+  }
+}
+
+@keyframes vt-chega {
+  from {
+    opacity: 0.25;
+  }
+  to {
+    opacity: 1;
   }
 }
 
