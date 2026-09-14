@@ -8,24 +8,35 @@ export interface ResultadoOCR {
   categoria?: Categoria
 }
 
+export type ResultadoLeitura =
+  | { ok: true; dados: ResultadoOCR }
+  | { ok: false; mensagem: string }
+
 /**
  * Chama a Edge Function `ocr` (Supabase) para extrair dados de um comprovante
  * já enviado ao bucket 'comprovantes'.
- * Retorna os campos extraídos, ou null se não foi possível ler (fallback manual).
+ * Devolve { ok: true, dados } ou { ok: false, mensagem } com o motivo.
  */
-export async function lerComprovante(path: string): Promise<ResultadoOCR | null> {
+export async function lerComprovante(path: string): Promise<ResultadoLeitura> {
   try {
     const { data, error } = await supabase.functions.invoke('ocr', { body: { path } })
     if (error) {
       console.error('OCR falhou:', error)
-      return null
+      const e = error as unknown as { context?: Record<string, unknown>; message?: string }
+      const mensagem =
+        (e.context && typeof e.context.mensagem === 'string' ? e.context.mensagem : null) ??
+        e.message ??
+        'Erro ao chamar o leitor de boleto.'
+      return { ok: false, mensagem }
     }
     if (!data || data.ok !== true || !data.dados || typeof data.dados !== 'object') {
-      return null
+      const mensagem =
+        typeof data?.mensagem === 'string' ? data.mensagem : 'Não foi possível ler o comprovante — preencha manualmente.'
+      return { ok: false, mensagem }
     }
-    return data.dados as ResultadoOCR
+    return { ok: true, dados: data.dados as ResultadoOCR }
   } catch (err) {
     console.error('OCR erro inesperado:', err)
-    return null
+    return { ok: false, mensagem: 'Erro inesperado ao ler o comprovante.' }
   }
 }

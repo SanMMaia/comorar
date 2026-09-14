@@ -64,6 +64,7 @@ export function DespesaAvulsa() {
   const [comprovanteExistente, setComprovanteExistente] = useState<string | null>(null)
   const [comprovanteUrlExistente, setComprovanteUrlExistente] = useState<string | null>(null)
   const [removerAnexo, setRemoverAnexo] = useState(false)
+  const [ocrErro, setOcrErro] = useState('')
   const [comprovantePath, setComprovantePath] = useState<string | null>(null)
   const [ocrStatus, setOcrStatus] = useState<'ocioso' | 'processando' | 'ok' | 'falha'>('ocioso')
   const [ocrDados, setOcrDados] = useState<ResultadoOCR | null>(null)
@@ -83,9 +84,11 @@ export function DespesaAvulsa() {
     if (arquivo) {
       setRemoverAnexo(false)
       setOcrDados(null)
+      setOcrErro('')
       void processarOCR(arquivo)
     } else {
       setOcrStatus('ocioso')
+      setOcrErro('')
     }
     e.target.value = ''
   }
@@ -161,11 +164,13 @@ export function DespesaAvulsa() {
         path = await subirComprovante(casa.id, arquivo)
         setComprovantePath(path)
       }
-      const dados = await lerComprovante(path)
-      if (!dados) {
+      const res = await lerComprovante(path)
+      if (!res.ok) {
         setOcrStatus('falha')
+        setOcrErro(res.mensagem ?? 'Não foi possível ler o comprovante.')
         return
       }
+      const dados = res.dados
       setOcrDados(dados)
       if (dados.fornecedor) setFornecedor(dados.fornecedor)
       if (dados.valor && dados.valor > 0) setValor(String(dados.valor).replace('.', ','))
@@ -446,7 +451,7 @@ export function DespesaAvulsa() {
             )}
             {ocrStatus === 'falha' && (
               <div className="mt">
-                <p className="small muted">Não foi possível ler o comprovante automaticamente — preencha manualmente.</p>
+                <div className="error-box">{(ocrErro || 'Não foi possível ler o comprovante automaticamente')}</div>
                 {comprovante && (
                   <button
                     type="button"

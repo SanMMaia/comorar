@@ -112,6 +112,7 @@ export function Pagar() {
   const [boletoEnviando, setBoletoEnviando] = useState(false)
   const [boletoPix, setBoletoPix] = useState<PixExtraido | null>(null)
   const [boletoPixTexto, setBoletoPixTexto] = useState<string | null>(null)
+  const [boletoOcrErro, setBoletoOcrErro] = useState('')
   const inputBoleto = useRef<HTMLInputElement>(null)
   const inputBoletoCamera = useRef<HTMLInputElement>(null)
 
@@ -125,14 +126,15 @@ export function Pagar() {
         path = await subirComprovante(casa.id, arquivo)
         setComprovantePath(path)
       }
-      const dados = await lerComprovante(path)
-      if (!dados) {
+      const res = await lerComprovante(path)
+      if (!res.ok) {
         setOcrStatus('falha')
+        setErro(res.mensagem ?? 'Não foi possível ler o boleto.')
         return
       }
-      setOcrDados(dados)
-      if (dados.valor && dados.valor > 0) setValorReal(String(dados.valor).replace('.', ','))
-      if (dados.data) setVencimento(dados.data)
+      setOcrDados(res.dados)
+      if (res.dados.valor && res.dados.valor > 0) setValorReal(String(res.dados.valor).replace('.', ','))
+      if (res.dados.data) setVencimento(res.dados.data)
       setOcrStatus('ok')
     } catch (err) {
       console.error('OCR do boleto falhou:', err)
@@ -170,6 +172,7 @@ export function Pagar() {
     setBoletoOcrStatus('ocioso')
     setBoletoOcrDados(null)
     setBoletoErro('')
+    setBoletoOcrErro('')
     setBoletoPix(null)
     setBoletoPixTexto(null)
     setBoletoUrlExistente(null)
@@ -181,6 +184,7 @@ export function Pagar() {
     setBoletoPath(null)
     setBoletoPix(null)
     setBoletoPixTexto(null)
+    setBoletoOcrErro('')
     setBoletoId(null)
   }
 
@@ -191,6 +195,7 @@ export function Pagar() {
       setBoletoOcrDados(null)
       setBoletoOcrStatus('processando')
       setBoletoErro('')
+      setBoletoOcrErro('')
       setBoletoPix(null)
       setBoletoPixTexto(null)
       void lerQrDaImagem(arquivo).then((texto) => {
@@ -209,12 +214,13 @@ export function Pagar() {
             path = await subirComprovante(casa.id, arquivo)
             setBoletoPath(path)
           }
-          const dados = await lerComprovante(path)
-          if (!dados) {
+          const res = await lerComprovante(path)
+          if (!res.ok) {
             setBoletoOcrStatus('falha')
+            setBoletoOcrErro(res.mensagem ?? 'Não foi possível ler o boleto.')
             return
           }
-          setBoletoOcrDados(dados)
+          setBoletoOcrDados(res.dados)
           setBoletoOcrStatus('ok')
         } catch (err) {
           console.error('OCR do boleto falhou:', err)
@@ -654,7 +660,9 @@ export function Pagar() {
                   </div>
                 )}
                 {boletoOcrStatus === 'falha' && (
-                  <p className="small muted mt">Não foi possível ler o boleto — você ainda pode salvar o anexo.</p>
+                  <div className="error-box mt">
+                    {boletoOcrErro || 'Não foi possível ler o boleto — você ainda pode salvar o anexo.'}
+                  </div>
                 )}
 
                 {boletoErro && <div className="error-box">{boletoErro}</div>}
