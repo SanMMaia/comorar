@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useApp } from '../state/AppContext'
 import { useDespesas } from '../lib/dados'
-import { formatBR, dataBR, mesAnoBR } from '../lib/format'
+import { formatBR, dataBR, mesAnoBR, estaAtrasada } from '../lib/format'
 import { labelsIntervalo } from '../lib/recorrenciaForm'
 import { labelCategoria } from '../lib/categorias'
 import type { Despesa, Recorrencia } from '../types'
@@ -154,6 +154,9 @@ export function Projecao() {
                       <div className="small">
                         <strong>{d.fornecedor}</strong>
                         <span className="muted"> · {dataBR(d.data)}</span>
+                        {estaAtrasada(d.data) && (
+                          <span className="badge badge-danger">atrasado</span>
+                        )}
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                         <strong className="mono small">{formatBR(d.valor)}</strong>

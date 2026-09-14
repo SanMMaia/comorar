@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useApp, nomeMorador } from '../state/AppContext'
 import { useDespesas } from '../lib/dados'
-import { formatBR, dataBR, mesAnoBR } from '../lib/format'
+import { formatBR, dataBR, mesAnoBR, estaAtrasada } from '../lib/format'
 import { labelCategoria } from '../lib/categorias'
 
 export function ListaMensal() {
@@ -95,7 +95,12 @@ export function ListaMensal() {
                         {d.rateios.filter((r) => !r.pago).length} pendente(s)
                       </span>
                     )}
-                    {d.status === 'prevista' && <span className="badge badge-warn">previsto</span>}
+                    {d.status === 'prevista' && estaAtrasada(d.data) && (
+                      <span className="badge badge-danger">atrasado</span>
+                    )}
+                    {d.status === 'prevista' && !estaAtrasada(d.data) && (
+                      <span className="badge badge-warn">previsto</span>
+                    )}
                   </div>
                 </div>
                 <span className="small muted">›</span>

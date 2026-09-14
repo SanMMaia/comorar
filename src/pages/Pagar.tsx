@@ -8,7 +8,7 @@ import { subirComprovante, removerComprovante, urlComprovante } from '../lib/com
 import { lerBoletoLocal, onOcrCarregamento } from '../lib/ocr-local'
 import { lerQrDaImagem, parsePixCopiaECola, type PixExtraido } from '../lib/pix'
 import type { ResultadoOCR } from '../lib/ocr'
-import { formatBR, dataBR, mesAnoBR, parseCentavos } from '../lib/format'
+import { formatBR, dataBR, mesAnoBR, parseCentavos, estaAtrasada } from '../lib/format'
 import type { Recorrencia, RegraRateio, TipoRateio } from '../types'
 import { labelCategoria } from '../lib/categorias'
 
@@ -479,6 +479,9 @@ export function Pagar() {
                     <strong>{d.fornecedor}</strong>
                     <div className="small muted">
                       previsto {formatBR(d.valor)} · {dataBR(d.data)}
+                      {estaAtrasada(d.data) && (
+                        <span className="badge badge-danger">atrasado</span>
+                      )}
                     </div>
                   </div>
                   <button type="button" className="btn btn-sm btn-secondary" onClick={fecharModal}>

@@ -3,7 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useApp, nomeMorador } from '../state/AppContext'
 import { subirComprovante, urlComprovante, removerComprovante } from '../lib/comprovante'
-import { formatBR, dataBR } from '../lib/format'
+import { formatBR, dataBR, estaAtrasada } from '../lib/format'
 import { labelCategoria } from '../lib/categorias'
 import type { Despesa, Rateio } from '../types'
 
@@ -141,7 +141,12 @@ export function DespesaDetalhe() {
 
       <div className="row">
         <h1 style={{ fontSize: 20, margin: 0 }}>{despesa.fornecedor}</h1>
-        {despesa.status === 'prevista' && <span className="badge badge-warn">prevista</span>}
+        {despesa.status === 'prevista' && estaAtrasada(despesa.data) && (
+          <span className="badge badge-danger">atrasada</span>
+        )}
+        {despesa.status === 'prevista' && !estaAtrasada(despesa.data) && (
+          <span className="badge badge-warn">prevista</span>
+        )}
         {despesa.status === 'cancelada' && <span className="badge badge-muted">cancelada</span>}
         {despesa.status === 'confirmada' && <span className="badge badge-ok">confirmada</span>}
       </div>

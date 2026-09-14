@@ -3,7 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useApp, nomeMorador } from '../state/AppContext'
 import { useDespesas } from '../lib/dados'
-import { formatBR, dataBR } from '../lib/format'
+import { formatBR, dataBR, estaAtrasada } from '../lib/format'
 import { labelsIntervalo, labelsRateio } from '../lib/recorrenciaForm'
 import { labelCategoria } from '../lib/categorias'
 import type { Despesa, Recorrencia } from '../types'
@@ -116,7 +116,12 @@ export function RecorrenciaDetalhe() {
                     {dataBR(d.data)} · {formatBR(d.valor)}{' '}
                     {d.status === 'confirmada' && <span className="badge badge-ok">pago</span>}
                     {d.status === 'cancelada' && <span className="badge badge-muted">ignorado</span>}
-                    {d.status === 'prevista' && <span className="badge badge-warn">previsto</span>}
+                    {d.status === 'prevista' && estaAtrasada(d.data) && (
+                      <span className="badge badge-danger">atrasado</span>
+                    )}
+                    {d.status === 'prevista' && !estaAtrasada(d.data) && (
+                      <span className="badge badge-warn">previsto</span>
+                    )}
                   </span>
                   {d.status === 'prevista' && (
                     <button type="button" className="btn btn-sm btn-secondary" onClick={() => ignorarMes(d)}>
