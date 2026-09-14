@@ -213,7 +213,9 @@ export function Pagar() {
               const rec = recDe(d)
               return (
                 <div className="card grid-card" key={d.id}>
-                  <strong className="grid-titulo" title={d.fornecedor}>{d.fornecedor}</strong>
+                  <Link to={`/despesa/${d.id}`} viewTransition className="grid-titulo" title={d.fornecedor} style={{ textDecoration: 'none' }}>
+                    {d.fornecedor}
+                  </Link>
                   <span className="small muted">{labels[d.categoria]}</span>
                   <span className="mono grid-valor">{formatBR(d.valor)}</span>
                   <span className="small muted">{dataBR(d.data)}</span>
@@ -229,7 +231,7 @@ export function Pagar() {
       ) : futurasPorMes.size === 0 ? (
         <div className="empty">
           <strong>Nenhuma conta futura.</strong>
-          <Link to="/projecao" viewTransition className="btn btn-sm btn-secondary mt">
+          <Link to="/perfil/contas" viewTransition className="btn btn-sm btn-secondary mt">
             Gerenciar em Contas
           </Link>
         </div>
@@ -247,9 +249,11 @@ export function Pagar() {
               {grupo.map((d) => (
                 <div className="row" key={d.id} style={{ padding: '10px 12px', borderTop: '1px solid var(--border)' }}>
                   <div className="small">
-                    <strong>{d.fornecedor}</strong>
-                    <span className="muted"> · {dataBR(d.data)}</span>
-                  </div>
+                      <Link to={`/despesa/${d.id}`} viewTransition style={{ textDecoration: 'none', color: 'inherit' }}>
+                        <strong>{d.fornecedor}</strong>
+                      </Link>
+                      <span className="muted"> · {dataBR(d.data)}</span>
+                    </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                     <strong className="mono small">{formatBR(d.valor)}</strong>
                     <button type="button" className="btn btn-sm btn-primary" onClick={() => abrirPagamento(d)}>

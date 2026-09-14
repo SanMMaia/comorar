@@ -1,12 +1,16 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useApp } from '../state/AppContext'
 import { useDespesas } from '../lib/dados'
 import { calcularRateio } from '../lib/rateio'
-import { subirComprovante } from '../lib/comprovante'
+import {
+  removerComprovante,
+  subirComprovante,
+  urlComprovante,
+} from '../lib/comprovante'
 import { parseCentavos } from '../lib/format'
-import type { Categoria, Recorrencia, RegraRateio, TipoRateio } from '../types'
+import type { Categoria, Despesa, Rateio, Recorrencia, RegraRateio, TipoRateio } from '../types'
 
 const categorias: Categoria[] = ['aluguel', 'luz', 'agua', 'internet', 'mercado', 'outro']
 const labels: Record<Categoria, string> = {
@@ -19,6 +23,8 @@ const labels: Record<Categoria, string> = {
 }
 
 export function DespesaAvulsa() {
+  const { id } = useParams()
+  const editando = Boolean(id)
   const { casa, user, minhaMoradorId, moradores } = useApp()
   const { despesas } = useDespesas(casa?.id ?? null)
   const navigate = useNavigate()
@@ -62,6 +68,10 @@ export function DespesaAvulsa() {
   const [incluidos, setIncluidos] = useState<Set<string>>(new Set(moradores.map((m) => m.id)))
   const [percentuais, setPercentuais] = useState<Record<string, string>>({})
   const [comprovante, setComprovante] = useState<File | null>(null)
+  const [comprovanteExistente, setComprovanteExistente] = useState<string | null>(null)
+  const [comprovanteUrlExistente, setComprovanteUrlExistente] = useState<string | null>(null)
+  const [removerAnexo, setRemoverAnexo] = useState(false)
+  const [carregandoEdit, setCarregandoEdit] = useState(editando)
   const comprovanteUrl = useMemo(
     () => (comprovante ? URL.createObjectURL(comprovante) : null),
     [comprovante],
@@ -88,6 +98,48 @@ export function DespesaAvulsa() {
     })
   }
 
+  useEffect(() => {
+    if (!id || !casa) return
+    let ativo = true
+    supabase
+      .from('despesas')
+      .select('*')
+      .eq('id', id)
+      .single()
+      .then(async ({ data, error }) => {
+        if (!ativo || error || !data) return
+        const d = data as unknown as Despesa
+        setFornecedor(d.fornecedor)
+        setDescricao(d.descricao ?? '')
+        setValor(String(d.valor).replace('.', ','))
+        setCategoria((d.categoria ?? 'outro') as Categoria)
+        setPagoPor(d.pago_por ?? minhaMoradorId ?? moradores[0]?.id ?? '')
+        setData(d.data.slice(0, 10))
+        setTipoRateio((d.tipo_rateio ?? 'igual') as TipoRateio)
+        setComprovanteExistente(d.comprovante_url)
+        if (d.comprovante_url) {
+          setComprovanteUrlExistente((await urlComprovante(d.comprovante_url)) ?? null)
+        }
+        const { data: rateios } = await supabase
+          .from('rateios')
+          .select('*')
+          .eq('despesa_id', d.id)
+        if (!ativo) return
+        const rs = (rateios ?? []) as Rateio[]
+        setIncluidos(new Set(rs.map((r) => r.morador_id)))
+        const pct: Record<string, string> = {}
+        for (const r of rs) {
+          const p = d.valor > 0 ? (r.valor_rateado / d.valor) * 100 : 0
+          pct[r.morador_id] = String(Math.round(p * 10) / 10)
+        }
+        setPercentuais(pct)
+        setCarregandoEdit(false)
+      })
+    return () => {
+      ativo = false
+    }
+  }, [id, casa, minhaMoradorId, moradores])
+
   const voltar = () => navigate(-1)
 
   const salvar = async (e: FormEvent) => {
@@ -112,30 +164,54 @@ export function DespesaAvulsa() {
     if (itens.length === 0) return setErro('O rateio não possui participantes válidos')
 
     try {
-      let comprovante_url: string | null = null
+      let comprovante_url: string | null = comprovanteExistente
       if (comprovante) comprovante_url = await subirComprovante(casa.id, comprovante)
+      if (removerAnexo) comprovante_url = null
 
-      const { data: despesa, error } = await supabase
-        .from('despesas')
-        .insert({
-          casa_id: casa.id,
-          fornecedor: fornecedor.trim(),
-          descricao: descricao.trim() || null,
-          valor: valorNum,
-          categoria,
-          pago_por: pagoPorId,
-          tipo_rateio: tipoRateio,
-          status: 'confirmada',
-          data,
-          comprovante_url,
-        })
-        .select('id')
-        .single()
-      if (error) throw error
+      let despesaId = id
+      if (editando && id) {
+        const { error } = await supabase
+          .from('despesas')
+          .update({
+            fornecedor: fornecedor.trim(),
+            descricao: descricao.trim() || null,
+            valor: valorNum,
+            categoria,
+            pago_por: pagoPorId,
+            tipo_rateio: tipoRateio,
+            data,
+            comprovante_url,
+          })
+          .eq('id', id)
+        if (error) throw error
+        await supabase.from('rateios').delete().eq('despesa_id', id)
+        if (comprovanteExistente && (comprovante || removerAnexo)) {
+          await removerComprovante(comprovanteExistente)
+        }
+      } else {
+        const { data: despesa, error } = await supabase
+          .from('despesas')
+          .insert({
+            casa_id: casa.id,
+            fornecedor: fornecedor.trim(),
+            descricao: descricao.trim() || null,
+            valor: valorNum,
+            categoria,
+            pago_por: pagoPorId,
+            tipo_rateio: tipoRateio,
+            status: 'confirmada',
+            data,
+            comprovante_url,
+          })
+          .select('id')
+          .single()
+        if (error) throw error
+        despesaId = despesa.id
+      }
 
       const { error: errRateios } = await supabase.from('rateios').insert(
         itens.map((i) => ({
-          despesa_id: despesa.id,
+          despesa_id: despesaId,
           morador_id: i.morador_id,
           valor_rateado: i.valor_rateado,
           pago: i.morador_id === pagoPorId,
@@ -145,11 +221,14 @@ export function DespesaAvulsa() {
       )
       if (errRateios) throw errRateios
 
-      navigate('/mes')
+      if (editando) navigate(-1)
+      else navigate('/mes')
     } catch (err) {
       setErro(err instanceof Error ? err.message : 'Erro ao salvar despesa')
     }
   }
+
+  if (carregandoEdit) return <div className="empty">Carregando…</div>
 
   return (
     <>
@@ -159,8 +238,12 @@ export function DespesaAvulsa() {
         </button>
       </div>
 
-      <h1 style={{ fontSize: 20, margin: 0 }}>Nova despesa avulsa</h1>
-      <p className="small muted">Lançamento pontual que não se repete todo mês.</p>
+      <h1 style={{ fontSize: 20, margin: 0 }}>{editando ? 'Editar despesa' : 'Nova despesa avulsa'}</h1>
+      <p className="small muted">
+        {editando
+          ? 'Altere os dados e o rateio deste lançamento.'
+          : 'Lançamento pontual que não se repete todo mês.'}
+      </p>
 
       <form className="card mt" onSubmit={salvar}>
         <label>Fornecedor</label>
@@ -282,16 +365,43 @@ export function DespesaAvulsa() {
             <input value={descricao} onChange={(e) => setDescricao(e.target.value)} placeholder="Ex.: Compras da semana" />
 
             <label>Comprovante (opcional)</label>
-            <input ref={inputFoto} type="file" accept="image/*" onChange={(e) => setComprovante(e.target.files?.[0] ?? null)} />
+            <input
+              ref={inputFoto}
+              type="file"
+              accept="image/*"
+              onChange={(e) => {
+                setComprovante(e.target.files?.[0] ?? null)
+                if (e.target.files?.[0]) setRemoverAnexo(false)
+              }}
+            />
             {comprovanteUrl && (
               <img src={comprovanteUrl} alt="Comprovante" style={{ width: '100%', borderRadius: 8, marginTop: 8, display: 'block' }} />
             )}
+            {editando && comprovanteUrlExistente && comprovanteExistente && !removerAnexo && (
+              <div className="mt">
+                <img
+                  src={comprovanteUrlExistente}
+                  alt="Boleto atual"
+                  style={{ width: '100%', borderRadius: 8, display: 'block' }}
+                />
+                <button
+                  type="button"
+                  className="btn btn-sm btn-secondary mt"
+                  onClick={() => setRemoverAnexo(true)}
+                >
+                  Remover boleto
+                </button>
+              </div>
+            )}
+            {removerAnexo && <p className="small muted mt">O boleto atual será removido ao salvar.</p>}
           </div>
         </details>
 
         {erro && <div className="error-box">{erro}</div>}
 
-        <button type="submit" className="btn btn-primary mt-lg">Salvar despesa</button>
+        <button type="submit" className="btn btn-primary mt-lg">
+              {editando ? 'Salvar alterações' : 'Salvar despesa'}
+            </button>
       </form>
     </>
   )

@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useEffect, useRef, useState } from 'react'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useApp, nomeMorador } from '../state/AppContext'
-import { urlComprovante, removerComprovante } from '../lib/comprovante'
+import { subirComprovante, urlComprovante, removerComprovante } from '../lib/comprovante'
 import { formatBR, dataBR } from '../lib/format'
 import type { Categoria, Despesa, Rateio } from '../types'
 
@@ -22,7 +22,9 @@ interface Detalhe extends Despesa {
 export function DespesaDetalhe() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const { moradores, minhaMoradorId, user } = useApp()
+  const { moradores, minhaMoradorId, user, casa } = useApp()
+
+  const inputBoleto = useRef<HTMLInputElement>(null)
 
   const [despesa, setDespesa] = useState<Detalhe | null>(null)
   const [foto, setFoto] = useState<string | null>(null)
@@ -72,6 +74,41 @@ export function DespesaDetalhe() {
     const { error } = await supabase.from('despesas').delete().eq('id', despesa.id)
     if (error) return setErro(error.message)
     navigate('/mes')
+  }
+
+  const anexarBoleto = async (file: File) => {
+    if (!despesa || !casa) return
+    setErro('')
+    try {
+      const url = await subirComprovante(casa.id, file)
+      const { error } = await supabase
+        .from('despesas')
+        .update({ comprovante_url: url })
+        .eq('id', despesa.id)
+      if (error) throw error
+      if (despesa.comprovante_url) await removerComprovante(despesa.comprovante_url)
+      setDespesa({ ...despesa, comprovante_url: url })
+      setFoto((await urlComprovante(url)) ?? null)
+    } catch (err) {
+      setErro(err instanceof Error ? err.message : 'Erro ao anexar boleto')
+    }
+  }
+
+  const removerBoleto = async () => {
+    if (!despesa) return
+    setErro('')
+    try {
+      if (despesa.comprovante_url) await removerComprovante(despesa.comprovante_url)
+      const { error } = await supabase
+        .from('despesas')
+        .update({ comprovante_url: null })
+        .eq('id', despesa.id)
+      if (error) throw error
+      setDespesa({ ...despesa, comprovante_url: null })
+      setFoto(null)
+    } catch (err) {
+      setErro(err instanceof Error ? err.message : 'Erro ao remover boleto')
+    }
   }
 
   if (carregando) return <div className="empty">Carregando…</div>
@@ -143,8 +180,43 @@ export function DespesaDetalhe() {
 
       {erro && <div className="error-box mt">{erro}</div>}
 
+      <div className="card mt">
+        <strong>Boleto / comprovante</strong>
+        <div className="small muted mt">{despesa.comprovante_url ? 'Anexado — toque para ampliar.' : 'Nenhum boleto anexado.'}</div>
+        <input
+          ref={inputBoleto}
+          type="file"
+          accept="image/*"
+          style={{ display: 'none' }}
+          onChange={(e) => {
+            const f = e.target.files?.[0]
+            if (f) void anexarBoleto(f)
+            e.target.value = ''
+          }}
+        />
+        <div className="row mt" style={{ gap: 8 }}>
+          <button type="button" className="btn btn-sm btn-secondary" onClick={() => inputBoleto.current?.click()}>
+            {despesa.comprovante_url ? 'Substituir boleto' : 'Anexar boleto'}
+          </button>
+          {despesa.comprovante_url && (
+            <button type="button" className="btn btn-sm btn-danger" onClick={() => void removerBoleto()}>
+              Remover boleto
+            </button>
+          )}
+        </div>
+      </div>
+
+      <Link
+        to={`/despesa/${despesa.id}/editar`}
+        viewTransition
+        className="btn btn-secondary mt-lg"
+        style={{ display: 'block', textAlign: 'center' }}
+      >
+        ✎ Editar despesa
+      </Link>
+
       {souOwner && despesa.status !== 'cancelada' && (
-        <button type="button" className="btn btn-danger mt-lg" onClick={excluir}>
+        <button type="button" className="btn btn-danger mt" onClick={excluir}>
           Excluir despesa
         </button>
       )}
