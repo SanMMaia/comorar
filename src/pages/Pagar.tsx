@@ -5,7 +5,7 @@ import { useApp } from '../state/AppContext'
 import { useDespesas } from '../lib/dados'
 import { calcularRateio } from '../lib/rateio'
 import { subirComprovante, removerComprovante, urlComprovante } from '../lib/comprovante'
-import { lerComprovante } from '../lib/ocr'
+import { lerBoletoLocal, onOcrCarregamento } from '../lib/ocr-local'
 import { lerQrDaImagem, parsePixCopiaECola, type PixExtraido } from '../lib/pix'
 import type { ResultadoOCR } from '../lib/ocr'
 import { formatBR, dataBR, mesAnoBR, parseCentavos } from '../lib/format'
@@ -113,20 +113,24 @@ export function Pagar() {
   const [boletoPix, setBoletoPix] = useState<PixExtraido | null>(null)
   const [boletoPixTexto, setBoletoPixTexto] = useState<string | null>(null)
   const [boletoOcrErro, setBoletoOcrErro] = useState('')
+  const [ocrBaixando, setOcrBaixando] = useState(false)
   const inputBoleto = useRef<HTMLInputElement>(null)
   const inputBoletoCamera = useRef<HTMLInputElement>(null)
 
+  useEffect(() => {
+    onOcrCarregamento(setOcrBaixando)
+    return () => onOcrCarregamento(null)
+  }, [])
+
   const processarBoleto = async (arquivo: File) => {
-    if (!casa) return
     setOcrStatus('processando')
     setErro('')
     try {
-      let path = comprovantePath
-      if (!path) {
-        path = await subirComprovante(casa.id, arquivo)
-        setComprovantePath(path)
-      }
-      const res = await lerComprovante(path)
+      const [res, path] = await Promise.all([
+        lerBoletoLocal(arquivo),
+        casa ? subirComprovante(casa.id, arquivo).catch(() => null) : Promise.resolve(null),
+      ])
+      if (path) setComprovantePath(path)
       if (!res.ok) {
         setOcrStatus('falha')
         setErro(res.mensagem ?? 'Não foi possível ler o boleto.')
@@ -207,14 +211,12 @@ export function Pagar() {
         }
       })
       void (async () => {
-        if (!casa) return
         try {
-          let path = boletoPath
-          if (!path) {
-            path = await subirComprovante(casa.id, arquivo)
-            setBoletoPath(path)
-          }
-          const res = await lerComprovante(path)
+          const [res, path] = await Promise.all([
+            lerBoletoLocal(arquivo),
+            casa ? subirComprovante(casa.id, arquivo).catch(() => null) : Promise.resolve(null),
+          ])
+          if (path) setBoletoPath(path)
           if (!res.ok) {
             setBoletoOcrStatus('falha')
             setBoletoOcrErro(res.mensagem ?? 'Não foi possível ler o boleto.')
@@ -529,9 +531,8 @@ export function Pagar() {
                 {comprovanteUrl && (
                   <img src={comprovanteUrl} alt="Comprovante" style={{ width: '100%', borderRadius: 8, marginTop: 8, display: 'block' }} />
                 )}
-                {ocrStatus === 'processando' && (
-                  <p className="small muted mt">🔎 Lendo boleto…</p>
-                )}
+                {ocrStatus === 'processando' && ocrBaixando && <p className="small muted mt">⬇️ Baixando leitor de boleto (1ª vez)…</p>}
+                  {ocrStatus === 'processando' && !ocrBaixando && <p className="small muted mt">🔎 Lendo boleto no aparelho…</p>}
                 {ocrStatus === 'ok' && (
                   <p className="small muted mt">✓ Valor e vencimento preenchidos do boleto — confira.</p>
                 )}
@@ -637,7 +638,8 @@ export function Pagar() {
                     style={{ width: '100%', borderRadius: 8, marginTop: 8, display: 'block' }}
                   />
                 )}
-                {boletoOcrStatus === 'processando' && !boletoPix && <p className="small muted mt">🔎 Lendo boleto…</p>}
+                {boletoOcrStatus === 'processando' && !boletoPix && !ocrBaixando && <p className="small muted mt">🔎 Lendo boleto no aparelho…</p>}
+                {boletoOcrStatus === 'processando' && !boletoPix && ocrBaixando && <p className="small muted mt">⬇️ Baixando leitor de boleto (1ª vez)…</p>}
                 {boletoOcrStatus === 'processando' && boletoPix && (
                   <p className="small muted mt">✓ QR lido — aguardando leitura do documento…</p>
                 )}

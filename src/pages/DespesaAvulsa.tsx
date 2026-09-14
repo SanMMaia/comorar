@@ -10,7 +10,7 @@ import {
   urlComprovante,
 } from '../lib/comprovante'
 import { parseCentavos } from '../lib/format'
-import { lerComprovante } from '../lib/ocr'
+import { lerBoletoLocal, onOcrCarregamento } from '../lib/ocr-local'
 import { categoriasEfetivas } from '../lib/categorias'
 import type { ResultadoOCR } from '../lib/ocr'
 import type { Categoria, Despesa, Rateio, Recorrencia, RegraRateio, TipoRateio } from '../types'
@@ -65,6 +65,7 @@ export function DespesaAvulsa() {
   const [comprovanteUrlExistente, setComprovanteUrlExistente] = useState<string | null>(null)
   const [removerAnexo, setRemoverAnexo] = useState(false)
   const [ocrErro, setOcrErro] = useState('')
+  const [ocrBaixando, setOcrBaixando] = useState(false)
   const [comprovantePath, setComprovantePath] = useState<string | null>(null)
   const [ocrStatus, setOcrStatus] = useState<'ocioso' | 'processando' | 'ok' | 'falha'>('ocioso')
   const [ocrDados, setOcrDados] = useState<ResultadoOCR | null>(null)
@@ -77,6 +78,11 @@ export function DespesaAvulsa() {
   const inputFoto = useRef<HTMLInputElement>(null)
   const inputFotoCamera = useRef<HTMLInputElement>(null)
   const [erro, setErro] = useState('')
+
+  useEffect(() => {
+    onOcrCarregamento(setOcrBaixando)
+    return () => onOcrCarregamento(null)
+  }, [])
 
   const aoEscolherArquivo = (e: ChangeEvent<HTMLInputElement>) => {
     const arquivo = e.target.files?.[0] ?? null
@@ -155,16 +161,14 @@ export function DespesaAvulsa() {
   }, [id, casa, minhaMoradorId, moradores])
 
   const processarOCR = async (arquivo: File) => {
-    if (!casa) return
     setOcrStatus('processando')
     setErro('')
     try {
-      let path = comprovantePath
-      if (!path) {
-        path = await subirComprovante(casa.id, arquivo)
-        setComprovantePath(path)
-      }
-      const res = await lerComprovante(path)
+      const [res, path] = await Promise.all([
+        lerBoletoLocal(arquivo),
+        casa ? subirComprovante(casa.id, arquivo).catch(() => null) : Promise.resolve(null),
+      ])
+      if (path) setComprovantePath(path)
       if (!res.ok) {
         setOcrStatus('falha')
         setOcrErro(res.mensagem ?? 'Não foi possível ler o comprovante.')
@@ -443,8 +447,11 @@ export function DespesaAvulsa() {
             {comprovanteUrl && (
               <img src={comprovanteUrl} alt="Comprovante" style={{ width: '100%', borderRadius: 8, marginTop: 8, display: 'block' }} />
             )}
-            {ocrStatus === 'processando' && (
-              <p className="small muted mt">🔎 Lendo comprovante…</p>
+            {ocrStatus === 'processando' && ocrBaixando && (
+              <p className="small muted mt">⬇️ Baixando leitor de comprovante (1ª vez)…</p>
+            )}
+            {ocrStatus === 'processando' && !ocrBaixando && (
+              <p className="small muted mt">🔎 Lendo comprovante no aparelho…</p>
             )}
             {ocrStatus === 'ok' && (
               <p className="small muted mt">✓ Dados preenchidos pelo OCR — confira antes de salvar.</p>
