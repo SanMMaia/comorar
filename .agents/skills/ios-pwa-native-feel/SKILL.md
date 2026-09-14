@@ -21,7 +21,7 @@ description: Fazer o Comorar (SPA/PWA) se sentir nativo no iOS — navegação, 
 6. **URL é a fonte da verdade** (deep link, reload, share) — a tab bar reflete a rota atual via `NavLink`.
 
 ### Correspondência no projeto atual (verificado 13/09/2026)
-Tabs: 5 em `NavLink` com ícone+rótulo em `Layout.tsx` — ok; push hierárquico com `viewTransition` — ok; **sem handler de re-tap** que reseta scroll (padrão pede o comportamento; custo baixo pois não há estado de scroll persistente). **Header global removido (commit após 53f22e7):** não há nav bar fixa — cada página tem seu `h1` rolando no conteúdo (Home: "Resumo"; Perfil: `casa.nome`); telas de detalhe usam `.nav-back` próprio.
+Tabs: 5 em `NavLink` com ícone+rótulo em `Layout.tsx` — ok; push hierárquico com `viewTransition` — ok; **sem handler de re-tap** que reseta scroll (padrão pede o comportamento; custo baixo pois não há estado de scroll persistente). **Header global removido (commit após 53f22e7):** não há nav bar fixa — cada página tem seu `h1` rolando no conteúdo (Home: "Resumo"; Perfil: `casa.nome`); telas de detalhe usam `.nav-back` próprio. **Editáveis = tela cheia via push** (skill: formulários nunca inline): `RecorrenciaEditar` (`/recorrencia/:id/editar`) e `Regras` (`/perfil/regras`) são páginas próprias abertas por card-link a partir do Detalhe/Perfil; ações administrativas (ativar/desativar, excluir) moram na tela cheia de edição; ações curtas por item (ignorar mês, reativar, liquidar) seguem inline — conforme a skill.
 
 ## 2. View Transitions API + React Router v7
 

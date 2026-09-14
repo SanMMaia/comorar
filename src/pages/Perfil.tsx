@@ -1,17 +1,13 @@
-import { useEffect, useState, type FormEvent } from 'react'
+import { useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useApp, nomeMorador } from '../state/AppContext'
-import type { RegraRateio } from '../types'
 
 const linkApp = 'https://comorar.vercel.app'
 
 export function Perfil() {
   const { casa, user, moradores, minhaMoradorId, signOut, refreshCasa } = useApp()
   const navigate = useNavigate()
-
-  const [percentuais, setPercentuais] = useState<Record<string, string>>({})
-  const [salvo, setSalvo] = useState(false)
 
   const [msgCopia, setMsgCopia] = useState(false)
 
@@ -21,24 +17,6 @@ export function Perfil() {
   const [enviandoNovo, setEnviandoNovo] = useState(false)
 
   const souOwner = moradores.find((m) => m.id === minhaMoradorId)?.role === 'owner'
-
-  useEffect(() => {
-    if (!casa) return
-    supabase
-      .from('regras_rateio')
-      .select('*')
-      .eq('casa_id', casa.id)
-      .then(({ data }) => {
-        const m = new Map((data ?? []).map((r: RegraRateio) => [r.user_id, r.percentual]))
-        const inicial: Record<string, string> = {}
-        for (const mor of moradores) {
-          const userRef = mor.user_id
-          const v = userRef ? m.get(userRef) : undefined
-          inicial[mor.id] = v !== undefined ? String(v) : ''
-        }
-        setPercentuais(inicial)
-      })
-  }, [casa, moradores])
 
   const mensagemConvite = () =>
     `Entre na casa "${casa?.nome}" no Comorar! Código de convite: ${casa?.codigo_convite}. Acesse ${linkApp}`
@@ -68,27 +46,6 @@ export function Perfil() {
       }
     }
     await copiar()
-  }
-
-  const salvarRegras = async () => {
-    if (!casa) return
-    const linhas = moradores
-      .filter((m) => m.user_id)
-      .map((m) => ({
-        casa_id: casa.id,
-        user_id: m.user_id as string,
-        percentual: Number(percentuais[m.id]) || 0,
-      }))
-      .filter((l) => l.percentual > 0)
-
-    const { error: delErr } = await supabase.from('regras_rateio').delete().eq('casa_id', casa.id)
-    if (delErr) return
-    if (linhas.length) {
-      const { error: insErr } = await supabase.from('regras_rateio').insert(linhas)
-      if (insErr) return
-    }
-    setSalvo(true)
-    setTimeout(() => setSalvo(false), 2000)
   }
 
   const criarMoradorSemApp = async (e: FormEvent) => {
@@ -214,41 +171,15 @@ export function Perfil() {
         </div>
       )}
 
-      <h2 style={{ fontSize: 15, marginTop: 20 }}>Taxa fixa de rateio (%)</h2>
-      <div className="card">
-        <p className="small muted" style={{ margin: 0 }}>
-          Percentual padrão das despesas do tipo "percentual". Somente moradores com conta podem ter taxa fixa.
-        </p>
-        {!souOwner ? (
-          <p className="small muted mt">Somente o(a) responsável pode editar.</p>
-        ) : (
-          <>
-            {moradores.map((m) => (
-              <div className="row" key={m.id} style={{ marginTop: 8 }}>
-                <span className="small">{m.nome}</span>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <input
-                    type="text"
-                    inputMode="numeric"
-                    style={{ width: 80 }}
-                    value={percentuais[m.id] ?? ''}
-                    onChange={(e) =>
-                      setPercentuais((prev) => ({
-                        ...prev,
-                        [m.id]: e.target.value.replace(/[^\d.]/g, ''),
-                      }))
-                    }
-                  />
-                  <span className="muted">%</span>
-                </div>
-              </div>
-            ))}
-            <button type="button" className="btn btn-primary btn-sm mt" onClick={salvarRegras}>
-              {salvo ? 'Salvo ✓' : 'Salvar taxa'}
-            </button>
-          </>
-        )}
-      </div>
+      <Link to="/perfil/regras" viewTransition className="card mt" style={{ display: 'block' }}>
+        <div className="row">
+          <div>
+            <strong>Taxa fixa de rateio (%)</strong>
+            <div className="small muted">Percentual padrão das despesas do tipo "percentual"</div>
+          </div>
+          <span className="small muted" aria-hidden>›</span>
+        </div>
+      </Link>
 
       <div className="mt-lg">
         <button type="button" className="btn btn-secondary" onClick={sairDaCasa}>Sair da casa</button>
