@@ -3,16 +3,7 @@ import { Link } from 'react-router-dom'
 import { useApp, nomeMorador } from '../state/AppContext'
 import { useDespesas } from '../lib/dados'
 import { formatBR, dataBR, mesAnoBR } from '../lib/format'
-import type { Categoria } from '../types'
-
-const labelsCat: Record<Categoria, string> = {
-  aluguel: 'Aluguel',
-  luz: 'Luz',
-  agua: 'Água',
-  internet: 'Internet',
-  mercado: 'Mercado',
-  outro: 'Outro',
-}
+import { labelCategoria } from '../lib/categorias'
 
 export function ListaMensal() {
   const { casa, moradores } = useApp()
@@ -87,7 +78,7 @@ export function ListaMensal() {
                 <div>
                   <strong>{d.fornecedor}</strong>
                   <div className="small muted">
-                    {labelsCat[d.categoria]} · {dataBR(d.data)}
+                    {labelCategoria(d.categoria, casa?.categorias)} · {dataBR(d.data)}
                   </div>
                   {d.status === 'confirmada' && (
                     <div className="small muted">

@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { useApp, nomeMorador } from '../state/AppContext'
 import { useDespesas } from '../lib/dados'
 import { formatBR, dataBR, mesAnoBR } from '../lib/format'
+import { labelCategoria } from '../lib/categorias'
 
 export function Home() {
   const { casa, minhaMoradorId, moradores, loading } = useApp()
@@ -94,7 +95,7 @@ export function Home() {
                 <div>
                   <strong>{d.fornecedor}</strong>
                   <div className="small muted">
-                    {d.categoria} · {dataBR(d.data)}
+                    {labelCategoria(d.categoria, casa?.categorias)} · {dataBR(d.data)}
                   </div>
                 </div>
                 <div style={{ textAlign: 'right' }}>
@@ -124,7 +125,7 @@ export function Home() {
               <div>
                 <strong>{d.fornecedor}</strong>
                 <div className="small muted">
-                  {nomeMorador(moradores, d.pago_por)} pagou · {d.categoria}
+                  {nomeMorador(moradores, d.pago_por)} pagou · {labelCategoria(d.categoria, casa?.categorias)}
                 </div>
               </div>
               <div style={{ textAlign: 'right' }}>

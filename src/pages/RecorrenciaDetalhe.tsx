@@ -4,7 +4,8 @@ import { supabase } from '../lib/supabase'
 import { useApp, nomeMorador } from '../state/AppContext'
 import { useDespesas } from '../lib/dados'
 import { formatBR, dataBR } from '../lib/format'
-import { labelsCat, labelsIntervalo, labelsRateio } from '../lib/recorrenciaForm'
+import { labelsIntervalo, labelsRateio } from '../lib/recorrenciaForm'
+import { labelCategoria } from '../lib/categorias'
 import type { Despesa, Recorrencia } from '../types'
 
 export function RecorrenciaDetalhe() {
@@ -82,7 +83,7 @@ export function RecorrenciaDetalhe() {
                   )}
                 </div>
                 <div className="small muted">
-                  {labelsCat[rec.categoria]} · dia {rec.dia_vencimento ?? '—'} · {labelsIntervalo[rec.intervalo]}
+                  {labelCategoria(rec.categoria, casa?.categorias)} · dia {rec.dia_vencimento ?? '—'} · {labelsIntervalo[rec.intervalo]}
                   {rec.data_fim ? ` · até ${dataBR(rec.data_fim)}` : ''}
                 </div>
                 {rec.descricao && <div className="small mt">{rec.descricao}</div>}

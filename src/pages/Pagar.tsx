@@ -6,16 +6,8 @@ import { useDespesas } from '../lib/dados'
 import { calcularRateio } from '../lib/rateio'
 import { subirComprovante } from '../lib/comprovante'
 import { formatBR, dataBR, mesAnoBR, parseCentavos } from '../lib/format'
-import type { Categoria, Recorrencia, RegraRateio, TipoRateio } from '../types'
-
-const labels: Record<Categoria, string> = {
-  aluguel: 'Aluguel',
-  luz: 'Luz',
-  agua: 'Água',
-  internet: 'Internet',
-  mercado: 'Mercado',
-  outro: 'Outro',
-}
+import type { Recorrencia, RegraRateio, TipoRateio } from '../types'
+import { labelCategoria } from '../lib/categorias'
 
 export function Pagar() {
   const { casa, user, minhaMoradorId, moradores } = useApp()
@@ -216,7 +208,7 @@ export function Pagar() {
                   <Link to={`/despesa/${d.id}`} viewTransition className="grid-titulo" title={d.fornecedor} style={{ textDecoration: 'none' }}>
                     {d.fornecedor}
                   </Link>
-                  <span className="small muted">{labels[d.categoria]}</span>
+                  <span className="small muted">{labelCategoria(d.categoria, casa?.categorias)}</span>
                   <span className="mono grid-valor">{formatBR(d.valor)}</span>
                   <span className="small muted">{dataBR(d.data)}</span>
                   {rec && <span className="badge">recorrente</span>}

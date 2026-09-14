@@ -1,10 +1,6 @@
 import type { Categoria, IntervaloRecorrencia, Recorrencia, TipoRateio } from '../types'
 import { parseCentavos } from './format'
 
-export const categorias: Categoria[] = ['aluguel', 'luz', 'agua', 'internet', 'mercado', 'outro']
-export const labelsCat: Record<Categoria, string> = {
-  aluguel: 'Aluguel', luz: 'Luz', agua: 'Água', internet: 'Internet', mercado: 'Mercado', outro: 'Outro',
-}
 export const labelsIntervalo: Record<IntervaloRecorrencia, string> = {
   mensal: 'Mensal', semanal: 'Semanal', quinzenal: 'Quinzenal', anual: 'Anual',
 }

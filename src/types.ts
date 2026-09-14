@@ -1,13 +1,19 @@
-export type Categoria = 'aluguel' | 'luz' | 'agua' | 'internet' | 'mercado' | 'outro'
+export type Categoria = string
 export type TipoRateio = 'igual' | 'percentual' | 'consumo'
 export type StatusDespesa = 'prevista' | 'confirmada' | 'cancelada'
 export type IntervaloRecorrencia = 'mensal' | 'semanal' | 'quinzenal' | 'anual'
+
+export interface CategoriaItem {
+  id: string
+  label: string
+}
 
 export interface Casa {
   id: string
   nome: string
   codigo_convite: string
   criado_em: string
+  categorias: CategoriaItem[] | null
 }
 
 export interface CasaMorador {

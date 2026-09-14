@@ -10,6 +10,7 @@ import { ListaMensal } from './pages/ListaMensal'
 import { Balanco } from './pages/Balanco'
 import { Projecao } from './pages/Projecao'
 import { Regras } from './pages/Regras'
+import { Categorias } from './pages/Categorias'
 import { RecorrenciaDetalhe } from './pages/RecorrenciaDetalhe'
 import { RecorrenciaEditar } from './pages/RecorrenciaEditar'
 import { RecorrenciaNova } from './pages/RecorrenciaNova'
@@ -58,6 +59,7 @@ function Protegido() {
         <Route path="/projecao" element={<Navigate to="/perfil/contas" replace />} />
       <Route path="/perfil/contas" element={<Projecao />} />
         <Route path="/perfil/regras" element={<Regras />} />
+        <Route path="/perfil/categorias" element={<Categorias />} />
         <Route path="/recorrencia/nova" element={<RecorrenciaNova />} />
         <Route path="/recorrencia/:id" element={<RecorrenciaDetalhe />} />
         <Route path="/recorrencia/:id/editar" element={<RecorrenciaEditar />} />

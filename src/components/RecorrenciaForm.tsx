@@ -1,4 +1,6 @@
-import { categorias, labelsCat, type Frm } from '../lib/recorrenciaForm'
+import { type Frm } from '../lib/recorrenciaForm'
+import { categoriasEfetivas } from '../lib/categorias'
+import { useApp } from '../state/AppContext'
 import type { Categoria, IntervaloRecorrencia, TipoRateio } from '../types'
 
 export function CamposForm({
@@ -10,6 +12,8 @@ export function CamposForm({
   onChange: (p: Partial<Frm>) => void
   moradores: { id: string; nome: string }[]
 }) {
+  const { casa } = useApp()
+  const categoriasCasa = categoriasEfetivas(casa?.categorias)
   return (
     <>
       <label>Fornecedor</label>
@@ -23,7 +27,7 @@ export function CamposForm({
         <div>
           <label>Categoria</label>
           <select value={f.categoria} onChange={(e) => onChange({ categoria: e.target.value as Categoria })}>
-            {categorias.map((c) => <option key={c} value={c}>{labelsCat[c]}</option>)}
+            {categoriasCasa.map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}
           </select>
         </div>
       </div>

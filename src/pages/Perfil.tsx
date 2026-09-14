@@ -171,6 +171,16 @@ export function Perfil() {
         </div>
       )}
 
+      <Link to="/perfil/categorias" viewTransition className="card mt" style={{ display: 'block' }}>
+        <div className="row">
+          <div>
+            <strong>Categorias de despesa</strong>
+            <div className="small muted">Adicione, renomeie ou remova categorias</div>
+          </div>
+          <span className="small muted" aria-hidden>›</span>
+        </div>
+      </Link>
+
       <Link to="/perfil/regras" viewTransition className="card mt" style={{ display: 'block' }}>
         <div className="row">
           <div>

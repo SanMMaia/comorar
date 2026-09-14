@@ -4,16 +4,8 @@ import { supabase } from '../lib/supabase'
 import { useApp, nomeMorador } from '../state/AppContext'
 import { subirComprovante, urlComprovante, removerComprovante } from '../lib/comprovante'
 import { formatBR, dataBR } from '../lib/format'
-import type { Categoria, Despesa, Rateio } from '../types'
-
-const labelsCat: Record<Categoria, string> = {
-  aluguel: 'Aluguel',
-  luz: 'Luz',
-  agua: 'Água',
-  internet: 'Internet',
-  mercado: 'Mercado',
-  outro: 'Outro',
-}
+import { labelCategoria } from '../lib/categorias'
+import type { Despesa, Rateio } from '../types'
 
 interface Detalhe extends Despesa {
   rateios: Rateio[]
@@ -132,7 +124,7 @@ export function DespesaDetalhe() {
       <div className="card mt">
         <div className="row">
           <div>
-            <div className="small muted">{labelsCat[despesa.categoria]} · {dataBR(despesa.data)}</div>
+            <div className="small muted">{labelCategoria(despesa.categoria, casa?.categorias)} · {dataBR(despesa.data)}</div>
             {despesa.descricao && <div className="small mt">{despesa.descricao}</div>}
             <div className="small muted mt">
               Pago por <strong>{nomeMorador(moradores, despesa.pago_por)}</strong>

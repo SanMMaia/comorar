@@ -11,18 +11,9 @@ import {
 } from '../lib/comprovante'
 import { parseCentavos } from '../lib/format'
 import { lerComprovante } from '../lib/ocr'
+import { categoriasEfetivas } from '../lib/categorias'
 import type { ResultadoOCR } from '../lib/ocr'
 import type { Categoria, Despesa, Rateio, Recorrencia, RegraRateio, TipoRateio } from '../types'
-
-const categorias: Categoria[] = ['aluguel', 'luz', 'agua', 'internet', 'mercado', 'outro']
-const labels: Record<Categoria, string> = {
-  aluguel: 'Aluguel',
-  luz: 'Luz',
-  agua: 'Água',
-  internet: 'Internet',
-  mercado: 'Mercado',
-  outro: 'Outro',
-}
 
 export function DespesaAvulsa() {
   const { id } = useParams()
@@ -338,9 +329,9 @@ export function DespesaAvulsa() {
           </div>
           <div>
             <label>Categoria</label>
-            <select value={categoria} onChange={(e) => setCategoria(e.target.value as Categoria)}>
-              {categorias.map((c) => (
-                <option key={c} value={c}>{labels[c]}</option>
+            <select value={categoria} onChange={(e) => setCategoria(e.target.value)}>
+              {categoriasEfetivas(casa?.categorias).map((c) => (
+                <option key={c.id} value={c.id}>{c.label}</option>
               ))}
             </select>
           </div>

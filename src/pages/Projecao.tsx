@@ -4,7 +4,8 @@ import { supabase } from '../lib/supabase'
 import { useApp } from '../state/AppContext'
 import { useDespesas } from '../lib/dados'
 import { formatBR, dataBR, mesAnoBR } from '../lib/format'
-import { labelsCat, labelsIntervalo } from '../lib/recorrenciaForm'
+import { labelsIntervalo } from '../lib/recorrenciaForm'
+import { labelCategoria } from '../lib/categorias'
 import type { Despesa, Recorrencia } from '../types'
 
 export function Projecao() {
@@ -105,7 +106,7 @@ export function Projecao() {
                 <div style={{ textAlign: 'left' }}>
                   <strong>{r.fornecedor}</strong>
                   <div className="small muted">
-                    {labelsCat[r.categoria]} · dia {r.dia_vencimento ?? '—'} · {labelsIntervalo[r.intervalo]}
+                    {labelCategoria(r.categoria, casa?.categorias)} · dia {r.dia_vencimento ?? '—'} · {labelsIntervalo[r.intervalo]}
                     {r.data_fim &&
                       ` · até ${new Date(r.data_fim + 'T00:00:00').toLocaleDateString('pt-BR')}`}
                   </div>
