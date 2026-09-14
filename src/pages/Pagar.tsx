@@ -637,12 +637,15 @@ export function Pagar() {
                     style={{ width: '100%', borderRadius: 8, marginTop: 8, display: 'block' }}
                   />
                 )}
-                {boletoOcrStatus === 'processando' && <p className="small muted mt">🔎 Lendo boleto…</p>}
+                {boletoOcrStatus === 'processando' && !boletoPix && <p className="small muted mt">🔎 Lendo boleto…</p>}
+                {boletoOcrStatus === 'processando' && boletoPix && (
+                  <p className="small muted mt">✓ QR lido — aguardando leitura do documento…</p>
+                )}
                 {boletoPix && (
-                  <p className="small muted mt">
-                    ✓ QR Pix lido
+                  <p className="small mt">
+                    ✓ <strong>QR Pix lido</strong>
                     {boletoPix.valor ? (
-                      <strong className="mono"> · valor {formatBR(boletoPix.valor)}</strong>
+                      <> · valor <strong className="mono">{formatBR(boletoPix.valor)}</strong></>
                     ) : null}
                     {boletoPix.nome ? <> · {boletoPix.nome}</> : null}
                   </p>
