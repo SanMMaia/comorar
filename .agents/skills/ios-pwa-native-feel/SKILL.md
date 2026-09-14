@@ -20,8 +20,8 @@ description: Fazer o Comorar (SPA/PWA) se sentir nativo no iOS — navegação, 
 5. **Re-tap na aba ativa** reseta o scroll (se scroll > 0, `scrollTo({top:0})`; senão re-monta a view se o estado foi perdido). Hoje cada rota re-monta, então o handler de re-tap é barato.
 6. **URL é a fonte da verdade** (deep link, reload, share) — a tab bar reflete a rota atual via `NavLink`.
 
-### Correspondência no projeto atual (verificado 13/09/2026)
-Tabs: 5 em `NavLink` com ícone+rótulo em `Layout.tsx` — ok; push hierárquico com `viewTransition` — ok; **sem handler de re-tap** que reseta scroll (padrão pede o comportamento; custo baixo pois não há estado de scroll persistente). **Header global removido (commit após 53f22e7):** não há nav bar fixa — cada página tem seu `h1` rolando no conteúdo (Home: "Resumo"; Perfil: `casa.nome`); telas de detalhe usam `.nav-back` próprio. **Editáveis = tela cheia via push** (skill: formulários nunca inline): `RecorrenciaEditar` (`/recorrencia/:id/editar`) e `Regras` (`/perfil/regras`) são páginas próprias abertas por card-link a partir do Detalhe/Perfil; ações administrativas (ativar/desativar, excluir) moram na tela cheia de edição; ações curtas por item (ignorar mês, reativar, liquidar) seguem inline — conforme a skill.
+### Correspondência no projeto atual (verificado 14/09/2026)
+Tabs em `NavLink` com ícone+rótulo em `Layout.tsx` — ok; push hierárquico com `viewTransition` — ok; **re-tap na aba ativa reseta scroll** (`window.scrollTo({top:0, behavior:'smooth'})` + `preventDefault` quando `pathname === to`) — implementado. **Header global removido (commit após 53f22e7):** não há nav bar fixa — cada página tem seu `h1` rolando no conteúdo (Home: "Resumo"; Perfil: `casa.nome`); telas de detalhe usam `.nav-back` próprio. **Editáveis = tela cheia via push** (skill: formulários nunca inline): `RecorrenciaEditar` (`/recorrencia/:id/editar`) e `Regras` (`/perfil/regras`) são páginas próprias abertas por card-link a partir do Detalhe/Perfil; ações administrativas (ativar/desativar, excluir) moram na tela cheia de edição; ações curtas por item (ignorar mês, reativar, liquidar) seguem inline — conforme a skill.
 
 ## 2. View Transitions API + React Router v7
 
@@ -48,8 +48,8 @@ Tabs: 5 em `NavLink` com ícone+rótulo em `Layout.tsx` — ok; push hierárquic
 7. Não confundir com **element-scoped view transitions** (`element.startViewTransition()`) — ainda limitado (Chrome/Edge 147+, sem Safari/Firefox). Não usar no caminho crítico.
 8. `view-transition-class` (agrupar animações por tipo no CSS) ainda não é unânime — verifique o suporte antes de depender.
 
-### Correspondência no projeto atual (verificado 13/09/2026)
-Já implementado: prop `viewTransition` nos Links de push; `.nav-back`; **`vt-nav` isolado com `animation: none`** (apenas a tab bar — o header fixo foi removido, o título agora rola no conteúdo); **`data-direction` via `useNavigationType()` + POP** (componente `SincronizarDirecao` em `App.tsx`; seletores `[data-direction=...]` no `index.css` — commit 53f22e7); keyframes `vt-sair`/`vt-entrar`; `prefers-reduced-motion` com `!important` (vence a especificidade dos seletores direcionais). **Gaps restantes:** tabs sem cross-fade; itens de lista→detalhe sem shared-element (`view-transition-name` variável), se desejado.
+### Correspondência no projeto atual (verificado 14/09/2026)
+Já implementado: prop `viewTransition` nos Links de push; `.nav-back`; **`vt-nav` isolado com `animation: none`** (apenas a tab bar — o header fixo foi removido, o título agora rola no conteúdo); **`data-direction` via `useNavigationType()` + POP** (componente `SincronizarDirecao` em `App.tsx`; seletores `[data-direction=...]` no `index.css` — commit 53f22e7); keyframes `vt-sair`/`vt-entrar`; `prefers-reduced-motion` com `!important` (vence a especificidade dos seletores direcionais). **Cross-fade de tabs:** `Layout.tsx` seta `data-direction="tab"` + `data-direcaoTab` (timestamp) no clique de aba inativa e o `SincronizarDirecao` respeita esse estado por ~600ms (não sobrescreve no meio da transição, revertendo para `forward` depois) — seletores `[data-direction="tab"]` usam `vt-some`/`vt-chega` (fade). **Gap restante:** itens de lista→detalhe sem shared-element (`view-transition-name` variável), se desejado.
 
 ## 3. Safe area, status bar e toques
 
@@ -67,8 +67,8 @@ Já implementado: prop `viewTransition` nos Links de push; `.nav-back`; **`vt-na
 - `overscroll-behavior: contain` no `body` para o bounce não vazar para o fundo cinza do Safari.
 - Fonte do sistema: `-apple-system, BlinkMacSystemFont, "Segoe UI", ...` pega SF Pro sem hospedar nada.
 
-### Correspondência no projeto atual (verificado 13/09/2026)
-Já: `viewport-fit=cover`; `theme-color` `#0f766e`; `apple-mobile-web-app-status-bar-style=default`; `env(safe-area-inset-bottom)` no `.content` e na bottom-nav; fonte system-ui; inputs herdam **16px** via `font: inherit` no `:root` (sem risco de zoom — a regra `clamp` não é acionada); altura usa **`100svh`** (aceitável em standalone; trocar para `100vh; 100dvh` se aparecer folga). **Gaps:** sem `env(safe-area-inset-top)` no `.app-header` (Dynamic Island pode sobrepor); sem `touch-action: manipulation`; sem `overscroll-behavior: contain`; sem remoção de tap-highlight + `:active` customizado.
+### Correspondência no projeto atual (verificado 14/09/2026)
+Já: `viewport-fit=cover`; `theme-color` `#0f766e`; `apple-mobile-web-app-status-bar-style=default`; `env(safe-area-inset-bottom)` + **`env(safe-area-inset-top)`** no `.content` e safe-area na bottom-nav; fonte system-ui; inputs herdam **16px** via `font: inherit` no `:root` (sem risco de zoom — a regra `clamp` não é acionada); altura usa **`100svh`** (aceitável em standalone; trocar para `100vh; 100dvh` se aparecer folga); **`touch-action: manipulation`** e **`overscroll-behavior: contain`** no `body`; **tap-highlight removido** (`-webkit-tap-highlight-color: transparent`, `-webkit-touch-callout: none`, `user-select: none` com re-ligação em inputs) **apenas em `@media (display-mode: standalone) and (pointer: coarse)`**, com feedback `:active` no lugar (`.btn-secondary:active`, `.nav-item:active`, `a:active`/`.link-card:active` com `opacity`).
 
 ## 4. `vite-plugin-pwa` no deploy da Vercel — armadilha mais comum (ordem das mais prováveis)
 
@@ -98,8 +98,8 @@ Já: `viewport-fit=cover`; `theme-color` `#0f766e`; `apple-mobile-web-app-status
 5. **Manifest é cacheado agressivamente pelo iOS** — ícone/tema/cores só mudam para usuários que re-instalarem o PWA. Não dependa disso para hotfixes. (Ícones só SVG p/ instalação iOS exigem PNG 180/192/512 — complemento fora do escopo, mas relevante.)
 6. **Registro em URL estável** (`/sw.js`, sem hash). Se precisar de kill-switch para usuários presos, sirva um `sw.js` no-op que faça `self.registration.unregister()` + delete de caches no MESMO caminho do SW quebrado.
 
-### Correspondência no projeto atual (verificado 13/09/2026 — `vite.config.ts`, `vercel.json`, `main.tsx`)
-Já: `registerType: 'autoUpdate'`; manifest (theme/background `#0f766e`, standalone) e ícones SVG; **hardening completo aplicado no commit 53f22e7:** `globPatterns` **sem `html`** + `navigateFallback: null`; `runtimeCaching` com `NetworkFirst`/`networkTimeoutSeconds: 4` em navigations (cacheName `pages`) + `CacheFirst` em assets; `cleanupOutdatedCaches: true`; `main.tsx` importa `virtual:pwa-register` com `registerSW({ immediate: true })`; `vercel.json` com `Cache-Control: public, max-age=0, must-revalidate` no `/sw.js` (verificado 200 no domínio). Trade-off vigente: offline só após a primeira visita (documento em NetworkFirst). Ícones: adicionar PNG 180/192/512 para instalação no iOS (pendente).
+### Correspondência no projeto atual (verificado 14/09/2026 — `vite.config.ts`, `vercel.json`, `main.tsx`)
+Já: `registerType: 'autoUpdate'`; manifest (theme/background `#0f766e`, standalone); **hardening completo aplicado no commit 53f22e7:** `globPatterns` **sem `html`** + `navigateFallback: null`; `runtimeCaching` com `NetworkFirst`/`networkTimeoutSeconds: 4` em navigations (cacheName `pages`) + `CacheFirst` em assets; `cleanupOutdatedCaches: true`; `main.tsx` importa `virtual:pwa-register` com `registerSW({ immediate: true })`; `vercel.json` com `Cache-Control: public, max-age=0, must-revalidate` no `/sw.js` (verificado 200 no domínio). Trade-off vigente: offline só após a primeira visita (documento em NetworkFirst). **Ícones:** PNG 180/192/512 gerados (script `scripts/gerar-icones.mjs`, rasterização sem dependências) em `public/icons/`, com `apple-touch-icon` no `index.html` e entrys `any`/`maskable` no manifest — instalação iOS agora com ícone próprio.
 
 ## 5. Quando NÃO aplicar
 
