@@ -40,6 +40,7 @@ body {
   background: var(--bg);
   display: flex;
   flex-direction: column;
+  overflow-x: hidden;
 }
 
 button {
@@ -76,6 +77,11 @@ label {
   font-weight: 600;
   color: var(--text-muted);
   margin: 14px 0 6px;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
 }
 
 .app {
@@ -172,6 +178,8 @@ label {
   border-radius: 14px;
   padding: 14px;
   box-shadow: var(--shadow);
+  overflow-wrap: break-word;
+  min-width: 0;
 }
 
 a.card {
@@ -377,6 +385,7 @@ a.card {
 
 .field-row > * {
   flex: 1;
+  min-width: 0;
 }
 
 details.opcoes {
@@ -430,6 +439,11 @@ details.opcoes .opcoes-corpo {
   align-items: center;
   justify-content: space-between;
   gap: 10px;
+  min-width: 0;
+}
+
+.row > * {
+  min-width: 0;
 }
 
 .badge {
