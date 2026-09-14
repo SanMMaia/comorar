@@ -10,6 +10,8 @@ import {
   urlComprovante,
 } from '../lib/comprovante'
 import { parseCentavos } from '../lib/format'
+import { lerComprovante } from '../lib/ocr'
+import type { ResultadoOCR } from '../lib/ocr'
 import type { Categoria, Despesa, Rateio, Recorrencia, RegraRateio, TipoRateio } from '../types'
 
 const categorias: Categoria[] = ['aluguel', 'luz', 'agua', 'internet', 'mercado', 'outro']
@@ -71,6 +73,10 @@ export function DespesaAvulsa() {
   const [comprovanteExistente, setComprovanteExistente] = useState<string | null>(null)
   const [comprovanteUrlExistente, setComprovanteUrlExistente] = useState<string | null>(null)
   const [removerAnexo, setRemoverAnexo] = useState(false)
+  const [comprovantePath, setComprovantePath] = useState<string | null>(null)
+  const [ocrStatus, setOcrStatus] = useState<'ocioso' | 'processando' | 'ok' | 'falha'>('ocioso')
+  const [ocrDados, setOcrDados] = useState<ResultadoOCR | null>(null)
+  const [salvoOK, setSalvoOK] = useState(false)
   const [carregandoEdit, setCarregandoEdit] = useState(editando)
   const comprovanteUrl = useMemo(
     () => (comprovante ? URL.createObjectURL(comprovante) : null),
@@ -140,7 +146,37 @@ export function DespesaAvulsa() {
     }
   }, [id, casa, minhaMoradorId, moradores])
 
-  const voltar = () => navigate(-1)
+  const processarOCR = async (arquivo: File) => {
+    if (!casa) return
+    setOcrStatus('processando')
+    setErro('')
+    try {
+      let path = comprovantePath
+      if (!path) {
+        path = await subirComprovante(casa.id, arquivo)
+        setComprovantePath(path)
+      }
+      const dados = await lerComprovante(path)
+      if (!dados) {
+        setOcrStatus('falha')
+        return
+      }
+      setOcrDados(dados)
+      if (dados.fornecedor) setFornecedor(dados.fornecedor)
+      if (dados.valor && dados.valor > 0) setValor(String(dados.valor).replace('.', ','))
+      if (dados.data) setData(dados.data)
+      if (dados.categoria) setCategoria(dados.categoria)
+      setOcrStatus('ok')
+    } catch (err) {
+      console.error('OCR falhou:', err)
+      setOcrStatus('falha')
+    }
+  }
+
+  const voltar = () => {
+    if (comprovantePath && !salvoOK) void removerComprovante(comprovantePath)
+    navigate(-1)
+  }
 
   const salvar = async (e: FormEvent) => {
     e.preventDefault()
@@ -165,8 +201,16 @@ export function DespesaAvulsa() {
 
     try {
       let comprovante_url: string | null = comprovanteExistente
-      if (comprovante) comprovante_url = await subirComprovante(casa.id, comprovante)
-      if (removerAnexo) comprovante_url = null
+      if (comprovantePath) comprovante_url = comprovantePath
+      else if (comprovante) comprovante_url = await subirComprovante(casa.id, comprovante)
+      if (removerAnexo) {
+        comprovante_url = null
+        if (comprovantePath) {
+          await removerComprovante(comprovantePath)
+          setComprovantePath(null)
+          setOcrStatus('ocioso')
+        }
+      }
 
       let despesaId = id
       if (editando && id) {
@@ -181,11 +225,12 @@ export function DespesaAvulsa() {
             tipo_rateio: tipoRateio,
             data,
             comprovante_url,
+            ocr_resultado: ocrDados,
           })
           .eq('id', id)
         if (error) throw error
         await supabase.from('rateios').delete().eq('despesa_id', id)
-        if (comprovanteExistente && (comprovante || removerAnexo)) {
+        if (comprovanteExistente && (comprovante || comprovantePath || removerAnexo)) {
           await removerComprovante(comprovanteExistente)
         }
       } else {
@@ -202,6 +247,7 @@ export function DespesaAvulsa() {
             status: 'confirmada',
             data,
             comprovante_url,
+            ocr_resultado: ocrDados,
           })
           .select('id')
           .single()
@@ -220,6 +266,8 @@ export function DespesaAvulsa() {
         })),
       )
       if (errRateios) throw errRateios
+
+      setSalvoOK(true)
 
       if (editando) navigate(-1)
       else navigate('/mes')
@@ -370,12 +418,39 @@ export function DespesaAvulsa() {
               type="file"
               accept="image/*"
               onChange={(e) => {
-                setComprovante(e.target.files?.[0] ?? null)
-                if (e.target.files?.[0]) setRemoverAnexo(false)
+                const arquivo = e.target.files?.[0] ?? null
+                setComprovante(arquivo)
+                if (arquivo) {
+                  setRemoverAnexo(false)
+                  setOcrDados(null)
+                  void processarOCR(arquivo)
+                } else {
+                  setOcrStatus('ocioso')
+                }
               }}
             />
             {comprovanteUrl && (
               <img src={comprovanteUrl} alt="Comprovante" style={{ width: '100%', borderRadius: 8, marginTop: 8, display: 'block' }} />
+            )}
+            {ocrStatus === 'processando' && (
+              <p className="small muted mt">🔎 Lendo comprovante…</p>
+            )}
+            {ocrStatus === 'ok' && (
+              <p className="small muted mt">✓ Dados preenchidos pelo OCR — confira antes de salvar.</p>
+            )}
+            {ocrStatus === 'falha' && (
+              <div className="mt">
+                <p className="small muted">Não foi possível ler o comprovante automaticamente — preencha manualmente.</p>
+                {comprovante && (
+                  <button
+                    type="button"
+                    className="btn btn-sm btn-secondary mt"
+                    onClick={() => void processarOCR(comprovante)}
+                  >
+                    Tentar novamente
+                  </button>
+                )}
+              </div>
             )}
             {editando && comprovanteUrlExistente && comprovanteExistente && !removerAnexo && (
               <div className="mt">
