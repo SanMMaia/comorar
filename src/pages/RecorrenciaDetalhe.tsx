@@ -27,6 +27,7 @@ export function RecorrenciaDetalhe() {
   const [enviando, setEnviando] = useState(false)
   const [editando, setEditando] = useState(false)
   const [formEdit, setFormEdit] = useState<Frm | null>(null)
+  const [aberto, setAberto] = useState(false)
 
   const souOwner = moradores.find((m) => m.id === minhaMoradorId)?.role === 'owner'
 
@@ -66,7 +67,7 @@ export function RecorrenciaDetalhe() {
     if (!window.confirm(`Excluir a recorrência "${rec.fornecedor}" e suas previsões futuras? Os lançamentos já confirmados serão mantidos.`)) return
     await supabase.from('despesas').delete().eq('origem_recorrencia_id', rec.id).eq('status', 'prevista')
     await supabase.from('recorrencias').delete().eq('id', rec.id)
-    navigate('/projecao', { replace: true })
+    navigate('/perfil/contas', { replace: true })
   }
 
   const ignorarMes = async (d: Despesa) => {
@@ -131,16 +132,33 @@ export function RecorrenciaDetalhe() {
         <div className="empty">{erro || 'Recorrência não encontrada.'}</div>
       ) : (
         <>
-          <div className="row">
-            <h1 style={{ fontSize: 20, margin: 0 }}>{rec.fornecedor}</h1>
-            {rec.ativa ? <span className="badge badge-ok">ativa</span> : <span className="badge badge-muted">inativa</span>}
-          </div>
-
-          <div className="card mt">
+          <div
+            className="card mt"
+            role="button"
+            tabIndex={0}
+            aria-expanded={aberto}
+            onClick={() => setAberto((v) => !v)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault()
+                setAberto((v) => !v)
+              }
+            }}
+            style={{ cursor: 'pointer' }}
+          >
             <div className="row">
               <div>
+                <div className="row" style={{ gap: 8, marginBottom: 4 }}>
+                  <h1 style={{ fontSize: 20, margin: 0 }}>{rec.fornecedor}</h1>
+                  {rec.ativa ? (
+                    <span className="badge badge-ok">ativa</span>
+                  ) : (
+                    <span className="badge badge-muted">inativa</span>
+                  )}
+                </div>
                 <div className="small muted">
                   {labelsCat[rec.categoria]} · dia {rec.dia_vencimento ?? '—'} · {labelsIntervalo[rec.intervalo]}
+                  {rec.data_fim ? ` · até ${dataBR(rec.data_fim)}` : ''}
                 </div>
                 {rec.descricao && <div className="small mt">{rec.descricao}</div>}
                 <div className="small muted mt">
@@ -154,8 +172,71 @@ export function RecorrenciaDetalhe() {
               <div style={{ textAlign: 'right' }}>
                 <strong className="mono" style={{ fontSize: 20 }}>{formatBR(rec.valor_previsto)}</strong>
                 <div className="small muted">valor previsto</div>
+                <div className="small" style={{ color: 'var(--accent)', marginTop: 8 }}>
+                  {aberto ? '▲ recolher' : '▼ editar'}
+                </div>
               </div>
             </div>
+
+            {aberto && (
+              <div className="mt">
+                {!souOwner ? (
+                  <div className="small muted">Somente o dono da casa edita esta recorrência.</div>
+                ) : editando && formEdit ? (
+                  <form
+                    onSubmit={(e) => {
+                      e.preventDefault()
+                      e.stopPropagation()
+                      void salvarEdicao()
+                    }}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <CamposForm
+                      f={formEdit}
+                      onChange={(p) => setFormEdit((prev) => (prev ? { ...prev, ...p } : prev))}
+                      moradores={moradores}
+                    />
+                    {erro && <div className="error-box">{erro}</div>}
+                    <div className="row mt" style={{ gap: 8 }}>
+                      <button type="submit" className="btn btn-primary" disabled={enviando}>
+                        {enviando ? 'Salvando…' : 'Salvar e recalcular previsões'}
+                      </button>
+                      <button
+                        type="button"
+                        className="btn btn-secondary"
+                        onClick={() => {
+                          setEditando(false)
+                          setFormEdit(null)
+                          setErro('')
+                        }}
+                      >
+                        Cancelar
+                      </button>
+                    </div>
+                  </form>
+                ) : (
+                  <div className="row" style={{ gap: 8, flexWrap: 'wrap' }} onClick={(e) => e.stopPropagation()}>
+                    <button
+                      type="button"
+                      className="btn btn-sm btn-secondary"
+                      onClick={() => {
+                        setEditando(true)
+                        setFormEdit(frmDeRec(rec))
+                        setErro('')
+                      }}
+                    >
+                      Editar
+                    </button>
+                    <button type="button" className="btn btn-sm btn-secondary" onClick={() => alternarAtiva()}>
+                      {rec.ativa ? 'Desativar' : 'Ativar'}
+                    </button>
+                    <button type="button" className="btn btn-sm btn-danger" onClick={() => excluir()}>
+                      Excluir
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           <h2 style={{ fontSize: 15, marginTop: 20 }}>Lançamentos</h2>
@@ -185,55 +266,6 @@ export function RecorrenciaDetalhe() {
               </div>
             ))
           )}
-
-          {souOwner && (
-            <div className="mt" style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-              <button
-                type="button"
-                className="btn btn-sm btn-secondary"
-                onClick={() => {
-                  if (editando) {
-                    setEditando(false)
-                    setFormEdit(null)
-                  } else {
-                    setEditando(true)
-                    setFormEdit(frmDeRec(rec))
-                    setErro('')
-                  }
-                }}
-              >
-                {editando ? 'Cancelar edição' : 'Editar'}
-              </button>
-              <button type="button" className="btn btn-sm btn-secondary" onClick={() => alternarAtiva()}>
-                {rec.ativa ? 'Desativar' : 'Ativar'}
-              </button>
-              <button type="button" className="btn btn-sm btn-danger" onClick={() => excluir()}>
-                Excluir
-              </button>
-            </div>
-          )}
-
-          {editando && formEdit && (
-            <form
-              className="card mt"
-              onSubmit={(e) => {
-                e.preventDefault()
-                void salvarEdicao()
-              }}
-            >
-              <CamposForm
-                f={formEdit}
-                onChange={(p) => setFormEdit((prev) => (prev ? { ...prev, ...p } : prev))}
-                moradores={moradores}
-              />
-              {erro && <div className="error-box">{erro}</div>}
-              <button type="submit" className="btn btn-primary mt" disabled={enviando}>
-                {enviando ? 'Salvando…' : 'Salvar e recalcular previsões'}
-              </button>
-            </form>
-          )}
-
-          {erro && !editando && <div className="error-box mt">{erro}</div>}
         </>
       )}
     </>
