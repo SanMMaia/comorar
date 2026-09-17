@@ -85,6 +85,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
           email: string | null
           role: string | null
           tipo: string | null
+          chave_pix: string | null
         }) => ({
           id: p.id,
           user_id: p.user_id,
@@ -92,6 +93,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
           email: p.email ?? '',
           role: (p.role ?? 'member') === 'owner' ? 'owner' : 'member',
           tipo: (p.tipo ?? 'usuario') === 'extra' ? 'extra' : 'usuario',
+          chave_pix: p.chave_pix ?? null,
         }),
       )
       setMoradores(completo)

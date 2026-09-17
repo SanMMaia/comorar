@@ -84,6 +84,7 @@ export interface MoradorCompleto {
   email: string
   role: 'owner' | 'member'
   tipo: 'usuario' | 'extra'
+  chave_pix: string | null
 }
 
 export interface Notificacao {

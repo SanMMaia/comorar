@@ -29,6 +29,46 @@ export function Perfil() {
   const [erroNovo, setErroNovo] = useState('')
   const [enviandoNovo, setEnviandoNovo] = useState(false)
 
+  const minhaChave = moradores.find((m) => m.id === minhaMoradorId)?.chave_pix ?? ''
+  const [chavePixBox, setChavePixBox] = useState('')
+  const [editandoPix, setEditandoPix] = useState(false)
+  const [salvandoPix, setSalvandoPix] = useState(false)
+  const [msgPixCopia, setMsgPixCopia] = useState(false)
+  const [erroPix, setErroPix] = useState('')
+
+  const copiarTexto = async (texto: string) => {
+    try {
+      await navigator.clipboard.writeText(texto)
+    } catch {
+      const ta = document.createElement('textarea')
+      ta.value = texto
+      document.body.appendChild(ta)
+      ta.select()
+      document.execCommand('copy')
+      document.body.removeChild(ta)
+    }
+    setMsgPixCopia(true)
+    setTimeout(() => setMsgPixCopia(false), 2000)
+  }
+
+  const salvarPix = async () => {
+    if (!minhaMoradorId) return
+    const chave = chavePixBox.trim()
+    setSalvandoPix(true)
+    setErroPix('')
+    const { error } = await supabase
+      .from('casa_morador')
+      .update({ chave_pix: chave || null })
+      .eq('id', minhaMoradorId)
+    setSalvandoPix(false)
+    if (error) {
+      setErroPix('Não deu para salvar a chave.')
+      return
+    }
+    setEditandoPix(false)
+    await refreshCasa()
+  }
+
   const souOwner = moradores.find((m) => m.id === minhaMoradorId)?.role === 'owner'
 
   const mensagemConvite = () =>
@@ -218,6 +258,58 @@ export function Perfil() {
                   <span className="badge badge-muted" style={{ marginLeft: 6 }}>responsável</span>
                 )}
                 {m.email && <div className="small muted">{m.email}</div>}
+                {m.id === minhaMoradorId && (
+                  <div style={{ marginTop: 10 }}>
+                    <div className="small" style={{ fontWeight: 600 }}>Chave Pix (para receber acertos)</div>
+                    {editandoPix ? (
+                      <>
+                        <input
+                          value={chavePixBox}
+                          onChange={(e) => setChavePixBox(e.target.value)}
+                          placeholder="Ex.: (11) 99999-9999, email ou CPF"
+                        />
+                        {erroPix && <div className="erro-text">{erroPix}</div>}
+                        <button
+                          type="button"
+                          className={`btn btn-sm btn-primary mt${salvandoPix ? ' btn-spinner' : ''}`}
+                          disabled={salvandoPix}
+                          onClick={() => void salvarPix()}
+                        >
+                          {salvandoPix ? '' : 'Salvar'}
+                        </button>
+                      </>
+                    ) : (
+                      <div className="row mt" style={{ gap: 8 }}>
+                        <span className="small muted" style={{ wordBreak: 'break-all', flex: 1 }}>
+                          {minhaChave || 'Nenhuma chave cadastrada'}
+                        </span>
+                        {minhaChave && (
+                          <button type="button" className="btn btn-sm btn-secondary" onClick={() => void copiarTexto(minhaChave)}>
+                            {msgPixCopia ? 'Copiado ✓' : 'Copiar'}
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          className="btn btn-sm btn-secondary"
+                          onClick={() => {
+                            setChavePixBox(minhaChave)
+                            setEditandoPix(true)
+                          }}
+                        >
+                          {minhaChave ? 'Editar' : 'Adicionar'}
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
+                {m.id !== minhaMoradorId && m.chave_pix && (
+                  <div className="small mt" style={{ marginTop: 6 }}>
+                    <span className="muted" style={{ wordBreak: 'break-all' }}>Pix: {m.chave_pix}</span>{' '}
+                    <button type="button" className="btn btn-sm btn-secondary" onClick={() => void copiarTexto(m.chave_pix ?? '')}>
+                      {msgPixCopia ? 'Copiado ✓' : 'Copiar'}
+                    </button>
+                  </div>
+                )}
               </div>
               {souOwner && m.id !== minhaMoradorId && (
                 <button type="button" className="btn btn-sm btn-secondary" onClick={() => removerMorador(m.id)}>

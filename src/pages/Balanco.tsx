@@ -12,6 +12,7 @@ export function Balanco() {
   const [valorAcerto, setValorAcerto] = useState('')
   const [salvando, setSalvando] = useState(false)
   const [erro, setErro] = useState('')
+  const [msgPixCopia, setMsgPixCopia] = useState(false)
   const saldos = useMeuSaldo(souOwner ? null : (casa?.id ?? null), null, despesas)
 
   const meusSaldos = useMemo(
@@ -245,6 +246,31 @@ export function Balanco() {
                 ? 'Você paga agora. O valor será abatido das despesas em que deve.'
                 : `${nomeMorador(moradores, acertando.devedor_id)} paga agora. O valor é abatido das despesas em que deve.`}
             </div>
+
+            {acertando.devedor_id === minhaMoradorId &&
+              moradores.find((m) => m.id === acertando.credor_id)?.chave_pix && (
+                <div className="card mt" style={{ padding: 10 }}>
+                  <div className="small" style={{ fontWeight: 600 }}>Pix de {nomeMorador(moradores, acertando.credor_id)}</div>
+                  <div className="row mt" style={{ gap: 8 }}>
+                    <span className="small mono" style={{ wordBreak: 'break-all', flex: 1 }}>
+                      {moradores.find((m) => m.id === acertando.credor_id)?.chave_pix}
+                    </span>
+                    <button
+                      type="button"
+                      className="btn btn-sm btn-secondary"
+                      onClick={() => {
+                        const pix = moradores.find((m) => m.id === acertando.credor_id)?.chave_pix
+                        if (!pix) return
+                        void navigator.clipboard.writeText(pix)
+                        setMsgPixCopia(true)
+                        setTimeout(() => setMsgPixCopia(false), 2000)
+                      }}
+                    >
+                      {msgPixCopia ? 'Copiado ✓' : 'Copiar'}
+                    </button>
+                  </div>
+                </div>
+              )}
 
             <label>Valor do acerto</label>
             <input
