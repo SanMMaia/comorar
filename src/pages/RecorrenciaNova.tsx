@@ -47,7 +47,7 @@ export function RecorrenciaNova() {
       if (error) throw error
       await gravarPrevistas(casa.id, rec as Recorrencia)
       invalidarCacheDespesas(casa.id)
-      navigate('/projecao')
+      navigate('/perfil/contas')
     } catch (err) {
       setErro(err instanceof Error ? err.message : 'Erro ao criar recorrência')
     } finally {

@@ -147,8 +147,10 @@ export function Balanco() {
 
   return (
     <>
-      <h1 className="page-title">Balanço da casa</h1>
-      <p className="page-sub">Quem deve para quem, no total</p>
+      <h1 className="page-title">Meu saldo</h1>
+      <p className="page-sub">
+        {souOwner ? 'Saldos e sugestões de pagamento de toda a casa' : 'Suas pendências e o que devem para você'}
+      </p>
 
       <div className="card saldo-card">
         <div className="linha">{meuSaldo >= 0 ? 'Devem para você' : 'Você deve'}</div>

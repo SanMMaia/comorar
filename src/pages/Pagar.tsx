@@ -11,6 +11,7 @@ import type { ResultadoOCR } from '../lib/ocr'
 import { formatBR, dataBR, mesAnoBR, parseCentavos, estaAtrasada } from '../lib/format'
 import type { Despesa, Recorrencia, RegraRateio, TipoRateio } from '../types'
 import { labelCategoria } from '../lib/categorias'
+import { DespesaAvulsa } from './DespesaAvulsa'
 
 export function Pagar() {
   const { casa, user, minhaMoradorId, moradores } = useApp()
@@ -378,16 +379,21 @@ export function Pagar() {
   }
 
   const [visao, setVisao] = useState<'mes' | 'futuras'>('mes')
+  const [modoAvulsa, setModoAvulsa] = useState(false)
 
   if (carregando) return <div className="empty">Carregando…</div>
+
+  if (modoAvulsa) {
+    return <DespesaAvulsa />
+  }
 
   return (
     <>
       <div className="row">
         <h1 className="bar-title">Pagar</h1>
-        <Link to="/despesa/nova" viewTransition className="btn btn-sm btn-primary">
+        <button type="button" className="btn btn-sm btn-primary" onClick={() => setModoAvulsa(true)}>
           + Avulsa
-        </Link>
+        </button>
       </div>
 
       <div className="seg mt">
@@ -732,7 +738,7 @@ export function Pagar() {
 
       <p className="small muted center mt">
         Gerencie recorrências (editar, datas, ignorar) em{' '}
-        <Link to="/projecao" viewTransition className="btn btn-sm btn-secondary">
+        <Link to="/perfil/contas" viewTransition className="btn btn-sm btn-secondary">
           Contas
         </Link>
       </p>

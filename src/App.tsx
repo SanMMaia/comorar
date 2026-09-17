@@ -13,6 +13,8 @@ const Pagar = lazy(() => import('./pages/Pagar').then((m) => ({ default: m.Pagar
 const Projecao = lazy(() => import('./pages/Projecao').then((m) => ({ default: m.Projecao })))
 const Regras = lazy(() => import('./pages/Regras').then((m) => ({ default: m.Regras })))
 const Categorias = lazy(() => import('./pages/Categorias').then((m) => ({ default: m.Categorias })))
+const Relatorios = lazy(() => import('./pages/Relatorios').then((m) => ({ default: m.Relatorios })))
+const Orcamento = lazy(() => import('./pages/Orcamento').then((m) => ({ default: m.Orcamento })))
 const RecorrenciaDetalhe = lazy(() => import('./pages/RecorrenciaDetalhe').then((m) => ({ default: m.RecorrenciaDetalhe })))
 const RecorrenciaEditar = lazy(() => import('./pages/RecorrenciaEditar').then((m) => ({ default: m.RecorrenciaEditar })))
 const RecorrenciaNova = lazy(() => import('./pages/RecorrenciaNova').then((m) => ({ default: m.RecorrenciaNova })))
@@ -70,12 +72,13 @@ function Protegido() {
       <Route path="/perfil/contas" element={<Projecao />} />
         <Route path="/perfil/regras" element={<Regras />} />
         <Route path="/perfil/categorias" element={<Categorias />} />
+        <Route path="/perfil/relatorios" element={<Relatorios />} />
+        <Route path="/perfil/orcamento" element={<Orcamento />} />
         <Route path="/recorrencia/nova" element={<RecorrenciaNova />} />
         <Route path="/recorrencia/:id" element={<RecorrenciaDetalhe />} />
         <Route path="/recorrencia/:id/editar" element={<RecorrenciaEditar />} />
         <Route path="/recorrencias" element={<Navigate to="/perfil/contas" replace />} />
         <Route path="/perfil" element={<Perfil />} />
-        <Route path="/despesa/nova" element={<DespesaAvulsa />} />
         <Route path="/despesa/:id/editar" element={<DespesaAvulsa />} />
         <Route path="/despesa/:id" element={<DespesaDetalhe />} />
         <Route path="*" element={<Navigate to="/" replace />} />

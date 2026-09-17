@@ -171,15 +171,38 @@ export function Perfil() {
       </div>
 
       {souOwner && (
-        <Link to="/perfil/contas" viewTransition className="card mt" style={{ display: 'block' }}>
-          <div className="item-linha">
-            <div className="item-corpo">
-              <strong>Contas recorrentes</strong>
-              <div className="small muted">Gerencie recorrências e lançamentos previstos</div>
+        <>
+          <Link to="/perfil/contas" viewTransition className="card mt" style={{ display: 'block' }}>
+            <div className="item-linha">
+              <div className="item-corpo">
+                <strong>Contas recorrentes</strong>
+                <div className="small muted">Gerencie recorrências e lançamentos previstos</div>
+              </div>
+              <span className="item-seta" aria-hidden>›</span>
             </div>
-            <span className="item-seta" aria-hidden>›</span>
+          </Link>
+
+          <div className="card-flush mt">
+            <Link to="/perfil/relatorios" viewTransition className="list-line">
+              <div className="item-linha">
+                <div className="item-corpo">
+                  <strong>Relatórios</strong>
+                  <div className="small muted">Comparativo mês a mês da casa</div>
+                </div>
+                <span className="item-seta" aria-hidden>›</span>
+              </div>
+            </Link>
+            <Link to="/perfil/orcamento" viewTransition className="list-line">
+              <div className="item-linha">
+                <div className="item-corpo">
+                  <strong>Orçamento</strong>
+                  <div className="small muted">Limites por categoria e aviso de estouro</div>
+                </div>
+                <span className="item-seta" aria-hidden>›</span>
+              </div>
+            </Link>
           </div>
-        </Link>
+        </>
       )}
 
       <h2 className="section-title" style={{ marginTop: 20 }}>Moradores</h2>

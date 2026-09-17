@@ -180,7 +180,13 @@ export function Projecao() {
               {aberto && (
                 <div style={{ padding: '0 14px 8px' }}>
                   {grupo.lancamentos.map((d) => (
-                    <div className="row" key={d.id} style={{ padding: '6px 0', borderTop: '1px solid var(--border)' }}>
+                    <Link
+                      to={`/despesa/${d.id}`}
+                      viewTransition
+                      key={d.id}
+                      className="row clicavel"
+                      style={{ padding: '6px 0', borderTop: '1px solid var(--border)', textDecoration: 'none', color: 'inherit' }}
+                    >
                       <div className="small">
                         <strong>{d.fornecedor}</strong>
                         <span className="muted"> · {dataBR(d.data)}</span>
@@ -190,11 +196,19 @@ export function Projecao() {
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                         <strong className="mono small">{formatBR(d.valor)}</strong>
-                        <button type="button" className="btn btn-sm btn-secondary" onClick={() => ignorarMes(d)}>
+                        <button
+                          type="button"
+                          className="btn btn-sm btn-secondary"
+                          onClick={(e) => {
+                            e.preventDefault()
+                            e.stopPropagation()
+                            void ignorarMes(d)
+                          }}
+                        >
                           Ignorar
                         </button>
                       </div>
-                    </div>
+                    </Link>
                   ))}
                 </div>
               )}

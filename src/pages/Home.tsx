@@ -1,10 +1,11 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useApp, nomeMorador } from '../state/AppContext'
 import { useDespesas, useMeuSaldo } from '../lib/dados'
 import { supabase } from '../lib/supabase'
 import { formatBR, dataBR, mesAnoBR, estaAtrasada, mesAtual, mesChave } from '../lib/format'
 import { labelCategoria } from '../lib/categorias'
+import type { Recorrencia } from '../types'
 
 export function Home() {
   const { casa, user, minhaMoradorId, moradores, loading, souOwner } = useApp()
@@ -13,6 +14,17 @@ export function Home() {
   const [mantendo, setMantendo] = useState(false)
   const chaveAtual = mesAtual()
   const saldos = useMeuSaldo(souOwner ? null : (casa?.id ?? null), chaveAtual, despesas)
+
+  const [recorrencias, setRecorrencias] = useState<Recorrencia[]>([])
+
+  useEffect(() => {
+    if (!casa) return
+    supabase
+      .from('recorrencias')
+      .select('*')
+      .eq('casa_id', casa.id)
+      .then(({ data }) => setRecorrencias((data ?? []) as Recorrencia[]))
+  }, [casa])
 
   const { totalMes, vcDeve, devemAVoce } = useMemo(() => {
     const uid = minhaMoradorId
@@ -52,10 +64,19 @@ export function Home() {
 
   const previstasMes = useMemo(() => {
     const chaveAtual = mesAtual()
+    const uid = minhaMoradorId
     return despesas
       .filter((d) => d.status === 'prevista' && mesChave(d.data) === chaveAtual)
+      .filter((d) => {
+        if (souOwner) return true
+        if (!uid) return false
+        if (d.rateios.some((r) => r.morador_id === uid)) return true
+        const rec = recorrencias.find((r) => r.id === d.origem_recorrencia_id)
+        if (!rec) return false
+        return rec.tipo_rateio === 'igual' || rec.pagador_padrao === uid
+      })
       .sort((a, b) => a.data.localeCompare(b.data))
-  }, [despesas])
+  }, [despesas, recorrencias, minhaMoradorId, souOwner])
 
   const totalPrevisto = useMemo(() => previstasMes.reduce((a, b) => a + b.valor, 0), [previstasMes])
 
@@ -201,8 +222,8 @@ export function Home() {
 
       {souOwner && (
         <p className="center small muted mt">
-          Cadastre <Link to="/projecao" viewTransition>contas recorrentes</Link> e veja as{' '}
-          <Link to="/projecao" viewTransition>próximas contas</Link> automaticamente.
+          Cadastre <Link to="/perfil/contas" viewTransition>contas recorrentes</Link> para as próximas contas
+          aparecerem aqui automaticamente.
         </p>
       )}
     </>
