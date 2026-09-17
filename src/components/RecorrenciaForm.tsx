@@ -33,11 +33,13 @@ export function CamposForm({
       </div>
 
       <div className="field-row">
-        <div>
-          <label>Dia de vencimento</label>
-          <input type="number" min={1} max={31} value={f.dia} onChange={(e) => onChange({ dia: e.target.value })} />
-        </div>
-        <div>
+        {f.intervalo === 'mensal' && (
+          <div>
+            <label>Dia de vencimento</label>
+            <input type="number" min={1} max={31} value={f.dia} onChange={(e) => onChange({ dia: e.target.value })} />
+          </div>
+        )}
+        <div style={f.intervalo === 'mensal' ? undefined : { display: 'contents' }}>
           <label>Repetição</label>
           <select value={f.intervalo} onChange={(e) => onChange({ intervalo: e.target.value as IntervaloRecorrencia })}>
             <option value="mensal">Mensal</option>

@@ -51,8 +51,10 @@ export function validarFrm(f: Frm): string | null {
   if (!f.fornecedor.trim()) return 'Informe o fornecedor'
   const v = parseCentavos(f.valor)
   if (v === null || v <= 0) return 'Informe um valor previsto válido'
-  const dia = Number(f.dia)
-  if (!Number.isInteger(dia) || dia < 1 || dia > 31) return 'Dia de vencimento inválido'
+  if (f.intervalo === 'mensal') {
+    const dia = Number(f.dia)
+    if (!Number.isInteger(dia) || dia < 1 || dia > 31) return 'Dia de vencimento inválido'
+  }
   if (f.dataFim && f.dataInicio && f.dataFim < f.dataInicio)
     return 'A data final deve ser depois da data de início'
   return null

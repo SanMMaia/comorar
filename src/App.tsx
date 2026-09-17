@@ -1,22 +1,23 @@
-import { useEffect } from 'react'
+import { lazy, Suspense, useEffect } from 'react'
 import { Navigate, Route, Routes, useLocation, useNavigationType } from 'react-router-dom'
 import { AppProvider, useApp } from './state/AppContext'
 import { Layout } from './components/Layout'
-import { Login } from './pages/Login'
-import { Onboarding } from './pages/Onboarding'
 import { Home } from './pages/Home'
-import { Pagar } from './pages/Pagar'
 import { ListaMensal } from './pages/ListaMensal'
 import { Balanco } from './pages/Balanco'
-import { Projecao } from './pages/Projecao'
-import { Regras } from './pages/Regras'
-import { Categorias } from './pages/Categorias'
-import { RecorrenciaDetalhe } from './pages/RecorrenciaDetalhe'
-import { RecorrenciaEditar } from './pages/RecorrenciaEditar'
-import { RecorrenciaNova } from './pages/RecorrenciaNova'
-import { Perfil } from './pages/Perfil'
-import { DespesaDetalhe } from './pages/DespesaDetalhe'
-import { DespesaAvulsa } from './pages/DespesaAvulsa'
+import { Login } from './pages/Login'
+import { Onboarding } from './pages/Onboarding'
+
+const Pagar = lazy(() => import('./pages/Pagar').then((m) => ({ default: m.Pagar })))
+const Projecao = lazy(() => import('./pages/Projecao').then((m) => ({ default: m.Projecao })))
+const Regras = lazy(() => import('./pages/Regras').then((m) => ({ default: m.Regras })))
+const Categorias = lazy(() => import('./pages/Categorias').then((m) => ({ default: m.Categorias })))
+const RecorrenciaDetalhe = lazy(() => import('./pages/RecorrenciaDetalhe').then((m) => ({ default: m.RecorrenciaDetalhe })))
+const RecorrenciaEditar = lazy(() => import('./pages/RecorrenciaEditar').then((m) => ({ default: m.RecorrenciaEditar })))
+const RecorrenciaNova = lazy(() => import('./pages/RecorrenciaNova').then((m) => ({ default: m.RecorrenciaNova })))
+const Perfil = lazy(() => import('./pages/Perfil').then((m) => ({ default: m.Perfil })))
+const DespesaDetalhe = lazy(() => import('./pages/DespesaDetalhe').then((m) => ({ default: m.DespesaDetalhe })))
+const DespesaAvulsa = lazy(() => import('./pages/DespesaAvulsa').then((m) => ({ default: m.DespesaAvulsa })))
 
 function Rotas() {
   const { loading, user } = useApp()
@@ -25,13 +26,15 @@ function Rotas() {
     return <div className="empty">Carregando…</div>
   }
   return (
-    <Routes>
-      <Route
-        path="/login"
-        element={user ? <Navigate to="/" replace /> : <Login />}
-      />
-      <Route path="/*" element={user ? <Protegido /> : <Navigate to="/login" replace />} />
-    </Routes>
+    <Suspense fallback={<div className="empty">Carregando…</div>}>
+      <Routes>
+        <Route
+          path="/login"
+          element={user ? <Navigate to="/" replace /> : <Login />}
+        />
+        <Route path="/*" element={user ? <Protegido /> : <Navigate to="/login" replace />} />
+      </Routes>
+    </Suspense>
   )
 }
 
@@ -43,14 +46,17 @@ function Protegido() {
       return <div className="empty">Carregando…</div>
     }
     return (
-      <Routes>
-        <Route path="/onboarding" element={<Onboarding />} />
-        <Route path="*" element={<Navigate to="/onboarding" replace />} />
-      </Routes>
+      <Suspense fallback={<div className="empty">Carregando…</div>}>
+        <Routes>
+          <Route path="/onboarding" element={<Onboarding />} />
+          <Route path="*" element={<Navigate to="/onboarding" replace />} />
+        </Routes>
+      </Suspense>
     )
   }
   return (
-    <Routes>
+    <Suspense fallback={<div className="empty">Carregando…</div>}>
+      <Routes>
       <Route element={<Layout />}>
         <Route path="/" element={<Home />} />
         <Route path="/nova" element={<Pagar />} />
@@ -70,7 +76,8 @@ function Protegido() {
         <Route path="/despesa/:id" element={<DespesaDetalhe />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
-    </Routes>
+      </Routes>
+    </Suspense>
   )
 }
 
@@ -95,6 +102,13 @@ function SincronizarDirecao() {
 }
 
 export default function App() {
+  useEffect(() => {
+    const t = window.setTimeout(() => {
+      import('./pages/Pagar').catch(() => undefined)
+    }, 1200)
+    return () => window.clearTimeout(t)
+  }, [])
+
   return (
     <AppProvider>
       <SincronizarDirecao />
