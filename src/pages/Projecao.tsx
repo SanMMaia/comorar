@@ -74,9 +74,20 @@ export function Projecao() {
       .sort((a, b) => a.data.localeCompare(b.data))
 
   const ignorarMes = async (d: Despesa) => {
+    if (!window.confirm(`Ignorar "${d.fornecedor}" de ${dataBR(d.data)}?`)) return
     await supabase.from('despesas').update({ status: 'cancelada' }).eq('id', d.id)
+    setUltimaIgnorada(d)
     await recarregar()
   }
+
+  const desfazerIgnorar = async () => {
+    if (!ultimaIgnorada) return
+    await supabase.from('despesas').update({ status: 'prevista' }).eq('id', ultimaIgnorada.id)
+    setUltimaIgnorada(null)
+    await recarregar()
+  }
+
+  const [ultimaIgnorada, setUltimaIgnorada] = useState<Despesa | null>(null)
 
   if (carregando) return <div className="empty">Carregando…</div>
 
@@ -94,6 +105,17 @@ export function Projecao() {
         </Link>
       </div>
       <p className="small muted">Toque em uma conta para ver os lançamentos e gerenciar a recorrência.</p>
+
+      {ultimaIgnorada && (
+        <div className="card row mt" style={{ borderLeft: '4px solid var(--warn, #e0a92e)' }}>
+          <span className="small">
+            <strong>{ultimaIgnorada.fornecedor}</strong> ignorado.
+          </span>
+          <button type="button" className="btn btn-sm btn-secondary" onClick={() => void desfazerIgnorar()}>
+            Desfazer
+          </button>
+        </div>
+      )}
 
       {recorrencias.length === 0 ? (
         <div className="empty">Nenhuma recorrência cadastrada.</div>

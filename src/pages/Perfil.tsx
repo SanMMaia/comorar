@@ -79,6 +79,7 @@ export function Perfil() {
 
   const sairDaCasa = async () => {
     if (!casa || !user) return
+    if (!window.confirm(`Sair da casa "${casa.nome}"? Você precisará de um novo convite para voltar.`)) return
     await supabase.from('casa_morador').update({ ativo: false }).eq('casa_id', casa.id).eq('user_id', user.id)
     await refreshCasa()
     navigate('/onboarding')

@@ -83,8 +83,32 @@ export function RecorrenciaEditar() {
 
   const alternarAtiva = async () => {
     if (!rec) return
-    await supabase.from('recorrencias').update({ ativa: !rec.ativa }).eq('id', rec.id)
-    voltar()
+    const novoEstado = !rec.ativa
+    if (!novoEstado) {
+      if (!window.confirm(`Desativar "${rec.fornecedor}"? As previsões futuras serão removidas (os lançamentos pagos são mantidos).`))
+        return
+    }
+    setEnviando(true)
+    try {
+      await supabase
+        .from('despesas')
+        .delete()
+        .eq('origem_recorrencia_id', rec.id)
+        .eq('status', 'prevista')
+      const { data: atualizada, error } = await supabase
+        .from('recorrencias')
+        .update({ ativa: novoEstado })
+        .eq('id', rec.id)
+        .select('*')
+        .single()
+      if (error) throw error
+      if (novoEstado && casa) await gravarPrevistas(casa.id, atualizada as Recorrencia)
+      voltar()
+    } catch (err) {
+      setErro(err instanceof Error ? err.message : 'Erro ao alterar recorrência')
+    } finally {
+      setEnviando(false)
+    }
   }
 
   const excluir = async () => {
@@ -157,8 +181,8 @@ export function RecorrenciaEditar() {
             style={{ gap: 8, flexWrap: 'wrap' }}
             onClick={(e) => e.stopPropagation()}
           >
-            <button type="button" className="btn btn-sm btn-secondary" onClick={() => void alternarAtiva()}>
-              {rec.ativa ? 'Desativar' : 'Ativar'}
+            <button type="button" className="btn btn-sm btn-secondary" disabled={enviando} onClick={() => void alternarAtiva()}>
+              {enviando ? 'Salvando…' : rec.ativa ? 'Desativar' : 'Ativar'}
             </button>
             <button type="button" className="btn btn-sm btn-danger" onClick={() => void excluir()}>
               Excluir

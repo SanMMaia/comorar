@@ -9,7 +9,7 @@ import { lerBoletoLocal, onOcrCarregamento } from '../lib/ocr-local'
 import { lerQrDaImagem, parsePixCopiaECola, type PixExtraido } from '../lib/pix'
 import type { ResultadoOCR } from '../lib/ocr'
 import { formatBR, dataBR, mesAnoBR, parseCentavos, estaAtrasada } from '../lib/format'
-import type { Recorrencia, RegraRateio, TipoRateio } from '../types'
+import type { Despesa, Recorrencia, RegraRateio, TipoRateio } from '../types'
 import { labelCategoria } from '../lib/categorias'
 
 export function Pagar() {
@@ -101,6 +101,7 @@ export function Pagar() {
   const [comprovantePath, setComprovantePath] = useState<string | null>(null)
   const [ocrStatus, setOcrStatus] = useState<'ocioso' | 'processando' | 'ok' | 'falha'>('ocioso')
   const [ocrDados, setOcrDados] = useState<ResultadoOCR | null>(null)
+  const [ultimaIgnorada, setUltimaIgnorada] = useState<Despesa | null>(null)
 
   const [boletoId, setBoletoId] = useState<string | null>(null)
   const [boletoArquivo, setBoletoArquivo] = useState<File | null>(null)
@@ -358,10 +359,21 @@ export function Pagar() {
   }
 
   const ignorar = async (id: string) => {
+    const d = todasPrevistas.find((p) => p.id === id)
+    if (!d) return
+    if (!window.confirm(`Ignorar "${d.fornecedor}" de ${dataBR(d.data)}? Você pode desfazer em seguida.`)) return
     await supabase.from('despesas').update({ status: 'cancelada' }).eq('id', id)
     if (comprovantePath) await removerComprovante(comprovantePath)
     setComprovantePath(null)
     setPagandoId(null)
+    setUltimaIgnorada(d)
+    await recarregar()
+  }
+
+  const desfazerIgnorar = async () => {
+    if (!ultimaIgnorada) return
+    await supabase.from('despesas').update({ status: 'prevista' }).eq('id', ultimaIgnorada.id)
+    setUltimaIgnorada(null)
     await recarregar()
   }
 
@@ -395,6 +407,17 @@ export function Pagar() {
         </button>
       </div>
       <p className="small muted">Pague as contas do mês. Para adiantar uma conta futura, use a aba Próximas.</p>
+
+      {ultimaIgnorada && (
+        <div className="card row mt" style={{ borderLeft: '4px solid var(--warn, #e0a92e)' }}>
+          <span className="small">
+            <strong>{ultimaIgnorada.fornecedor}</strong> ignorado.
+          </span>
+          <button type="button" className="btn btn-sm btn-secondary" onClick={() => void desfazerIgnorar()}>
+            Desfazer
+          </button>
+        </div>
+      )}
 
       {visao === 'mes' ? (
         doMes.length === 0 ? (

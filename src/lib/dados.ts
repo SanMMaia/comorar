@@ -6,32 +6,54 @@ export interface DespesaComRateios extends Despesa {
   rateios: Rateio[]
 }
 
+const cacheDespesas = new Map<string, { despesas: DespesaComRateios[]; ts: number }>()
+const CACHE_TTL_MS = 30_000
+
 export function useDespesas(casaId: string | null) {
-  const [despesas, setDespesas] = useState<DespesaComRateios[]>([])
-  const [carregando, setCarregando] = useState(true)
+  const [despesas, setDespesas] = useState<DespesaComRateios[]>(() => {
+    const c = casaId ? cacheDespesas.get(casaId) : undefined
+    return c && Date.now() - c.ts < CACHE_TTL_MS ? c.despesas : []
+  })
+  const [carregando, setCarregando] = useState(() => {
+    const c = casaId ? cacheDespesas.get(casaId) : undefined
+    return !(c && Date.now() - c.ts < CACHE_TTL_MS)
+  })
 
-  const carregar = useCallback(async () => {
-    if (!casaId) {
-      setDespesas([])
+  const carregar = useCallback(
+    async (forcar = false) => {
+      if (!casaId) {
+        setDespesas([])
+        setCarregando(false)
+        return
+      }
+      const c = cacheDespesas.get(casaId)
+      if (!forcar && c && Date.now() - c.ts < CACHE_TTL_MS) {
+        setDespesas(c.despesas)
+        setCarregando(false)
+        return
+      }
+      setCarregando(true)
+      const { data, error } = await supabase
+        .from('despesas')
+        .select('*, rateios(*)')
+        .eq('casa_id', casaId)
+        .order('data', { ascending: false })
+
+      if (!error) {
+        const lista = (data ?? []) as unknown as DespesaComRateios[]
+        cacheDespesas.set(casaId, { despesas: lista, ts: Date.now() })
+        setDespesas(lista)
+      }
       setCarregando(false)
-      return
-    }
-    setCarregando(true)
-    const { data, error } = await supabase
-      .from('despesas')
-      .select('*, rateios(*)')
-      .eq('casa_id', casaId)
-      .order('data', { ascending: false })
-
-    if (!error) setDespesas((data ?? []) as unknown as DespesaComRateios[])
-    setCarregando(false)
-  }, [casaId])
+    },
+    [casaId],
+  )
 
   useEffect(() => {
     void carregar()
   }, [carregar])
 
-  return { despesas, carregando, recarregar: carregar }
+  return { despesas, carregando, recarregar: () => carregar(true) }
 }
 
 export interface ObrigacaoCalculada {
