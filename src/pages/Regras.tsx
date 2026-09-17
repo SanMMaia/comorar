@@ -9,6 +9,7 @@ export function Regras() {
   const { casa, moradores, minhaMoradorId } = useApp()
   const [percentuais, setPercentuais] = useState<Record<string, string>>({})
   const [salvo, setSalvo] = useState(false)
+  const [erro, setErro] = useState('')
 
   const souOwner = moradores.find((m) => m.id === minhaMoradorId)?.role === 'owner'
 
@@ -32,6 +33,14 @@ export function Regras() {
 
   const salvar = async () => {
     if (!casa) return
+    const somaTotal = moradores
+      .filter((m) => m.user_id)
+      .reduce((acc, m) => acc + (Number(percentuais[m.id]) || 0), 0)
+    if (Math.abs(somaTotal - 100) > 0.5) {
+      setErro(somaTotal === 0 ? 'Informe os percentuais de cada morador.' : `Percentuais somam ${somaTotal}% — revise para 100%`)
+      return
+    }
+    setErro('')
     const linhas = moradores
       .filter((m) => m.user_id)
       .map((m) => ({
@@ -64,6 +73,8 @@ export function Regras() {
         Percentual padrão das despesas do tipo "percentual". Somente moradores com conta podem ter
         taxa fixa.
       </p>
+
+      {erro && <div className="error-box">{erro}</div>}
 
       <div className="card">
         {!souOwner ? (

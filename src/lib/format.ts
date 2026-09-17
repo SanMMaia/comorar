@@ -26,6 +26,17 @@ export function hojeData(): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
 
+/** Chave YYYY-MM do mês corrente no fuso local (evita inconsistência UTC/local). */
+export function mesAtual(): string {
+  const d = new Date()
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+}
+
+/** Chave YYYY-MM a partir de uma data YYYY-MM-DD. */
+export function mesChave(data: string): string {
+  return data.slice(0, 7)
+}
+
 /** True se `data` (YYYY-MM-DD) já passou de hoje — lançamento vencido/atrasado. */
 export function estaAtrasada(data: string, hoje: string = hojeData()): boolean {
   return data < hoje

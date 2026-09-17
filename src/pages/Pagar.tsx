@@ -308,7 +308,7 @@ export function Pagar() {
       if (comprovantePath) comprovante_url = comprovantePath
       else if (comprovante) comprovante_url = await subirComprovante(casa.id, comprovante)
 
-      const { error: errUpd } = await supabase
+      const { data: despesaAtualizada, error: errUpd } = await supabase
         .from('despesas')
         .update({
           status: 'confirmada',
@@ -319,7 +319,15 @@ export function Pagar() {
           ocr_resultado: ocrDados,
         })
         .eq('id', d.id)
+        .eq('status', 'prevista')
+        .select('id')
       if (errUpd) throw errUpd
+      if (!despesaAtualizada || despesaAtualizada.length === 0) {
+        setErro('Pagamento já confirmado antes. Reabrindo a lista…')
+        setPagandoId(null)
+        await recarregar()
+        return
+      }
 
       const itens = calcularRateio(valorNum, moradores.map((m) => ({ user_id: m.id })), {
         regra: tipoRateioPag,

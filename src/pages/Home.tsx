@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { useApp, nomeMorador } from '../state/AppContext'
 import { useDespesas } from '../lib/dados'
-import { formatBR, dataBR, mesAnoBR, estaAtrasada } from '../lib/format'
+import { formatBR, dataBR, mesAnoBR, estaAtrasada, mesAtual, mesChave } from '../lib/format'
 import { labelCategoria } from '../lib/categorias'
 
 export function Home() {
@@ -11,13 +11,13 @@ export function Home() {
 
   const { totalMes, vcDeve, devemAVoce } = useMemo(() => {
     const uid = minhaMoradorId
-    const chaveAtual = new Date().toISOString().slice(0, 7)
+    const chaveAtual = mesAtual()
     let totalMes = 0
     let vcDeve = 0
     let devemAVoce = 0
     for (const d of despesas) {
       if (d.status !== 'confirmada') continue
-      if (d.data.slice(0, 7) !== chaveAtual) continue
+      if (mesChave(d.data) !== chaveAtual) continue
       totalMes += d.valor
       const aberto = d.rateios.filter((r) => !r.pago)
       for (const r of aberto) {
@@ -33,9 +33,9 @@ export function Home() {
   }, [despesas, minhaMoradorId])
 
   const previstasMes = useMemo(() => {
-    const chaveAtual = new Date().toISOString().slice(0, 7)
+    const chaveAtual = mesAtual()
     return despesas
-      .filter((d) => d.status === 'prevista' && d.data.slice(0, 7) === chaveAtual)
+      .filter((d) => d.status === 'prevista' && mesChave(d.data) === chaveAtual)
       .sort((a, b) => a.data.localeCompare(b.data))
   }, [despesas])
 

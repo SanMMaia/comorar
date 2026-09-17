@@ -55,11 +55,11 @@ export function Balanco() {
     const plano = planejarAcerto(pendentes, valorNum)
     const agora = new Date().toISOString()
 
-    for (const q of plano.quitar) {
+    if (plano.quitar.length > 0) {
       const { error } = await supabase
         .from('rateios')
         .update({ pago: true, pago_em: agora, confirmado_por: user?.id ?? null })
-        .eq('id', q.rateio_id)
+        .in('id', plano.quitar.map((q) => q.rateio_id))
       if (error) {
         setErro(error.message)
         setSalvando(false)
