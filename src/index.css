@@ -51,6 +51,11 @@
   box-sizing: border-box;
 }
 
+html {
+  background: var(--bg);
+  overscroll-behavior-y: none;
+}
+
 body {
   margin: 0;
   background: var(--bg);
