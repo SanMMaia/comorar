@@ -98,17 +98,17 @@ export function Notificacoes() {
               tabIndex={0}
               onKeyDown={(e) => e.key === 'Enter' && void abrir(n)}
             >
-              <div className="row">
+              <div className="item-linha">
                 <span className="notif-emoji" aria-hidden>{emojiTipo[n.tipo] ?? '🔔'}</span>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div className="row" style={{ display: 'flex' }}>
-                    <strong style={{ flex: 1, minWidth: 0 }}>{n.titulo}</strong>
+                <div className="item-corpo">
+                  <div className="item-titulo">
+                    <strong>{n.titulo}</strong>
                     <span className="small muted notif-tempo">{tempoRelativo(n.criado_em)}</span>
                   </div>
-                  <div className="small" style={{ marginTop: 2 }}>{n.corpo}</div>
+                  <div className="small muted" style={{ marginTop: 2 }}>{n.corpo}</div>
                 </div>
                 {!n.lida && <span className="notif-ponto" aria-hidden />}
-                <span className="small muted" aria-hidden>›</span>
+                <span className="item-seta" aria-hidden>›</span>
               </div>
             </div>
           ))}

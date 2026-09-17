@@ -71,14 +71,34 @@ export function Layout() {
   const [navVisivel, setNavVisivel] = useState(true)
 
   useEffect(() => {
-    let ultimoY = 0
-    const aoRolar = () => {
-      const y = window.scrollY
-      setNavVisivel(y <= ultimoY || y < 80)
+    let ultimoY = Math.max(0, window.scrollY)
+    let raf = 0
+
+    const avaliar = () => {
+      raf = 0
+      const y = Math.max(0, window.scrollY)
+      const restante = document.documentElement.scrollHeight - window.innerHeight - y
+      const descendo = y > ultimoY + 6
+      const subindo = y < ultimoY - 6
+      if (y < 72 || restante < 120 || subindo) {
+        setNavVisivel(true)
+      } else if (descendo) {
+        setNavVisivel(false)
+      }
       ultimoY = y
     }
+
+    const aoRolar = () => {
+      if (!raf) raf = requestAnimationFrame(avaliar)
+    }
+
     window.addEventListener('scroll', aoRolar, { passive: true })
-    return () => window.removeEventListener('scroll', aoRolar)
+    window.addEventListener('resize', aoRolar)
+    return () => {
+      window.removeEventListener('scroll', aoRolar)
+      window.removeEventListener('resize', aoRolar)
+      if (raf) cancelAnimationFrame(raf)
+    }
   }, [])
 
   const reTap = (event: React.MouseEvent, to: string) => {

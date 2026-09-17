@@ -429,7 +429,7 @@ export function Pagar() {
             </button>
           </div>
         ) : (
-          <div className="grid3 mt">
+          <div className="grid-cards mt">
             {doMes.map((d) => {
               const rec = recDe(d)
               return (
@@ -444,11 +444,11 @@ export function Pagar() {
                     {rec && <span className="badge badge-muted">recorrente</span>}
                     {d.boleto_url && <span className="badge badge-muted">boleto anexado</span>}
                   </div>
-                  <div className="row" style={{ gap: 4, marginTop: 8 }}>
-                    <button type="button" className="btn btn-sm btn-secondary" style={{ flex: 1 }} onClick={() => void abrirBoleto(d)}>
+                  <div className="grid-acoes">
+                    <button type="button" className="btn btn-sm btn-secondary" onClick={() => void abrirBoleto(d)}>
                       Boleto
                     </button>
-                    <button type="button" className="btn btn-sm btn-primary" style={{ flex: 1 }} onClick={() => abrirPagamento(d)}>
+                    <button type="button" className="btn btn-sm btn-primary" onClick={() => abrirPagamento(d)}>
                       Pagar
                     </button>
                   </div>
@@ -477,15 +477,19 @@ export function Pagar() {
                 </span>
               </div>
               {grupo.map((d) => (
-                <div className="row list-line" key={d.id}>
-                  <div className="small">
+                <div className="list-line" key={d.id}>
+                  <div className="item-linha">
+                    <div className="item-corpo small">
                       <Link to={`/despesa/${d.id}`} viewTransition style={{ textDecoration: 'none', color: 'inherit' }}>
                         <strong>{d.fornecedor}</strong>
                       </Link>
                       <span className="muted"> · {dataBR(d.data)}</span>
                     </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <strong className="mono small">{formatBR(d.valor)}</strong>
+                    <div className="item-lado">
+                      <strong className="mono">{formatBR(d.valor)}</strong>
+                    </div>
+                  </div>
+                  <div className="item-acoes">
                     <button type="button" className="btn btn-sm btn-secondary" onClick={() => void abrirBoleto(d)}>
                       Boleto
                     </button>

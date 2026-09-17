@@ -101,22 +101,20 @@ export function Home() {
           <div className="card-flush mt">
             {previstasMes.map((d) => (
               <Link to={`/despesa/${d.id}`} viewTransition key={d.id} className="list-line">
-                <div className="row">
-                  <div>
+                <div className="item-linha">
+                  <div className="item-corpo">
                     <strong>{d.fornecedor}</strong>
                     <div className="small muted">
                       {labelCategoria(d.categoria, casa?.categorias)} · {dataBR(d.data)}
                     </div>
                   </div>
-                  <div style={{ textAlign: 'right' }}>
+                  <div className="item-lado">
                     <strong className="mono">{formatBR(d.valor)}</strong>
                     {estaAtrasada(d.data) && (
-                      <div className="small mt">
-                        <span className="badge badge-danger">atrasado</span>
-                      </div>
+                      <span className="badge badge-danger">atrasado</span>
                     )}
                   </div>
-                  <span className="small muted">›</span>
+                  <span className="item-seta" aria-hidden>›</span>
                 </div>
               </Link>
             ))}
@@ -146,24 +144,25 @@ export function Home() {
               tabIndex={0}
               onKeyDown={(e) => e.key === 'Enter' && navigate(`/despesa/${d.id}`)}
             >
-              <div className="row">
-                <div>
+              <div className="item-linha">
+                <div className="item-corpo">
                   <strong>{d.fornecedor}</strong>
                   <div className="small muted">
                     {nomeMorador(moradores, d.pago_por)} pagou · {labelCategoria(d.categoria, casa?.categorias)}
                   </div>
                 </div>
-                <div style={{ textAlign: 'right' }}>
+                <div className="item-lado">
                   <strong className="mono">{formatBR(d.valor)}</strong>
-                  <div className="small muted">
-                    {minhaParte?.pago
-                      ? <span className="badge badge-ok">pago</span>
-                      : minhaParte
-                        ? <span className="badge badge-warn">sua parte {formatBR(minhaParte.valor_rateado)}</span>
-                        : '—'}
-                  </div>
+                  {minhaParte?.pago
+                    ? <span className="badge badge-ok">pago</span>
+                    : minhaParte
+                      ? <span className="badge badge-warn">sua parte {formatBR(minhaParte.valor_rateado)}</span>
+                      : <span className="small muted">—</span>}
                 </div>
-                {minhaParte && !minhaParte.pago && (
+                <span className="item-seta" aria-hidden>›</span>
+              </div>
+              {minhaParte && !minhaParte.pago && (
+                <div className="item-acoes">
                   <button
                     type="button"
                     className="btn btn-sm btn-secondary"
@@ -175,9 +174,8 @@ export function Home() {
                   >
                     {mantendo ? '…' : 'Marcar minha parte'}
                   </button>
-                )}
-                <span className="small muted">›</span>
-              </div>
+                </div>
+              )}
             </div>
           ))}
         </div>

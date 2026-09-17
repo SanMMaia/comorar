@@ -118,44 +118,52 @@ export function Projecao() {
       )}
 
       {recorrencias.length === 0 ? (
-        <div className="empty">Nenhuma recorrência cadastrada.</div>
+        <div className="empty">
+          <div className="empty-icone" aria-hidden>🔁</div>
+          <p>Nenhuma recorrência cadastrada.</p>
+        </div>
       ) : (
-        recorrencias.map((r) => {
-          const lancamentos = lancamentosDe(r.id)
-          return (
-            <Link to={`/recorrencia/${r.id}`} viewTransition key={r.id} className="card mt link-card">
-              <div className="row">
-                <div style={{ textAlign: 'left' }}>
-                  <strong>{r.fornecedor}</strong>
-                  <div className="small muted">
-                    {labelCategoria(r.categoria, casa?.categorias)} · dia {r.dia_vencimento ?? '—'} · {labelsIntervalo[r.intervalo]}
-                    {r.data_fim &&
-                      ` · até ${new Date(r.data_fim + 'T00:00:00').toLocaleDateString('pt-BR')}`}
+        <div className="card-flush mt">
+          {recorrencias.map((r) => {
+            const lancamentos = lancamentosDe(r.id)
+            return (
+              <Link to={`/recorrencia/${r.id}`} viewTransition key={r.id} className="list-line">
+                <div className="item-linha">
+                  <div className="item-corpo">
+                    <strong>{r.fornecedor}</strong>
+                    <div className="small muted">
+                      {labelCategoria(r.categoria, casa?.categorias)} · dia {r.dia_vencimento ?? '—'} · {labelsIntervalo[r.intervalo]}
+                      {r.data_fim &&
+                        ` · até ${new Date(r.data_fim + 'T00:00:00').toLocaleDateString('pt-BR')}`}
+                    </div>
                   </div>
-                </div>
-                <div style={{ textAlign: 'right' }}>
-                  <strong className="mono">{formatBR(r.valor_previsto)}</strong>
-                  <div className="small">
-                    {r.ativa ? <span className="badge badge-muted">{lancamentos.length} lançamento(s)</span> : <span className="badge badge-muted">inativa</span>}
+                  <div className="item-lado">
+                    <strong className="mono">{formatBR(r.valor_previsto)}</strong>
+                    {r.ativa
+                      ? <span className="badge badge-muted">{lancamentos.length} lançamento(s)</span>
+                      : <span className="badge badge-muted">inativa</span>}
                   </div>
+                  <span className="item-seta" aria-hidden>›</span>
                 </div>
-                <span className="small muted">›</span>
-              </div>
-            </Link>
-          )
-        })
+              </Link>
+            )
+          })}
+        </div>
       )}
 
-      <h2 style={{ fontSize: 15, marginTop: 24 }}>Próximas contas</h2>
+      <h2 className="section-title" style={{ marginTop: 24 }}>Próximas contas</h2>
       {previstas.length === 0 ? (
-        <div className="empty">Nenhuma previsão ativa. Crie uma recorrência acima para gerar.</div>
+        <div className="empty">
+          <div className="empty-icone" aria-hidden>📆</div>
+          <p>Nenhuma previsão ativa. Crie uma recorrência acima para gerar.</p>
+        </div>
       ) : (
         Array.from(previstasPorMes.entries()).map(([chave, grupo]) => {
           const aberto = mesesAbertos.has(chave)
           const [ano, mes] = chave.split('-').map(Number)
           return (
-            <div className="card" key={chave} style={{ padding: 0 }}>
-              <button type="button" className="link-row" style={{ padding: 14 }} onClick={() => alternarMes(chave)}>
+            <div className="card-flush" key={chave}>
+              <button type="button" className="link-row list-line" onClick={() => alternarMes(chave)}>
                 <div className="row">
                   <div style={{ textAlign: 'left' }}>
                     <strong>{mesAnoBR(new Date(ano, mes - 1, 1))}</strong>

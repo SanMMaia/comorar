@@ -102,9 +102,9 @@ export function Categorias() {
       )}
       {erro && <div className="error-box">{erro}</div>}
 
-      <div className="mt">
+      <div className="card-flush mt">
         {lista.map((c) => (
-          <div className="card" key={c.id}>
+          <div className="list-line" key={c.id}>
             {editandoId === c.id && souOwner ? (
               <div className="row">
                 <input
@@ -136,13 +136,13 @@ export function Categorias() {
                 </button>
               </div>
             ) : (
-              <div className="row">
-                <div style={{ flex: 1, minWidth: 0 }}>
+              <div className="item-linha">
+                <div className="item-corpo">
                   <strong>{c.label}</strong>
                   <div className="small muted">{c.id}</div>
                 </div>
                 {souOwner && (
-                  <div className="row" style={{ flex: 'none' }}>
+                  <div className="row" style={{ flex: 'none', gap: 8 }}>
                     <button
                       type="button"
                       className="btn btn-sm btn-secondary"

@@ -5,11 +5,30 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="apple-touch-icon" href="/icons/icon-180.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <meta name="theme-color" content="#0f766e" />
+    <meta name="theme-color" content="#f3f5f7" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="description" content="Comorar — divida as despesas da casa entre os moradores de forma justa." />
     <title>Comorar</title>
+    <script>
+      (function () {
+        try {
+          var pref = localStorage.getItem('comorar:tema') || 'sistema'
+          var escuro =
+            pref === 'escuro' ||
+            (pref === 'sistema' && window.matchMedia('(prefers-color-scheme: dark)').matches)
+          var tema = escuro ? 'escuro' : 'claro'
+          var html = document.documentElement
+          html.dataset.tema = tema
+          html.dataset.temaPref = pref
+          html.style.colorScheme = tema
+          var meta = document.querySelector('meta[name="theme-color"]')
+          if (meta) meta.setAttribute('content', escuro ? '#0c1116' : '#f3f5f7')
+        } catch (e) {
+          /* no-op */
+        }
+      })()
+    </script>
   </head>
   <body>
     <div id="root"></div>

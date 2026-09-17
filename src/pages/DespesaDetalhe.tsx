@@ -179,24 +179,28 @@ export function DespesaDetalhe() {
 
       {despesa.status === 'confirmada' && (
         <>
-          <h2 style={{ fontSize: 15, marginTop: 20 }}>Rateio</h2>
-          {despesa.rateios.map((r) => (
-            <div className="card" key={r.id}>
-              <div className="row">
-                <span>
-                  <strong>{nomeMorador(moradores, r.morador_id)}</strong>
-                  <span className="small muted"> deve {formatBR(r.valor_rateado)}</span>
-                </span>
-                {r.pago ? (
-                  <span className="badge badge-ok">pago</span>
-                ) : (
-                  <button type="button" className="btn btn-sm btn-secondary" onClick={() => marcarPago(r)}>
-                    Marcar pago
-                  </button>
-                )}
+          <h2 className="section-title" style={{ marginTop: 20 }}>Rateio</h2>
+          <div className="card-flush mt">
+            {despesa.rateios.map((r) => (
+              <div className="list-line" key={r.id}>
+                <div className="item-linha">
+                  <div className="item-corpo">
+                    <strong>{nomeMorador(moradores, r.morador_id)}</strong>
+                    <div className="small muted">deve {formatBR(r.valor_rateado)}</div>
+                  </div>
+                  <div className="item-lado">
+                    {r.pago ? (
+                      <span className="badge badge-ok">pago</span>
+                    ) : (
+                      <button type="button" className="btn btn-sm btn-secondary" onClick={() => marcarPago(r)}>
+                        Marcar pago
+                      </button>
+                    )}
+                  </div>
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </>
       )}
 

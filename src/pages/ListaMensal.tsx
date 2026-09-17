@@ -150,8 +150,8 @@ export function ListaMensal() {
                   tabIndex={0}
                   onKeyDown={(e) => e.key === 'Enter' && navigate(`/despesa/${d.id}`)}
                 >
-                  <div className="row">
-                    <div>
+                  <div className="item-linha">
+                    <div className="item-corpo">
                       <strong>{d.fornecedor}</strong>
                       <div className="small muted">
                         {labelCategoria(d.categoria, casa?.categorias)} · {dataBR(d.data)}
@@ -163,23 +163,24 @@ export function ListaMensal() {
                         </div>
                       )}
                     </div>
-                    <div style={{ textAlign: 'right' }}>
+                    <div className="item-lado">
                       <strong className="mono">{formatBR(d.valor)}</strong>
-                      <div className="small mt">
-                        {d.status === 'confirmada' && d.rateios.some((r) => !r.pago) && (
-                          <span className="badge badge-warn">
-                            {d.rateios.filter((r) => !r.pago).length} pendente(s)
-                          </span>
-                        )}
-                        {d.status === 'prevista' && estaAtrasada(d.data) && (
-                          <span className="badge badge-danger">atrasado</span>
-                        )}
-                        {d.status === 'prevista' && !estaAtrasada(d.data) && (
-                          <span className="badge badge-warn">previsto</span>
-                        )}
-                      </div>
+                      {d.status === 'confirmada' && d.rateios.some((r) => !r.pago) && (
+                        <span className="badge badge-warn">
+                          {d.rateios.filter((r) => !r.pago).length} pendente(s)
+                        </span>
+                      )}
+                      {d.status === 'prevista' && estaAtrasada(d.data) && (
+                        <span className="badge badge-danger">atrasado</span>
+                      )}
+                      {d.status === 'prevista' && !estaAtrasada(d.data) && (
+                        <span className="badge badge-warn">previsto</span>
+                      )}
                     </div>
-                    {minhaParte && (
+                    <span className="item-seta" aria-hidden>›</span>
+                  </div>
+                  {minhaParte && (
+                    <div className="item-acoes">
                       <button
                         type="button"
                         className="btn btn-sm btn-secondary"
@@ -191,9 +192,8 @@ export function ListaMensal() {
                       >
                         {mantendo ? '…' : 'Marcar minha parte'}
                       </button>
-                    )}
-                    <span className="small muted">›</span>
-                  </div>
+                    </div>
+                  )}
                 </div>
               )
             })}

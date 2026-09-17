@@ -146,13 +146,17 @@ export function Balanco() {
         <div className="card-flush mt">
           {transferencias.map((t, idx) => (
             <div className="list-line" key={idx}>
-              <div className="row">
-                <div>
+              <div className="item-linha">
+                <div className="item-corpo">
                   <strong>{nomeMorador(moradores, t.devedor_id)}</strong>
                   <span className="muted"> paga para </span>
                   <strong>{nomeMorador(moradores, t.credor_id)}</strong>
-                  <div className="small muted">{formatBR(t.valor)}</div>
                 </div>
+                <div className="item-lado">
+                  <strong className="mono">{formatBR(t.valor)}</strong>
+                </div>
+              </div>
+              <div className="item-acoes">
                 <button type="button" className="btn btn-sm btn-secondary" onClick={() => abrirAcerto(t)}>
                   Registrar pagamento
                 </button>

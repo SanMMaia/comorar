@@ -105,37 +105,45 @@ export function RecorrenciaDetalhe() {
             </div>
           </Link>
 
-          <h2 style={{ fontSize: 15, marginTop: 20 }}>Lançamentos</h2>
+          <h2 className="section-title" style={{ marginTop: 20 }}>Lançamentos</h2>
           {lancamentos.length === 0 ? (
-            <div className="empty">Nenhum lançamento ainda.</div>
+            <div className="empty">
+              <div className="empty-icone" aria-hidden>🧾</div>
+              <p>Nenhum lançamento ainda.</p>
+            </div>
           ) : (
-            lancamentos.map((d) => (
-              <div className="card" key={d.id}>
-                <div className="row">
-                  <span className="small">
-                    {dataBR(d.data)} · {formatBR(d.valor)}{' '}
-                    {d.status === 'confirmada' && <span className="badge badge-ok">pago</span>}
-                    {d.status === 'cancelada' && <span className="badge badge-muted">ignorado</span>}
-                    {d.status === 'prevista' && estaAtrasada(d.data) && (
-                      <span className="badge badge-danger">atrasado</span>
+            <div className="card-flush mt">
+              {lancamentos.map((d) => (
+                <div className="list-line" key={d.id}>
+                  <div className="item-linha">
+                    <div className="item-corpo small">
+                      <strong>{dataBR(d.data)}</strong>{' '}
+                      {d.status === 'confirmada' && <span className="badge badge-ok">pago</span>}
+                      {d.status === 'cancelada' && <span className="badge badge-muted">ignorado</span>}
+                      {d.status === 'prevista' && estaAtrasada(d.data) && (
+                        <span className="badge badge-danger">atrasado</span>
+                      )}
+                      {d.status === 'prevista' && !estaAtrasada(d.data) && (
+                        <span className="badge badge-warn">previsto</span>
+                      )}
+                    </div>
+                    <div className="item-lado">
+                      <strong className="mono">{formatBR(d.valor)}</strong>
+                    </div>
+                    {d.status === 'prevista' && (
+                      <button type="button" className="btn btn-sm btn-secondary" onClick={() => ignorarMes(d)}>
+                        Ignorar mês
+                      </button>
                     )}
-                    {d.status === 'prevista' && !estaAtrasada(d.data) && (
-                      <span className="badge badge-warn">previsto</span>
+                    {d.status === 'cancelada' && (
+                      <button type="button" className="btn btn-sm btn-secondary" onClick={() => reativarMes(d)}>
+                        Reativar
+                      </button>
                     )}
-                  </span>
-                  {d.status === 'prevista' && (
-                    <button type="button" className="btn btn-sm btn-secondary" onClick={() => ignorarMes(d)}>
-                      Ignorar mês
-                    </button>
-                  )}
-                  {d.status === 'cancelada' && (
-                    <button type="button" className="btn btn-sm btn-secondary" onClick={() => reativarMes(d)}>
-                      Reativar
-                    </button>
-                  )}
+                  </div>
                 </div>
-              </div>
-            ))
+              ))}
+            </div>
           )}
         </>
       )}

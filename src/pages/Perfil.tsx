@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useApp, nomeMorador } from '../state/AppContext'
+import { lerTemaPref, salvarTema, type TemaPref } from '../lib/tema'
 
 const linkApp = 'https://comorar.vercel.app'
 
@@ -10,6 +11,12 @@ export function Perfil() {
   const navigate = useNavigate()
 
   const [msgCopia, setMsgCopia] = useState(false)
+  const [tema, setTema] = useState<TemaPref>(lerTemaPref)
+
+  const trocarTema = (t: TemaPref) => {
+    setTema(t)
+    salvarTema(t)
+  }
 
   const [novoNome, setNovoNome] = useState('')
   const [novoEmail, setNovoEmail] = useState('')
@@ -122,12 +129,12 @@ export function Perfil() {
       </div>
 
       <Link to="/perfil/contas" viewTransition className="card mt" style={{ display: 'block' }}>
-        <div className="row">
-          <div>
+        <div className="item-linha">
+          <div className="item-corpo">
             <strong>Contas recorrentes</strong>
             <div className="small muted">Gerencie recorrências e lançamentos previstos</div>
           </div>
-          <span className="small muted" aria-hidden>›</span>
+          <span className="item-seta" aria-hidden>›</span>
         </div>
       </Link>
 
@@ -135,8 +142,8 @@ export function Perfil() {
       <div className="card-flush">
         {moradores.map((m) => (
           <div className="list-line" key={m.id}>
-            <div className="row">
-              <div>
+            <div className="item-linha">
+              <div className="item-corpo">
                 <strong>{m.nome}</strong>
                 {m.user_id === user?.id && <span className="badge badge-ok" style={{ marginLeft: 6 }}>você</span>}
                 {m.tipo === 'extra' && <span className="badge badge-muted" style={{ marginLeft: 6 }}>sem app</span>}
@@ -174,23 +181,46 @@ export function Perfil() {
         </div>
       )}
 
+      <div className="card mt">
+        <h2 className="section-title">Aparência</h2>
+        <p className="small muted" style={{ margin: '6px 0 12px' }}>
+          Escolha o tema do app ou acompanhe o do sistema.
+        </p>
+        <div className="seg seg-3">
+          {([
+            ['sistema', 'Sistema'],
+            ['claro', 'Claro'],
+            ['escuro', 'Escuro'],
+          ] as const).map(([valor, rotulo]) => (
+            <button
+              key={valor}
+              type="button"
+              className={tema === valor ? 'seg-on' : ''}
+              onClick={() => trocarTema(valor)}
+            >
+              {rotulo}
+            </button>
+          ))}
+        </div>
+      </div>
+
       <div className="card-flush mt">
         <Link to="/perfil/categorias" viewTransition className="list-line">
-          <div className="row">
-            <div>
+          <div className="item-linha">
+            <div className="item-corpo">
               <strong>Categorias de despesa</strong>
               <div className="small muted">Adicione, renomeie ou remova categorias</div>
             </div>
-            <span className="small muted" aria-hidden>›</span>
+            <span className="item-seta" aria-hidden>›</span>
           </div>
         </Link>
         <Link to="/perfil/regras" viewTransition className="list-line">
-          <div className="row">
-            <div>
+          <div className="item-linha">
+            <div className="item-corpo">
               <strong>Taxa fixa de rateio (%)</strong>
               <div className="small muted">Percentual padrão das despesas do tipo "percentual"</div>
             </div>
-            <span className="small muted" aria-hidden>›</span>
+            <span className="item-seta" aria-hidden>›</span>
           </div>
         </Link>
       </div>
