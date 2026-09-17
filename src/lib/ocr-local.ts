@@ -1,5 +1,6 @@
 import { createWorker } from 'tesseract.js'
 import type { ResultadoOCR } from './ocr'
+import { inferirCategoriaDoTexto } from './categorias'
 
 export type ResultadoLeituraLocal =
   | { ok: true; dados: ResultadoOCR }
@@ -74,6 +75,9 @@ function extrairDoTexto(texto: string): ResultadoOCR {
     }
     if (melhor > 0) dados.valor = Math.round(melhor * 100) / 100
   }
+
+  const categoria = inferirCategoriaDoTexto(texto)
+  if (categoria) dados.categoria = categoria
 
   for (const l of linhas) {
     if (/vencimen/i.test(l)) {

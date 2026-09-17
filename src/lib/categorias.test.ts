@@ -1,62 +1,39 @@
 import { describe, expect, it } from 'vitest'
-import {
-  CATEGORIAS_PADRAO,
-  categoriasEfetivas,
-  labelCategoria,
-  slugCategoria,
-} from './categorias'
-import type { CategoriaItem } from '../types'
+import { inferirCategoriaDoTexto } from './categorias'
 
-describe('categoriasEfetivas', () => {
-  it('usa as padrão quando não há lista custom', () => {
-    expect(categoriasEfetivas(null)).toEqual(CATEGORIAS_PADRAO)
-    expect(categoriasEfetivas(undefined)).toEqual(CATEGORIAS_PADRAO)
+describe('inferirCategoriaDoTexto', () => {
+  it('reconhece ENEL como luz', () => {
+    expect(
+      inferirCategoriaDoTexto('ENEL Distribuição Rio\nConta de energia\nVencimento 10/09/2026'),
+    ).toBe('luz')
   })
 
-  it('desconsidera valores inválidos e cai nas padrão', () => {
-    const lixo = [{ id: 'x' }, null, { id: 1, label: 'y' }] as unknown as CategoriaItem[]
-    expect(categoriasEfetivas(lixo)).toEqual(CATEGORIAS_PADRAO)
+  it('reconhece COELBA mesmo com acentos/variação', () => {
+    expect(inferirCategoriaDoTexto('Coélba — energia elétrica')).toBe('luz')
   })
 
-  it('remove duplicados mantendo a primeira ocorrência', () => {
-    const custom = [
-      { id: 'luz', label: 'Energia' },
-      { id: 'luz', label: 'Luz' },
-    ]
-    expect(categoriasEfetivas(custom)).toEqual([{ id: 'luz', label: 'Energia' }])
+  it('reconhece aluguel via imobiliária', () => {
+    expect(inferirCategoriaDoTexto('Imobiliária Centro Prime\nPagamento de aluguel')).toBe('aluguel')
   })
 
-  it('mantém a ordem da lista da casa', () => {
-    const custom = [
-      { id: 'outro', label: 'Outros' },
-      { id: 'mercado', label: 'Compras' },
-    ]
-    expect(categoriasEfetivas(custom)).toEqual(custom)
-  })
-})
-
-describe('labelCategoria', () => {
-  it('usa o label personalizado da casa', () => {
-    expect(labelCategoria('mercado', [{ id: 'mercado', label: 'Compras' }])).toBe('Compras')
+  it('reconhece mercado pelo fornecedor', () => {
+    expect(inferirCategoriaDoTexto('PÃO DE AÇÚCAR Supermercado\nTotal 123,45')).toBe('mercado')
   })
 
-  it('cai no label padrão quando a categoria foi removida da casa', () => {
-    expect(labelCategoria('aluguel', [{ id: 'outro', label: 'Outros' }])).toBe('Aluguel')
+  it('reconhece copasa como agua', () => {
+    expect(inferirCategoriaDoTexto('Companhia de Saneamento — COPASA\nFatura de água')).toBe('agua')
   })
 
-  it('formata ids desconhecidos', () => {
-    expect(labelCategoria('condominio', null)).toBe('Condominio')
-    expect(labelCategoria('transporte-urbano', null)).toBe('Transporte Urbano')
-  })
-})
-
-describe('slugCategoria', () => {
-  it('gera slug sem acentos', () => {
-    expect(slugCategoria('Condomínio')).toBe('condominio')
+  it('reconhece internet por fibra', () => {
+    expect(inferirCategoriaDoTexto('Provedor fibra óptica Vivo Fibra')).toBe('internet')
   })
 
-  it('substitui espaços e símbolos por hífen', () => {
-    expect(slugCategoria('Transporte Urbano')).toBe('transporte-urbano')
-    expect(slugCategoria('  Pet&Shop  ')).toBe('pet-shop')
+  it('retorna undefined para texto sem pista', () => {
+    expect(inferirCategoriaDoTexto('Nota fiscal numero 1234\nTotal 50,00')).toBeUndefined()
+  })
+
+  it('aluguel tem prioridade sobre mercado pela ordem', () => {
+    const texto = 'Locação de imobiliária no Mercado Central'
+    expect(inferirCategoriaDoTexto(texto)).toBe('aluguel')
   })
 })

@@ -59,3 +59,24 @@ export function slugCategoria(nome: string): string {
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '')
 }
+
+const PALAVRAS_CATEGORIA: Array<[Categoria, string[]]> = [
+  ['aluguel', ['aluguel', 'locacao', 'imobiliari']],
+  ['luz', ['enel', 'celesc', 'coelba', 'energia', 'conta de luz', 'eletrico']],
+  ['agua', ['sabesp', 'copasa', 'saneamento', 'abastecimento', 'esgoto']],
+  ['internet', ['internet', 'fibra', 'banda larga', 'wi-fi', 'provedor', 'telefonica', 'net']],
+  ['mercado', ['mercado', 'supermercado', 'hipermercado', 'atacadao', 'carrefour', 'pao de acucar', 'hortifruit', 'padaria']],
+]
+
+/**
+ * Infere a categoria de um comprovante pelo texto OCR (fornecedor/linhas).
+ * Retorna a primeira categoria que bater com o texto, senão undefined.
+ * Ordem importa: aluguel antes de mercado evita "locação de imobiliária".
+ */
+export function inferirCategoriaDoTexto(texto: string): Categoria | undefined {
+  const t = texto.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+  for (const [cat, palavras] of PALAVRAS_CATEGORIA) {
+    if (palavras.some((p) => t.includes(p))) return cat
+  }
+  return undefined
+}
