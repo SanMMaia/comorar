@@ -1,4 +1,5 @@
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
+import { useNotificacoes } from '../state/NotificacoesContext'
 
 const rotas = [
   { to: '/', label: 'Resumo', icon: '🏠', end: true },
@@ -9,6 +10,7 @@ const rotas = [
 
 export function Layout() {
   const { pathname } = useLocation()
+  const { naoLidas } = useNotificacoes()
 
   const reTap = (event: React.MouseEvent, to: string) => {
     if (pathname === to) {
@@ -22,6 +24,19 @@ export function Layout() {
 
   return (
     <>
+      <NavLink
+        to="/notificacoes"
+        viewTransition
+        className="sino"
+        aria-label={`Notificações${naoLidas ? ` (${naoLidas} não lidas)` : ''}`}
+        onClick={() => {
+          document.documentElement.dataset.direction = 'forward'
+        }}
+      >
+        <span className="icon" aria-hidden>🔔</span>
+        {naoLidas > 0 && <span className="sino-badge">{naoLidas > 99 ? '99+' : naoLidas}</span>}
+      </NavLink>
+
       <main className="content">
         <Outlet />
       </main>

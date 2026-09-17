@@ -1,6 +1,7 @@
 import { lazy, Suspense, useEffect } from 'react'
 import { Navigate, Route, Routes, useLocation, useNavigationType } from 'react-router-dom'
 import { AppProvider, useApp } from './state/AppContext'
+import { NotificacoesProvider } from './state/NotificacoesContext'
 import { Layout } from './components/Layout'
 import { Home } from './pages/Home'
 import { ListaMensal } from './pages/ListaMensal'
@@ -18,6 +19,7 @@ const RecorrenciaNova = lazy(() => import('./pages/RecorrenciaNova').then((m) =>
 const Perfil = lazy(() => import('./pages/Perfil').then((m) => ({ default: m.Perfil })))
 const DespesaDetalhe = lazy(() => import('./pages/DespesaDetalhe').then((m) => ({ default: m.DespesaDetalhe })))
 const DespesaAvulsa = lazy(() => import('./pages/DespesaAvulsa').then((m) => ({ default: m.DespesaAvulsa })))
+const Notificacoes = lazy(() => import('./pages/Notificacoes').then((m) => ({ default: m.Notificacoes })))
 
 function Rotas() {
   const { loading, user } = useApp()
@@ -55,14 +57,16 @@ function Protegido() {
     )
   }
   return (
-    <Suspense fallback={<div className="empty">Carregando…</div>}>
-      <Routes>
-      <Route element={<Layout />}>
-        <Route path="/" element={<Home />} />
-        <Route path="/nova" element={<Pagar />} />
-        <Route path="/mes" element={<ListaMensal />} />
-        <Route path="/balanco" element={<Balanco />} />
-        <Route path="/projecao" element={<Navigate to="/perfil/contas" replace />} />
+    <NotificacoesProvider>
+      <Suspense fallback={<div className="empty">Carregando…</div>}>
+        <Routes>
+        <Route element={<Layout />}>
+          <Route path="/" element={<Home />} />
+          <Route path="/nova" element={<Pagar />} />
+          <Route path="/mes" element={<ListaMensal />} />
+          <Route path="/balanco" element={<Balanco />} />
+          <Route path="/notificacoes" element={<Notificacoes />} />
+          <Route path="/projecao" element={<Navigate to="/perfil/contas" replace />} />
       <Route path="/perfil/contas" element={<Projecao />} />
         <Route path="/perfil/regras" element={<Regras />} />
         <Route path="/perfil/categorias" element={<Categorias />} />
@@ -78,6 +82,7 @@ function Protegido() {
       </Route>
       </Routes>
     </Suspense>
+    </NotificacoesProvider>
   )
 }
 

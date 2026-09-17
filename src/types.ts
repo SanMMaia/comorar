@@ -85,3 +85,21 @@ export interface MoradorCompleto {
   role: 'owner' | 'member'
   tipo: 'usuario' | 'extra'
 }
+
+export interface Notificacao {
+  id: string
+  user_id: string
+  tipo: 'rateio_criado' | 'pagamento_confirmado' | 'vencimento_proximo'
+  titulo: string
+  corpo: string
+  link_destino: string
+  lida: boolean
+  criado_em: string
+}
+
+export interface PreferenciaNotificacao {
+  user_id: string
+  ativo: boolean
+  dias_antecedencia: number
+  canais: string[]
+}

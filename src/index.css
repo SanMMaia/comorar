@@ -652,3 +652,89 @@ details.opcoes .opcoes-corpo {
     --shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
   }
 }
+
+/* ---------- sino de notificações ---------- */
+
+.sino {
+  position: fixed;
+  top: calc(10px + env(safe-area-inset-top));
+  right: 14px;
+  z-index: 25;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  text-decoration: none;
+  color: var(--text);
+}
+
+.sino .icon {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.sino:active {
+  opacity: 0.7;
+}
+
+.sino-badge {
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: 9px;
+  background: var(--danger);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 18px;
+  text-align: center;
+}
+
+/* ---------- página de notificações ---------- */
+
+.notif-emoji {
+  font-size: 20px;
+  line-height: 1;
+  margin-right: 10px;
+}
+
+.notif-tempo {
+  white-space: nowrap;
+  margin-left: 8px;
+}
+
+.notif-naolida {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.notif-ponto {
+  width: 8px;
+  height: 8px;
+  margin-left: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+  flex-shrink: 0;
+}
+
+.config-linha {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 12px 0 0;
+}
+
+.config-linha input[type='checkbox'] {
+  width: 22px;
+  height: 22px;
+  accent-color: var(--accent);
+  flex-shrink: 0;
+}
