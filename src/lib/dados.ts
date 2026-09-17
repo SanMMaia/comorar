@@ -63,6 +63,43 @@ export function useDespesas(casaId: string | null) {
   return { despesas, carregando, recarregar: carregar }
 }
 
+export interface SaldoPessoal {
+  direcao: 'devo' | 'me_devem'
+  contraparte_id: string
+  valor: number
+}
+
+/**
+ * Saldo do morador logado (o que deve e quem lhe deve). Vem de RPC
+ * `meu_saldo`, pois a RLS esconde o rateio de terceiros. `gatilho` dispara
+ * nova consulta (ex.: a lista de despesas, que muda após um pagamento).
+ */
+export function useMeuSaldo(
+  casaId: string | null,
+  mes: string | null,
+  gatilho?: unknown,
+) {
+  const [saldos, setSaldos] = useState<SaldoPessoal[]>([])
+
+  useEffect(() => {
+    if (!casaId) {
+      setSaldos([])
+      return
+    }
+    let vivo = true
+    void supabase
+      .rpc('meu_saldo', { p_casa: casaId, p_mes: mes })
+      .then(({ data }) => {
+        if (vivo) setSaldos((data ?? []) as SaldoPessoal[])
+      })
+    return () => {
+      vivo = false
+    }
+  }, [casaId, mes, gatilho])
+
+  return saldos
+}
+
 export interface ObrigacaoCalculada {
   devedor_id: string
   credor_id: string

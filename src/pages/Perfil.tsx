@@ -1,8 +1,9 @@
-import { useState, type FormEvent } from 'react'
+import { useRef, useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useApp, nomeMorador } from '../state/AppContext'
 import { lerTemaPref, salvarTema, type TemaPref } from '../lib/tema'
+import { exportarBackup, restaurarBackup } from '../lib/backup'
 
 const linkApp = 'https://comorar.vercel.app'
 
@@ -12,6 +13,11 @@ export function Perfil() {
 
   const [msgCopia, setMsgCopia] = useState(false)
   const [tema, setTema] = useState<TemaPref>(lerTemaPref)
+  const inputBackup = useRef<HTMLInputElement>(null)
+  const [exportando, setExportando] = useState(false)
+  const [restaurando, setRestaurando] = useState(false)
+  const [msgBackup, setMsgBackup] = useState('')
+  const [erroBackup, setErroBackup] = useState('')
 
   const trocarTema = (t: TemaPref) => {
     setTema(t)
@@ -97,6 +103,42 @@ export function Perfil() {
     navigate('/login')
   }
 
+  const baixarBackup = async () => {
+    if (!casa) return
+    setErroBackup('')
+    setMsgBackup('')
+    setExportando(true)
+    try {
+      await exportarBackup(casa.id, casa.nome)
+      setMsgBackup('Backup baixado. Guarde o arquivo em local seguro.')
+    } catch (err) {
+      setErroBackup(err instanceof Error ? err.message : 'Erro ao exportar.')
+    } finally {
+      setExportando(false)
+    }
+  }
+
+  const enviarBackup = async (arquivo: File) => {
+    if (
+      !window.confirm(
+        'Restaurar este backup criará uma casa NOVA com os dados do arquivo. Deseja continuar?',
+      )
+    )
+      return
+    setErroBackup('')
+    setMsgBackup('')
+    setRestaurando(true)
+    try {
+      await restaurarBackup(arquivo)
+      await refreshCasa()
+      setMsgBackup('Backup restaurado. Você é o responsável pela casa restaurada.')
+    } catch (err) {
+      setErroBackup(err instanceof Error ? err.message : 'Erro ao restaurar.')
+    } finally {
+      setRestaurando(false)
+    }
+  }
+
   if (!casa) return <div className="empty">Sem casa vinculada.</div>
 
   return (
@@ -128,15 +170,17 @@ export function Perfil() {
         </p>
       </div>
 
-      <Link to="/perfil/contas" viewTransition className="card mt" style={{ display: 'block' }}>
-        <div className="item-linha">
-          <div className="item-corpo">
-            <strong>Contas recorrentes</strong>
-            <div className="small muted">Gerencie recorrências e lançamentos previstos</div>
+      {souOwner && (
+        <Link to="/perfil/contas" viewTransition className="card mt" style={{ display: 'block' }}>
+          <div className="item-linha">
+            <div className="item-corpo">
+              <strong>Contas recorrentes</strong>
+              <div className="small muted">Gerencie recorrências e lançamentos previstos</div>
+            </div>
+            <span className="item-seta" aria-hidden>›</span>
           </div>
-          <span className="item-seta" aria-hidden>›</span>
-        </div>
-      </Link>
+        </Link>
+      )}
 
       <h2 className="section-title" style={{ marginTop: 20 }}>Moradores</h2>
       <div className="card-flush">
@@ -204,26 +248,69 @@ export function Perfil() {
         </div>
       </div>
 
-      <div className="card-flush mt">
-        <Link to="/perfil/categorias" viewTransition className="list-line">
-          <div className="item-linha">
-            <div className="item-corpo">
-              <strong>Categorias de despesa</strong>
-              <div className="small muted">Adicione, renomeie ou remova categorias</div>
+      {souOwner && (
+        <div className="card-flush mt">
+          <Link to="/perfil/categorias" viewTransition className="list-line">
+            <div className="item-linha">
+              <div className="item-corpo">
+                <strong>Categorias de despesa</strong>
+                <div className="small muted">Adicione, renomeie ou remova categorias</div>
+              </div>
+              <span className="item-seta" aria-hidden>›</span>
             </div>
-            <span className="item-seta" aria-hidden>›</span>
-          </div>
-        </Link>
-        <Link to="/perfil/regras" viewTransition className="list-line">
-          <div className="item-linha">
-            <div className="item-corpo">
-              <strong>Taxa fixa de rateio (%)</strong>
-              <div className="small muted">Percentual padrão das despesas do tipo "percentual"</div>
+          </Link>
+          <Link to="/perfil/regras" viewTransition className="list-line">
+            <div className="item-linha">
+              <div className="item-corpo">
+                <strong>Taxa fixa de rateio (%)</strong>
+                <div className="small muted">Percentual padrão das despesas do tipo "percentual"</div>
+              </div>
+              <span className="item-seta" aria-hidden>›</span>
             </div>
-            <span className="item-seta" aria-hidden>›</span>
+          </Link>
+        </div>
+      )}
+
+      {souOwner && (
+        <div className="card mt">
+          <h2 className="section-title">Backup e restauração</h2>
+          <p className="small muted" style={{ margin: '6px 0 0' }}>
+            Baixe uma cópia de tudo (moradores, recorrências, despesas e rateios) em um arquivo
+            JSON. Restaurar cria uma casa nova a partir do arquivo.
+          </p>
+          {msgBackup && <div className="info-box mt">{msgBackup}</div>}
+          {erroBackup && <div className="error-box mt">{erroBackup}</div>}
+          <input
+            ref={inputBackup}
+            type="file"
+            accept="application/json,.json"
+            style={{ display: 'none' }}
+            onChange={(e) => {
+              const f = e.target.files?.[0]
+              if (f) void enviarBackup(f)
+              e.target.value = ''
+            }}
+          />
+          <div className="row mt" style={{ gap: 8 }}>
+            <button
+              type="button"
+              className="btn btn-secondary btn-sm"
+              onClick={() => void baixarBackup()}
+              disabled={exportando || restaurando}
+            >
+              {exportando ? 'Gerando…' : 'Exportar backup'}
+            </button>
+            <button
+              type="button"
+              className="btn btn-secondary btn-sm"
+              onClick={() => inputBackup.current?.click()}
+              disabled={exportando || restaurando}
+            >
+              {restaurando ? 'Restaurando…' : 'Restaurar'}
+            </button>
           </div>
-        </Link>
-      </div>
+        </div>
+      )}
 
       <div className="mt-lg">
         <button type="button" className="btn btn-secondary" onClick={sairDaCasa}>Sair da casa</button>

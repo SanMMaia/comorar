@@ -48,6 +48,14 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,svg,png,ico,woff2}'],
+        // jsPDF (e dependências) só são baixados ao exportar o extrato.
+        // Ficam fora do precache para o app não instalar ~1 MB à toa.
+        globIgnores: [
+          '**/jspdf*.js',
+          '**/html2canvas*.js',
+          '**/purify*.js',
+          '**/index.es-*.js',
+        ],
         navigateFallback: null,
         cleanupOutdatedCaches: true,
         runtimeCaching: [

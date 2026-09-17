@@ -1,26 +1,49 @@
 import { useMemo, useState } from 'react'
 import { useApp, nomeMorador } from '../state/AppContext'
-import { useDespesas, obrigacoesDe } from '../lib/dados'
+import { useDespesas, obrigacoesDe, useMeuSaldo } from '../lib/dados'
 import { saldosPorPessoa, compactarTransferencias, planejarAcerto, type Obrigacao, type PrevisaoAcerto } from '../lib/balanco'
 import { formatBR, parseCentavos } from '../lib/format'
 import { supabase } from '../lib/supabase'
 
 export function Balanco() {
-  const { casa, user, minhaMoradorId, moradores } = useApp()
+  const { casa, user, minhaMoradorId, moradores, souOwner } = useApp()
   const { despesas, recarregar, carregando } = useDespesas(casa?.id ?? null)
   const [acertando, setAcertando] = useState<Obrigacao | null>(null)
   const [valorAcerto, setValorAcerto] = useState('')
   const [salvando, setSalvando] = useState(false)
   const [erro, setErro] = useState('')
+  const saldos = useMeuSaldo(souOwner ? null : (casa?.id ?? null), null, despesas)
 
-  const { meusSaldos, transferencias } = useMemo(() => {
-    const obrigacoes = obrigacoesDe(despesas)
-    const saldos = saldosPorPessoa(obrigacoes)
-    const t = compactarTransferencias(obrigacoes)
-    return { meusSaldos: saldos, transferencias: t }
-  }, [despesas])
+  const meusSaldos = useMemo(
+    () => (souOwner ? saldosPorPessoa(obrigacoesDe(despesas)) : {}),
+    [despesas, souOwner],
+  )
 
-  const meuSaldo = minhaMoradorId ? (meusSaldos[minhaMoradorId] ?? 0) : 0
+  // transferências a pagar: owner vê a casa toda, morador vê só o que deve
+  const transferencias = useMemo<Obrigacao[]>(() => {
+    if (souOwner) return compactarTransferencias(obrigacoesDe(despesas))
+    return saldos
+      .filter((s) => s.direcao === 'devo')
+      .map((s) => ({
+        devedor_id: minhaMoradorId ?? '',
+        credor_id: s.contraparte_id,
+        valor: Number(s.valor),
+      }))
+  }, [despesas, saldos, souOwner, minhaMoradorId])
+
+  const aReceber = useMemo(() => {
+    if (souOwner) return []
+    return saldos
+      .filter((s) => s.direcao === 'me_devem')
+      .map((s) => ({ devedor_id: s.contraparte_id, valor: Number(s.valor) }))
+  }, [saldos, souOwner])
+
+  const meuSaldo = souOwner
+    ? minhaMoradorId
+      ? (meusSaldos[minhaMoradorId] ?? 0)
+      : 0
+    : aReceber.reduce((a, s) => a + s.valor, 0) -
+      transferencias.reduce((a, t) => a + t.valor, 0)
 
   const pendentesDoPar = (devedorId: string, credorId: string): PrevisaoAcerto[] =>
     despesas
@@ -136,11 +159,13 @@ export function Balanco() {
 
       {erro && <div className="error-box">{erro}</div>}
 
-      <h2 className="section-title" style={{ marginTop: 20 }}>Sugestões de pagamento</h2>
+      <h2 className="section-title" style={{ marginTop: 20 }}>
+        {souOwner ? 'Sugestões de pagamento' : 'Você deve'}
+      </h2>
       {transferencias.length === 0 ? (
         <div className="empty">
           <div className="empty-icone" aria-hidden>🎉</div>
-          <p>Saldo zerado — nada a pagar.</p>
+          <p>{souOwner ? 'Saldo zerado — nada a pagar.' : 'Você não deve nada.'}</p>
         </div>
       ) : (
         <div className="card-flush mt">
@@ -148,8 +173,17 @@ export function Balanco() {
             <div className="list-line" key={idx}>
               <div className="item-linha">
                 <div className="item-corpo">
-                  <strong>{nomeMorador(moradores, t.devedor_id)}</strong>
-                  <span className="muted"> paga para </span>
+                  {t.devedor_id === minhaMoradorId ? (
+                    <>
+                      <strong>Você</strong>
+                      <span className="muted"> paga para </span>
+                    </>
+                  ) : (
+                    <>
+                      <strong>{nomeMorador(moradores, t.devedor_id)}</strong>
+                      <span className="muted"> paga para </span>
+                    </>
+                  )}
                   <strong>{nomeMorador(moradores, t.credor_id)}</strong>
                 </div>
                 <div className="item-lado">
@@ -164,6 +198,30 @@ export function Balanco() {
             </div>
           ))}
         </div>
+      )}
+
+      {!souOwner && aReceber.length > 0 && (
+        <>
+          <h2 className="section-title" style={{ marginTop: 20 }}>Devem a você</h2>
+          <div className="card-flush">
+            {aReceber.map((s, idx) => (
+              <div className="list-line" key={idx}>
+                <div className="item-linha">
+                  <div className="item-corpo">
+                    <strong>{nomeMorador(moradores, s.devedor_id)}</strong>
+                    <span className="muted"> deve para você</span>
+                  </div>
+                  <div className="item-lado">
+                    <strong className="mono">{formatBR(s.valor)}</strong>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+          <p className="small muted mt">
+            Combine com a pessoa (ou com o responsável) para confirmar o pagamento.
+          </p>
+        </>
       )}
 
       {acertando && (

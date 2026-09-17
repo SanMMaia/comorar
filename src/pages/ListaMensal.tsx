@@ -5,12 +5,14 @@ import { useDespesas } from '../lib/dados'
 import { supabase } from '../lib/supabase'
 import { formatBR, dataBR, mesAnoBR, estaAtrasada } from '../lib/format'
 import { categoriasEfetivas, labelCategoria } from '../lib/categorias'
+import { gerarExtratoPdf } from '../lib/extratoPdf'
 
 export function ListaMensal() {
-  const { casa, user, minhaMoradorId, moradores } = useApp()
+  const { casa, user, minhaMoradorId, moradores, souOwner } = useApp()
   const { despesas, recarregar, carregando } = useDespesas(casa?.id ?? null)
   const navigate = useNavigate()
   const [mantendo, setMantendo] = useState(false)
+  const [gerandoPdf, setGerandoPdf] = useState(false)
   const [busca, setBusca] = useState('')
   const [categoriaSel, setCategoriaSel] = useState('')
   const hoje = new Date()
@@ -40,6 +42,7 @@ export function ListaMensal() {
     const lista = despesas.filter((d) => {
       if (d.status === 'cancelada') return false
       if (d.data.slice(0, 7) !== chave) return false
+      if (!souOwner && d.status === 'confirmada' && !d.rateios.some((r) => r.morador_id === minhaMoradorId)) return false
       if (categoriaSel && d.categoria !== categoriaSel) return false
       if (termo) {
         if (d.fornecedor.toLowerCase().includes(termo)) return true
@@ -51,12 +54,19 @@ export function ListaMensal() {
       }
       return true
     })
+    const confirmadas = lista.filter((d) => d.status === 'confirmada')
+    const total = souOwner
+      ? confirmadas.reduce((a, b) => a + b.valor, 0)
+      : confirmadas.reduce((a, b) => {
+          const meu = b.rateios.find((r) => r.morador_id === minhaMoradorId)
+          return a + (meu?.valor_rateado ?? 0)
+        }, 0)
     return {
       doMes: lista,
-      total: lista.filter((d) => d.status === 'confirmada').reduce((a, b) => a + b.valor, 0),
+      total,
       totalPrevisto: lista.filter((d) => d.status === 'prevista').reduce((a, b) => a + b.valor, 0),
     }
-  }, [despesas, mes, ano, busca, categoriaSel, casa, moradores])
+  }, [despesas, mes, ano, busca, categoriaSel, casa, moradores, souOwner, minhaMoradorId])
 
   const marcarMinhaParte = async (rateioId: string) => {
     setMantendo(true)
@@ -67,6 +77,24 @@ export function ListaMensal() {
       .eq('pago', false)
     await recarregar()
     setMantendo(false)
+  }
+
+  const exportarPdf = async () => {
+    setGerandoPdf(true)
+    try {
+      await gerarExtratoPdf({
+        casaNome: casa?.nome ?? 'Casa',
+        mesLabel: mesAnoBR(new Date(ano, mes, 1)),
+        mesChave: `${ano}-${String(mes + 1).padStart(2, '0')}`,
+        souOwner,
+        despesas,
+        moradores,
+        minhaMoradorId,
+        categorias: casa?.categorias ?? null,
+      })
+    } finally {
+      setGerandoPdf(false)
+    }
   }
 
   const mesIndex = ano * 12 + mes
@@ -81,7 +109,8 @@ export function ListaMensal() {
         <div style={{ textAlign: 'center' }}>
           <h1 style={{ fontSize: 18, margin: 0 }}>{mesAnoBR(new Date(ano, mes, 1))}</h1>
           <div className="small muted">
-            {formatBR(total)}{totalPrevisto > 0 ? ` · ${formatBR(totalPrevisto)} previstos` : ''}
+            {souOwner ? formatBR(total) : `sua parte ${formatBR(total)}`}
+            {totalPrevisto > 0 ? ` · ${formatBR(totalPrevisto)} previstos` : ''}
           </div>
         </div>
         <button
@@ -122,6 +151,17 @@ export function ListaMensal() {
         ))}
       </div>
 
+      <div className="row mt" style={{ justifyContent: 'flex-end' }}>
+        <button
+          type="button"
+          className="btn btn-secondary btn-sm"
+          onClick={() => void exportarPdf()}
+          disabled={gerandoPdf || doMes.length === 0}
+        >
+          {gerandoPdf ? 'Gerando…' : 'Exportar PDF'}
+        </button>
+      </div>
+
       {busca.trim() && doMes.length === 0 && (
         <div className="empty">
           <div className="empty-icone" aria-hidden>🔍</div>
@@ -140,7 +180,9 @@ export function ListaMensal() {
           {doMes
             .sort((a, b) => a.data.localeCompare(b.data))
             .map((d) => {
-              const minhaParte = d.rateios.find((r) => r.morador_id === minhaMoradorId && !r.pago)
+              const meuRateio = d.rateios.find((r) => r.morador_id === minhaMoradorId)
+              const minhaParte = meuRateio && !meuRateio.pago ? meuRateio : undefined
+              const pendentes = d.rateios.filter((r) => !r.pago).length
               return (
                 <div
                   key={d.id}
@@ -165,9 +207,12 @@ export function ListaMensal() {
                     </div>
                     <div className="item-lado">
                       <strong className="mono">{formatBR(d.valor)}</strong>
-                      {d.status === 'confirmada' && d.rateios.some((r) => !r.pago) && (
-                        <span className="badge badge-warn">
-                          {d.rateios.filter((r) => !r.pago).length} pendente(s)
+                      {d.status === 'confirmada' && souOwner && pendentes > 0 && (
+                        <span className="badge badge-warn">{pendentes} pendente(s)</span>
+                      )}
+                      {d.status === 'confirmada' && !souOwner && meuRateio && (
+                        <span className={meuRateio.pago ? 'badge badge-ok' : 'badge badge-warn'}>
+                          {meuRateio.pago ? 'sua parte paga' : `sua parte ${formatBR(meuRateio.valor_rateado)}`}
                         </span>
                       )}
                       {d.status === 'prevista' && estaAtrasada(d.data) && (

@@ -237,19 +237,23 @@ export function DespesaDetalhe() {
         </div>
       </div>
 
-      <Link
-        to={`/despesa/${despesa.id}/editar`}
-        viewTransition
-        className="btn btn-secondary mt-lg"
-        style={{ display: 'block', textAlign: 'center' }}
-      >
-        ✎ Editar despesa
-      </Link>
+      {souOwner && (
+        <>
+          <Link
+            to={`/despesa/${despesa.id}/editar`}
+            viewTransition
+            className="btn btn-secondary mt-lg"
+            style={{ display: 'block', textAlign: 'center' }}
+          >
+            ✎ Editar despesa
+          </Link>
 
-      {despesa.status === 'confirmada' && despesa.origem_recorrencia_id && (
-        <button type="button" className="btn btn-secondary mt" onClick={() => void desfazerPagamento()}>
-          ↩ Desfazer pagamento
-        </button>
+          {despesa.status === 'confirmada' && despesa.origem_recorrencia_id && (
+            <button type="button" className="btn btn-secondary mt" onClick={() => void desfazerPagamento()}>
+              ↩ Desfazer pagamento
+            </button>
+          )}
+        </>
       )}
 
       {souOwner && despesa.status !== 'cancelada' && (

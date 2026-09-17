@@ -1,39 +1,54 @@
 import { useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useApp, nomeMorador } from '../state/AppContext'
-import { useDespesas } from '../lib/dados'
+import { useDespesas, useMeuSaldo } from '../lib/dados'
 import { supabase } from '../lib/supabase'
 import { formatBR, dataBR, mesAnoBR, estaAtrasada, mesAtual, mesChave } from '../lib/format'
 import { labelCategoria } from '../lib/categorias'
 
 export function Home() {
-  const { casa, user, minhaMoradorId, moradores, loading } = useApp()
+  const { casa, user, minhaMoradorId, moradores, loading, souOwner } = useApp()
   const { despesas, recarregar, carregando } = useDespesas(casa?.id ?? null)
   const navigate = useNavigate()
   const [mantendo, setMantendo] = useState(false)
+  const chaveAtual = mesAtual()
+  const saldos = useMeuSaldo(souOwner ? null : (casa?.id ?? null), chaveAtual, despesas)
 
   const { totalMes, vcDeve, devemAVoce } = useMemo(() => {
     const uid = minhaMoradorId
-    const chaveAtual = mesAtual()
     let totalMes = 0
     let vcDeve = 0
     let devemAVoce = 0
     for (const d of despesas) {
       if (d.status !== 'confirmada') continue
       if (mesChave(d.data) !== chaveAtual) continue
-      totalMes += d.valor
+      if (souOwner) totalMes += d.valor
       const aberto = d.rateios.filter((r) => !r.pago)
       for (const r of aberto) {
         if (uid && r.morador_id === uid) vcDeve += r.valor_rateado
         if (uid && d.pago_por === uid) devemAVoce += r.valor_rateado
       }
+      // morador: mostra a própria parte no mês, não o gasto total da casa
+      if (!souOwner && uid) {
+        totalMes += d.rateios
+          .filter((r) => r.morador_id === uid)
+          .reduce((a, r) => a + r.valor_rateado, 0)
+      }
+    }
+    if (!souOwner) {
+      vcDeve = saldos
+        .filter((s) => s.direcao === 'devo')
+        .reduce((a, s) => a + Number(s.valor), 0)
+      devemAVoce = saldos
+        .filter((s) => s.direcao === 'me_devem')
+        .reduce((a, s) => a + Number(s.valor), 0)
     }
     return {
       totalMes,
       vcDeve: Math.round(vcDeve * 100) / 100,
       devemAVoce: Math.round(devemAVoce * 100) / 100,
     }
-  }, [despesas, minhaMoradorId])
+  }, [despesas, minhaMoradorId, souOwner, saldos, chaveAtual])
 
   const previstasMes = useMemo(() => {
     const chaveAtual = mesAtual()
@@ -59,12 +74,13 @@ export function Home() {
     const uid = minhaMoradorId
     return despesas
       .filter((d) => d.status === 'confirmada')
+      .filter((d) => souOwner || d.rateios.some((r) => r.morador_id === uid))
       .slice(0, 5)
       .map((d) => {
         const minhaParte = d.rateios.find((r) => r.morador_id === uid)
         return { d, minhaParte }
       })
-  }, [despesas, minhaMoradorId])
+  }, [despesas, minhaMoradorId, souOwner])
 
   if (loading || (casa && carregando)) {
     return <div className="empty">Carregando…</div>
@@ -75,7 +91,9 @@ export function Home() {
       <h1 className="page-title">Resumo</h1>
       <p className="page-sub">Visão geral da casa</p>
       <div className="card saldo-card">
-        <div className="linha">{mesAnoBR(new Date())} · gasto total</div>
+        <div className="linha">
+          {mesAnoBR(new Date())} · {souOwner ? 'gasto total' : 'sua parte'}
+        </div>
         <div className="valor mono">{formatBR(totalMes)}</div>
         <div className="row mt">
           <div className="linha">
@@ -181,10 +199,12 @@ export function Home() {
         </div>
       )}
 
-      <p className="center small muted mt">
-        Cadastre <Link to="/projecao" viewTransition>contas recorrentes</Link> e veja as{' '}
-        <Link to="/projecao" viewTransition>próximas contas</Link> automaticamente.
-      </p>
+      {souOwner && (
+        <p className="center small muted mt">
+          Cadastre <Link to="/projecao" viewTransition>contas recorrentes</Link> e veja as{' '}
+          <Link to="/projecao" viewTransition>próximas contas</Link> automaticamente.
+        </p>
+      )}
     </>
   )
 }

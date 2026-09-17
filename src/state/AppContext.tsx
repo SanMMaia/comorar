@@ -11,6 +11,7 @@ interface AppState {
   casaPronta: boolean
   moradores: MoradorCompleto[]
   minhaMoradorId: string | null
+  souOwner: boolean
   refreshCasa: () => Promise<void>
   signOut: () => Promise<void>
 }
@@ -23,6 +24,7 @@ const AppContext = createContext<AppState>({
   casaPronta: false,
   moradores: [],
   minhaMoradorId: null,
+  souOwner: false,
   refreshCasa: async () => {},
   signOut: async () => {},
 })
@@ -124,6 +126,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return moradores.find((m) => m.user_id === uid)?.id ?? null
   })()
 
+  const souOwner =
+    moradores.find((m) => m.id === minhaMoradorId)?.role === 'owner'
+
   return (
     <AppContext.Provider
       value={{
@@ -134,6 +139,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         casaPronta,
         moradores,
         minhaMoradorId,
+        souOwner,
         refreshCasa,
         signOut,
       }}
