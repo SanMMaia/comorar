@@ -22,11 +22,36 @@ export function Balanco() {
 
   const meuSaldo = minhaMoradorId ? (meusSaldos[minhaMoradorId] ?? 0) : 0
 
+  const pendentesDoPar = (devedorId: string, credorId: string): PrevisaoAcerto[] =>
+    despesas
+      .filter((d) => d.status === 'confirmada' && d.pago_por === credorId)
+      .flatMap((d) =>
+        d.rateios
+          .filter((r) => !r.pago && r.morador_id === devedorId)
+          .map((r) => ({ rateio_id: r.id, despesa_id: d.id, morador_id: r.morador_id, valor_rateado: r.valor_rateado })),
+      )
+
   const abrirAcerto = (t: Obrigacao) => {
     setAcertando(t)
     setValorAcerto(t.valor.toFixed(2).replace('.', ','))
     setErro('')
   }
+
+  const { planoAcerto, detalheRateio } = useMemo(() => {
+    const vazio = { planoAcerto: null as null | ReturnType<typeof planejarAcerto>, detalheRateio: () => ({ fornecedor: '', valor: 0 }) }
+    if (!acertando) return vazio
+    const pendentes = pendentesDoPar(acertando.devedor_id, acertando.credor_id)
+    const valorNum = parseCentavos(valorAcerto)
+    if (valorNum === null || valorNum <= 0) return vazio
+    const porRateio = new Map(
+      despesas.flatMap((d) => d.rateios.map((r) => [r.id, { fornecedor: d.fornecedor, valor: r.valor_rateado }] as const)),
+    )
+    return {
+      planoAcerto: planejarAcerto(pendentes, valorNum),
+      detalheRateio: (id: string) => porRateio.get(id) ?? { fornecedor: '', valor: 0 },
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [acertando, valorAcerto, despesas])
 
   const confirmarAcerto = async () => {
     if (!acertando) return
@@ -35,24 +60,21 @@ export function Balanco() {
       setErro('Informe um valor válido.')
       return
     }
+    if (!planoAcerto || (planoAcerto.quitar.length === 0 && !planoAcerto.dividir)) {
+      setErro('Nada a quitar com esse valor.')
+      return
+    }
     setSalvando(true)
     setErro('')
 
-    const pendentes: PrevisaoAcerto[] = despesas
-      .filter((d) => d.status === 'confirmada' && d.pago_por === acertando.credor_id)
-      .flatMap((d) =>
-        d.rateios
-          .filter((r) => !r.pago && r.morador_id === acertando.devedor_id)
-          .map((r) => ({ rateio_id: r.id, despesa_id: d.id, morador_id: r.morador_id, valor_rateado: r.valor_rateado })),
-      )
-
+    const pendentes = pendentesDoPar(acertando.devedor_id, acertando.credor_id)
     if (pendentes.length === 0) {
       setErro('Não há rateio pendente entre essas pessoas.')
       setSalvando(false)
       return
     }
 
-    const plano = planejarAcerto(pendentes, valorNum)
+    const plano = planoAcerto
     const agora = new Date().toISOString()
 
     if (plano.quitar.length > 0) {
@@ -149,8 +171,9 @@ export function Balanco() {
             </div>
 
             <div className="small muted mt" style={{ marginTop: 12 }}>
-              Todas as despesas em que {nomeMorador(moradores, acertando.devedor_id)} deve a{' '}
-              {nomeMorador(moradores, acertando.credor_id)} serão quitadas até o valor informado.
+              {acertando.devedor_id === minhaMoradorId
+                ? 'Você paga agora. O valor será abatido das despesas em que deve.'
+                : `${nomeMorador(moradores, acertando.devedor_id)} paga agora. O valor é abatido das despesas em que deve.`}
             </div>
 
             <label>Valor do acerto</label>
@@ -160,6 +183,36 @@ export function Balanco() {
               onChange={(e) => setValorAcerto(e.target.value)}
               autoFocus
             />
+
+            {planoAcerto && (planoAcerto.quitar.length > 0 || planoAcerto.dividir) && (
+              <div className="card mt" style={{ padding: 10 }}>
+                <div className="small muted" style={{ marginBottom: 6 }}>Prévia do que será quitado:</div>
+                {planoAcerto.quitar.map((q) => {
+                  const det = detalheRateio(q.rateio_id)
+                  return (
+                    <div className="row small" key={q.rateio_id} style={{ padding: '2px 0' }}>
+                      <span>
+                        {det.fornecedor || 'Rateio'}
+                        <span className="muted"> · {formatBR(det.valor)}</span>
+                      </span>
+                      <span className="badge badge-ok">quita</span>
+                    </div>
+                  )
+                })}
+                {planoAcerto.dividir && (
+                  <div className="row small" style={{ padding: '2px 0' }}>
+                    <span>
+                      {detalheRateio(planoAcerto.dividir.rateio_id).fornecedor || 'Rateio'}
+                      <span className="muted"> · {formatBR(planoAcerto.dividir.valor_pago)} paga + {formatBR(planoAcerto.dividir.valor_restante)} fica</span>
+                    </span>
+                    <span className="badge badge-warn">divide</span>
+                  </div>
+                )}
+                {planoAcerto.quitar.length === 0 && !planoAcerto.dividir && (
+                  <div className="small muted">Nada a quitar com esse valor.</div>
+                )}
+              </div>
+            )}
 
             <button
               type="button"

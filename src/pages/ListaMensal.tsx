@@ -1,13 +1,17 @@
 import { useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { useApp, nomeMorador } from '../state/AppContext'
 import { useDespesas } from '../lib/dados'
+import { supabase } from '../lib/supabase'
 import { formatBR, dataBR, mesAnoBR, estaAtrasada } from '../lib/format'
 import { labelCategoria } from '../lib/categorias'
 
 export function ListaMensal() {
-  const { casa, moradores } = useApp()
-  const { despesas, carregando } = useDespesas(casa?.id ?? null)
+  const { casa, user, minhaMoradorId, moradores } = useApp()
+  const { despesas, recarregar, carregando } = useDespesas(casa?.id ?? null)
+  const navigate = useNavigate()
+  const [mantendo, setMantendo] = useState(false)
+  const [busca, setBusca] = useState('')
   const hoje = new Date()
   const [mes, setMes] = useState(hoje.getMonth())
   const [ano, setAno] = useState(hoje.getFullYear())
@@ -31,16 +35,37 @@ export function ListaMensal() {
 
   const { doMes, total, totalPrevisto } = useMemo(() => {
     const chave = `${ano}-${String(mes + 1).padStart(2, '0')}`
+    const termo = busca.trim().toLowerCase()
     const lista = despesas.filter((d) => {
       if (d.status === 'cancelada') return false
-      return d.data.slice(0, 7) === chave
+      if (d.data.slice(0, 7) !== chave) return false
+      if (termo) {
+        if (d.fornecedor.toLowerCase().includes(termo)) return true
+        const cat = labelCategoria(d.categoria, casa?.categorias).toLowerCase()
+        if (cat.includes(termo)) return true
+        if (d.descricao?.toLowerCase().includes(termo)) return true
+        if (nomeMorador(moradores, d.pago_por).toLowerCase().includes(termo)) return true
+        return false
+      }
+      return true
     })
     return {
       doMes: lista,
       total: lista.filter((d) => d.status === 'confirmada').reduce((a, b) => a + b.valor, 0),
       totalPrevisto: lista.filter((d) => d.status === 'prevista').reduce((a, b) => a + b.valor, 0),
     }
-  }, [despesas, mes, ano])
+  }, [despesas, mes, ano, busca, casa, moradores])
+
+  const marcarMinhaParte = async (rateioId: string) => {
+    setMantendo(true)
+    await supabase
+      .from('rateios')
+      .update({ pago: true, pago_em: new Date().toISOString(), confirmado_por: user?.id ?? null })
+      .eq('id', rateioId)
+      .eq('pago', false)
+    await recarregar()
+    setMantendo(false)
+  }
 
   const mesIndex = ano * 12 + mes
   const hojeIndex = hoje.getFullYear() * 12 + hoje.getMonth()
@@ -67,13 +92,34 @@ export function ListaMensal() {
         </button>
       </div>
 
-      {doMes.length === 0 ? (
+      <input
+        type="search"
+        className="mt"
+        placeholder="Buscar por fornecedor, categoria ou morador…"
+        value={busca}
+        onChange={(e) => setBusca(e.target.value)}
+      />
+
+      {busca.trim() && doMes.length === 0 && (
+        <div className="empty">Nada encontrado para "{busca.trim()}" neste mês.</div>
+      )}
+      {!busca.trim() && doMes.length === 0 && (
         <div className="empty">Nenhum lançamento neste mês.</div>
-      ) : (
-        doMes
-          .sort((a, b) => a.data.localeCompare(b.data))
-          .map((d) => (
-            <Link to={`/despesa/${d.id}`} viewTransition key={d.id} className="card link-card">
+      )}
+
+      {doMes
+        .sort((a, b) => a.data.localeCompare(b.data))
+        .map((d) => {
+          const minhaParte = d.rateios.find((r) => r.morador_id === minhaMoradorId && !r.pago)
+          return (
+            <div
+              key={d.id}
+              className="card link-card"
+              onClick={() => navigate(`/despesa/${d.id}`)}
+              role="link"
+              tabIndex={0}
+              onKeyDown={(e) => e.key === 'Enter' && navigate(`/despesa/${d.id}`)}
+            >
               <div className="row">
                 <div>
                   <strong>{d.fornecedor}</strong>
@@ -103,11 +149,24 @@ export function ListaMensal() {
                     )}
                   </div>
                 </div>
+                {minhaParte && (
+                  <button
+                    type="button"
+                    className="btn btn-sm btn-secondary"
+                    disabled={mantendo}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      void marcarMinhaParte(minhaParte.id)
+                    }}
+                  >
+                    {mantendo ? '…' : 'Marcar minha parte'}
+                  </button>
+                )}
                 <span className="small muted">›</span>
               </div>
-            </Link>
-          ))
-      )}
+            </div>
+          )
+        })}
 
       <div style={{ height: 8 }} />
     </>

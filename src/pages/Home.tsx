@@ -1,13 +1,16 @@
-import { useMemo } from 'react'
-import { Link } from 'react-router-dom'
+import { useMemo, useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 import { useApp, nomeMorador } from '../state/AppContext'
 import { useDespesas } from '../lib/dados'
+import { supabase } from '../lib/supabase'
 import { formatBR, dataBR, mesAnoBR, estaAtrasada, mesAtual, mesChave } from '../lib/format'
 import { labelCategoria } from '../lib/categorias'
 
 export function Home() {
-  const { casa, minhaMoradorId, moradores, loading } = useApp()
-  const { despesas, carregando } = useDespesas(casa?.id ?? null)
+  const { casa, user, minhaMoradorId, moradores, loading } = useApp()
+  const { despesas, recarregar, carregando } = useDespesas(casa?.id ?? null)
+  const navigate = useNavigate()
+  const [mantendo, setMantendo] = useState(false)
 
   const { totalMes, vcDeve, devemAVoce } = useMemo(() => {
     const uid = minhaMoradorId
@@ -40,6 +43,17 @@ export function Home() {
   }, [despesas])
 
   const totalPrevisto = useMemo(() => previstasMes.reduce((a, b) => a + b.valor, 0), [previstasMes])
+
+  const marcarMinhaParte = async (rateioId: string) => {
+    setMantendo(true)
+    await supabase
+      .from('rateios')
+      .update({ pago: true, pago_em: new Date().toISOString(), confirmado_por: user?.id ?? null })
+      .eq('id', rateioId)
+      .eq('pago', false)
+    await recarregar()
+    setMantendo(false)
+  }
 
   const recentes = useMemo(() => {
     const uid = minhaMoradorId
@@ -119,7 +133,14 @@ export function Home() {
         </div>
       ) : (
         recentes.map(({ d, minhaParte }) => (
-          <Link to={`/despesa/${d.id}`} viewTransition key={d.id} className="card link-card">
+          <div
+            key={d.id}
+            className="card link-card"
+            onClick={() => navigate(`/despesa/${d.id}`)}
+            role="link"
+            tabIndex={0}
+            onKeyDown={(e) => e.key === 'Enter' && navigate(`/despesa/${d.id}`)}
+          >
             <div className="row">
               <div>
                 <strong>{d.fornecedor}</strong>
@@ -137,9 +158,22 @@ export function Home() {
                       : '—'}
                 </div>
               </div>
+              {minhaParte && !minhaParte.pago && (
+                <button
+                  type="button"
+                  className="btn btn-sm btn-secondary"
+                  disabled={mantendo}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    void marcarMinhaParte(minhaParte.id)
+                  }}
+                >
+                  {mantendo ? '…' : 'Marcar minha parte'}
+                </button>
+              )}
               <span className="small muted">›</span>
             </div>
-          </Link>
+          </div>
         ))
       )}
 
