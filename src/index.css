@@ -486,6 +486,22 @@ details.opcoes .opcoes-corpo {
 .badge-danger { background: var(--danger-soft); color: var(--danger); }
 .badge-muted { background: var(--surface-2); color: var(--text-muted); }
 
+.chip {
+  border: 1px solid var(--border, var(--surface-3));
+  background: var(--surface-2);
+  color: var(--text);
+  padding: 5px 12px;
+  border-radius: 999px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.chip-ativo {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
 .saldo-card {
   background: linear-gradient(135deg, var(--accent), var(--accent-strong));
   color: #fff;

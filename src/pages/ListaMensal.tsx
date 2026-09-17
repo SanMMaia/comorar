@@ -4,7 +4,7 @@ import { useApp, nomeMorador } from '../state/AppContext'
 import { useDespesas } from '../lib/dados'
 import { supabase } from '../lib/supabase'
 import { formatBR, dataBR, mesAnoBR, estaAtrasada } from '../lib/format'
-import { labelCategoria } from '../lib/categorias'
+import { categoriasEfetivas, labelCategoria } from '../lib/categorias'
 
 export function ListaMensal() {
   const { casa, user, minhaMoradorId, moradores } = useApp()
@@ -12,6 +12,7 @@ export function ListaMensal() {
   const navigate = useNavigate()
   const [mantendo, setMantendo] = useState(false)
   const [busca, setBusca] = useState('')
+  const [categoriaSel, setCategoriaSel] = useState('')
   const hoje = new Date()
   const [mes, setMes] = useState(hoje.getMonth())
   const [ano, setAno] = useState(hoje.getFullYear())
@@ -39,6 +40,7 @@ export function ListaMensal() {
     const lista = despesas.filter((d) => {
       if (d.status === 'cancelada') return false
       if (d.data.slice(0, 7) !== chave) return false
+      if (categoriaSel && d.categoria !== categoriaSel) return false
       if (termo) {
         if (d.fornecedor.toLowerCase().includes(termo)) return true
         const cat = labelCategoria(d.categoria, casa?.categorias).toLowerCase()
@@ -54,7 +56,7 @@ export function ListaMensal() {
       total: lista.filter((d) => d.status === 'confirmada').reduce((a, b) => a + b.valor, 0),
       totalPrevisto: lista.filter((d) => d.status === 'prevista').reduce((a, b) => a + b.valor, 0),
     }
-  }, [despesas, mes, ano, busca, casa, moradores])
+  }, [despesas, mes, ano, busca, categoriaSel, casa, moradores])
 
   const marcarMinhaParte = async (rateioId: string) => {
     setMantendo(true)
@@ -99,6 +101,26 @@ export function ListaMensal() {
         value={busca}
         onChange={(e) => setBusca(e.target.value)}
       />
+
+      <div className="row mt" style={{ gap: 6, flexWrap: 'wrap' }}>
+        <button
+          type="button"
+          className={categoriaSel === '' ? 'chip chip-ativo' : 'chip'}
+          onClick={() => setCategoriaSel('')}
+        >
+          Todas
+        </button>
+        {categoriasEfetivas(casa?.categorias).map((c) => (
+          <button
+            type="button"
+            key={c.id}
+            className={categoriaSel === c.id ? 'chip chip-ativo' : 'chip'}
+            onClick={() => setCategoriaSel((v) => (v === c.id ? '' : c.id))}
+          >
+            {c.label}
+          </button>
+        ))}
+      </div>
 
       {busca.trim() && doMes.length === 0 && (
         <div className="empty">Nada encontrado para "{busca.trim()}" neste mês.</div>
