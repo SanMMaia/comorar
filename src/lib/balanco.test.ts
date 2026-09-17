@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { compactarTransferencias, saldosPorPessoa, type Obrigacao } from './balanco'
+import { compactarTransferencias, planejarAcerto, saldosPorPessoa, type Obrigacao, type PrevisaoAcerto } from './balanco'
 
 describe('saldosPorPessoa', () => {
   it('soma créditos e débitos', () => {
@@ -45,5 +45,42 @@ describe('compactarTransferencias', () => {
     for (const id of Object.keys(antes)) {
       expect(depois[id]).toBeCloseTo(antes[id], 2)
     }
+  })
+})
+
+describe('planejarAcerto', () => {
+  const pendentes: PrevisaoAcerto[] = [
+    { rateio_id: 'r1', despesa_id: 'd1', morador_id: 'b', valor_rateado: 30 },
+    { rateio_id: 'r2', despesa_id: 'd2', morador_id: 'b', valor_rateado: 100 },
+  ]
+
+  it('quita rateios inteiros quando o valor fecha', () => {
+    const plano = planejarAcerto(pendentes, 30)
+    expect(plano.quitar).toEqual([{ rateio_id: 'r1' }])
+    expect(plano.dividir).toBeNull()
+  })
+
+  it('divide o último rateio quando o valor não fecha exato', () => {
+    const plano = planejarAcerto(pendentes, 45)
+    expect(plano.quitar).toEqual([{ rateio_id: 'r1' }])
+    expect(plano.dividir).toEqual({
+      rateio_id: 'r2',
+      despesa_id: 'd2',
+      morador_id: 'b',
+      valor_pago: 15,
+      valor_restante: 85,
+    })
+  })
+
+  it('quita tudo quando o valor cobre a dívida do par', () => {
+    const plano = planejarAcerto(pendentes, 500)
+    expect(plano.quitar).toEqual([{ rateio_id: 'r1' }, { rateio_id: 'r2' }])
+    expect(plano.dividir).toBeNull()
+  })
+
+  it('nada a fazer quando não há pendentes', () => {
+    const plano = planejarAcerto([], 10)
+    expect(plano.quitar).toEqual([])
+    expect(plano.dividir).toBeNull()
   })
 })

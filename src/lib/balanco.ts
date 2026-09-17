@@ -17,6 +17,59 @@ export function saldosPorPessoa(obrigacoes: Obrigacao[]): Record<string, number>
   return saldo
 }
 
+export interface PrevisaoAcerto {
+  rateio_id: string
+  despesa_id: string
+  morador_id: string
+  valor_rateado: number
+}
+
+export interface PlanoAcerto {
+  quitar: { rateio_id: string }[]
+  dividir: {
+    rateio_id: string
+    despesa_id: string
+    morador_id: string
+    valor_pago: number
+    valor_restante: number
+  } | null
+}
+
+/**
+ * Planeja o acerto de um valor entre duas pessoas sobre os rateios pendentes
+ * do par. Quita rateios inteiros dos menores para os maiores; se o valor não
+ * fechar exato, o próximo rateio é "dividido" (parte paga + parte ainda devida).
+ * `valor` é limitado ao total pendente do par.
+ */
+export function planejarAcerto(pendentes: PrevisaoAcerto[], valor: number): PlanoAcerto {
+  const total = pendentes.reduce((a, b) => a + b.valor_rateado, 0)
+  let restante = Math.min(valor, total)
+  const lista = [...pendentes].sort(
+    (a, b) => a.valor_rateado - b.valor_rateado || a.rateio_id.localeCompare(b.rateio_id),
+  )
+  const quitar: { rateio_id: string }[] = []
+  let dividir: PlanoAcerto['dividir'] = null
+
+  for (const p of lista) {
+    if (restante <= 0.005) break
+    if (p.valor_rateado <= restante + 0.005) {
+      quitar.push({ rateio_id: p.rateio_id })
+      restante -= p.valor_rateado
+    } else {
+      dividir = {
+        rateio_id: p.rateio_id,
+        despesa_id: p.despesa_id,
+        morador_id: p.morador_id,
+        valor_pago: Math.round(restante * 100) / 100,
+        valor_restante: Math.round((p.valor_rateado - restante) * 100) / 100,
+      }
+      restante = 0
+      break
+    }
+  }
+  return { quitar, dividir }
+}
+
 /**
  * Dada a lista `devedor deve credor`, reduz ao número mínimo de transferências
  * usando o algoritmo guloso: a cada passo, o maior credor paga o maior devedor.
