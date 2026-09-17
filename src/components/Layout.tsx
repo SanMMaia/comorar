@@ -1,11 +1,12 @@
-import { useEffect, useState } from 'react'
+import type { MouseEvent, SVGProps } from 'react'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import { useNotificacoes } from '../state/NotificacoesContext'
+import { marcarDirecaoForward, prepararCrossFadeTab } from '../lib/navegacao'
 
 type Icone = 'casa' | 'despesas' | 'balanco' | 'perfil' | 'sino'
 
 function Icone({ nome }: { nome: Icone }) {
-  const comum: React.SVGProps<SVGSVGElement> = {
+  const comum: SVGProps<SVGSVGElement> = {
     width: 18,
     height: 18,
     viewBox: '0 0 24 24',
@@ -68,47 +69,14 @@ const rotas: { to: string; label: string; icone: Icone; end?: boolean }[] = [
 export function Layout() {
   const { pathname } = useLocation()
   const { naoLidas } = useNotificacoes()
-  const [navVisivel, setNavVisivel] = useState(true)
 
-  useEffect(() => {
-    let ultimoY = Math.max(0, window.scrollY)
-    let raf = 0
-
-    const avaliar = () => {
-      raf = 0
-      const y = Math.max(0, window.scrollY)
-      const restante = document.documentElement.scrollHeight - window.innerHeight - y
-      const descendo = y > ultimoY + 6
-      const subindo = y < ultimoY - 6
-      if (y < 72 || restante < 120 || subindo) {
-        setNavVisivel(true)
-      } else if (descendo) {
-        setNavVisivel(false)
-      }
-      ultimoY = y
-    }
-
-    const aoRolar = () => {
-      if (!raf) raf = requestAnimationFrame(avaliar)
-    }
-
-    window.addEventListener('scroll', aoRolar, { passive: true })
-    window.addEventListener('resize', aoRolar)
-    return () => {
-      window.removeEventListener('scroll', aoRolar)
-      window.removeEventListener('resize', aoRolar)
-      if (raf) cancelAnimationFrame(raf)
-    }
-  }, [])
-
-  const reTap = (event: React.MouseEvent, to: string) => {
+  const reTap = (event: MouseEvent, to: string) => {
     if (pathname === to) {
       event.preventDefault()
       window.scrollTo({ top: 0, behavior: 'smooth' })
       return
     }
-    document.documentElement.dataset.direction = 'tab'
-    document.documentElement.dataset.direcaoTab = String(Date.now())
+    prepararCrossFadeTab()
   }
 
   return (
@@ -119,7 +87,7 @@ export function Layout() {
         className="sino"
         aria-label={`Notificações${naoLidas ? ` (${naoLidas} não lidas)` : ''}`}
         onClick={() => {
-          document.documentElement.dataset.direction = 'forward'
+          marcarDirecaoForward()
         }}
       >
         <span className="icon" aria-hidden>
@@ -132,7 +100,7 @@ export function Layout() {
         <Outlet />
       </main>
 
-      <nav className={`bottom-nav${navVisivel ? '' : ' nav-oculta'}`} aria-label="Navegação principal">
+      <nav className="bottom-nav" aria-label="Navegação principal">
         {rotas.slice(0, 2).map((r) => (
           <NavLink
             key={r.to}

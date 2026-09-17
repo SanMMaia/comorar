@@ -148,11 +148,6 @@ img {
   view-transition-name: vt-nav;
 }
 
-.bottom-nav.nav-oculta {
-  transform: translate(-50%, calc(140% + 20px));
-  opacity: 0;
-}
-
 .nav-item {
   display: flex;
   flex-direction: column;
