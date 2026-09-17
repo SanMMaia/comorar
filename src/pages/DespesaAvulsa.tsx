@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState, type ChangeEvent, type FormEvent 
 import { useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useApp } from '../state/AppContext'
-import { useDespesas } from '../lib/dados'
+import { useDespesas, invalidarCacheDespesas } from '../lib/dados'
 import { calcularRateio } from '../lib/rateio'
 import {
   removerComprovante,
@@ -287,6 +287,7 @@ export function DespesaAvulsa() {
       if (errRateios) throw errRateios
 
       setSalvoOK(true)
+      invalidarCacheDespesas(casa.id)
 
       if (editando) navigate(-1)
       else navigate('/mes')

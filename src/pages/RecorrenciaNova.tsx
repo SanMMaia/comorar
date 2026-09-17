@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useApp } from '../state/AppContext'
 import { gravarPrevistas } from '../lib/recorrencia'
+import { invalidarCacheDespesas } from '../lib/dados'
 import { parseCentavos } from '../lib/format'
 import { frmVazio, validarFrm, type Frm } from '../lib/recorrenciaForm'
 import { CamposForm } from '../components/RecorrenciaForm'
@@ -45,6 +46,7 @@ export function RecorrenciaNova() {
         .single()
       if (error) throw error
       await gravarPrevistas(casa.id, rec as Recorrencia)
+      invalidarCacheDespesas(casa.id)
       navigate('/projecao')
     } catch (err) {
       setErro(err instanceof Error ? err.message : 'Erro ao criar recorrência')

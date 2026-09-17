@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useApp, nomeMorador } from '../state/AppContext'
+import { invalidarCacheDespesas } from '../lib/dados'
 import { subirComprovante, urlComprovante, removerComprovante } from '../lib/comprovante'
 import { formatBR, dataBR, estaAtrasada } from '../lib/format'
 import { labelCategoria } from '../lib/categorias'
@@ -51,6 +52,8 @@ export function DespesaDetalhe() {
       .from('rateios')
       .update({ pago: true, pago_em: new Date().toISOString(), confirmado_por: user?.id ?? null })
       .eq('id', r.id)
+      .eq('pago', false)
+    invalidarCacheDespesas(casa?.id)
     const { data } = await supabase
       .from('despesas')
       .select('*, rateios(*)')
@@ -65,6 +68,7 @@ export function DespesaDetalhe() {
     if (despesa.comprovante_url) await removerComprovante(despesa.comprovante_url)
     const { error } = await supabase.from('despesas').delete().eq('id', despesa.id)
     if (error) return setErro(error.message)
+    invalidarCacheDespesas(casa?.id)
     navigate('/mes')
   }
 
@@ -81,6 +85,7 @@ export function DespesaDetalhe() {
         .update({ status: 'prevista', pago_por: null, comprovante_url: null, ocr_resultado: null })
         .eq('id', despesa.id)
       if (errUpd) throw errUpd
+      invalidarCacheDespesas(casa?.id)
       const { data } = await supabase
         .from('despesas')
         .select('*, rateios(*)')

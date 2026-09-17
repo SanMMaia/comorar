@@ -9,6 +9,12 @@ export interface DespesaComRateios extends Despesa {
 const cacheDespesas = new Map<string, { despesas: DespesaComRateios[]; ts: number }>()
 const CACHE_TTL_MS = 30_000
 
+/** Descarta o cache em memória (após criar/editar/excluir despesas ou rateios). */
+export function invalidarCacheDespesas(casaId?: string) {
+  if (casaId) cacheDespesas.delete(casaId)
+  else cacheDespesas.clear()
+}
+
 export function useDespesas(casaId: string | null) {
   const [despesas, setDespesas] = useState<DespesaComRateios[]>(() => {
     const c = casaId ? cacheDespesas.get(casaId) : undefined
@@ -20,19 +26,20 @@ export function useDespesas(casaId: string | null) {
   })
 
   const carregar = useCallback(
-    async (forcar = false) => {
+    async () => {
       if (!casaId) {
         setDespesas([])
         setCarregando(false)
         return
       }
       const c = cacheDespesas.get(casaId)
-      if (!forcar && c && Date.now() - c.ts < CACHE_TTL_MS) {
+      if (c) {
+        // stale-while-revalidate: mostra o cache já e revalida em seguida
         setDespesas(c.despesas)
         setCarregando(false)
-        return
+      } else {
+        setCarregando(true)
       }
-      setCarregando(true)
       const { data, error } = await supabase
         .from('despesas')
         .select('*, rateios(*)')
@@ -53,7 +60,7 @@ export function useDespesas(casaId: string | null) {
     void carregar()
   }, [carregar])
 
-  return { despesas, carregando, recarregar: () => carregar(true) }
+  return { despesas, carregando, recarregar: carregar }
 }
 
 export interface ObrigacaoCalculada {

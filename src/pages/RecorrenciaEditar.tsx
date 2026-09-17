@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useApp } from '../state/AppContext'
 import { gravarPrevistas } from '../lib/recorrencia'
+import { invalidarCacheDespesas } from '../lib/dados'
 import { formatBR, parseCentavos } from '../lib/format'
 import { frmDeRec, validarFrm, type Frm } from '../lib/recorrenciaForm'
 import { CamposForm } from '../components/RecorrenciaForm'
@@ -67,12 +68,14 @@ export function RecorrenciaEditar() {
         .select('*')
         .single()
       if (error) throw error
-      await supabase
+      const { error: errDel } = await supabase
         .from('despesas')
         .delete()
         .eq('origem_recorrencia_id', rec.id)
         .eq('status', 'prevista')
+      if (errDel) throw errDel
       if (casa) await gravarPrevistas(casa.id, atualizada as Recorrencia)
+      invalidarCacheDespesas(casa?.id)
       voltar()
     } catch (err) {
       setErro(err instanceof Error ? err.message : 'Erro ao salvar alterações')
@@ -90,11 +93,14 @@ export function RecorrenciaEditar() {
     }
     setEnviando(true)
     try {
-      await supabase
-        .from('despesas')
-        .delete()
-        .eq('origem_recorrencia_id', rec.id)
-        .eq('status', 'prevista')
+      if (!novoEstado) {
+        const { error: errDel } = await supabase
+          .from('despesas')
+          .delete()
+          .eq('origem_recorrencia_id', rec.id)
+          .eq('status', 'prevista')
+        if (errDel) throw errDel
+      }
       const { data: atualizada, error } = await supabase
         .from('recorrencias')
         .update({ ativa: novoEstado })
@@ -103,6 +109,7 @@ export function RecorrenciaEditar() {
         .single()
       if (error) throw error
       if (novoEstado && casa) await gravarPrevistas(casa.id, atualizada as Recorrencia)
+      invalidarCacheDespesas(casa?.id)
       voltar()
     } catch (err) {
       setErro(err instanceof Error ? err.message : 'Erro ao alterar recorrência')
@@ -121,6 +128,7 @@ export function RecorrenciaEditar() {
       .eq('origem_recorrencia_id', rec.id)
       .eq('status', 'prevista')
     await supabase.from('recorrencias').delete().eq('id', rec.id)
+    invalidarCacheDespesas(casa?.id)
     navigate('/perfil/contas', { replace: true })
   }
 
