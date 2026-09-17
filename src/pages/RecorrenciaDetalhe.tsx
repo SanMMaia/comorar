@@ -75,7 +75,7 @@ export function RecorrenciaDetalhe() {
             <div className="row">
               <div>
                 <div className="row" style={{ gap: 8, marginBottom: 4 }}>
-                  <h1 style={{ fontSize: 20, margin: 0 }}>{rec.fornecedor}</h1>
+                  <h1 className="bar-title">{rec.fornecedor}</h1>
                   {rec.ativa ? (
                     <span className="badge badge-ok">ativa</span>
                   ) : (

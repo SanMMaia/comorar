@@ -89,7 +89,7 @@ export function Categorias() {
         </button>
       </div>
 
-      <h1 style={{ fontSize: 20 }}>Categorias de despesa</h1>
+      <h1 className="page-title">Categorias de despesa</h1>
       <p className="small muted">
         Os nomes que aparecem nos lançamentos. Renomear ou excluir não altera
         lançamentos antigos.

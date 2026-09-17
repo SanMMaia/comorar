@@ -61,7 +61,7 @@ export function RecorrenciaNova() {
         </button>
       </div>
 
-      <h1 style={{ fontSize: 20, margin: 0 }}>Nova recorrência</h1>
+      <h1 className="bar-title">Nova recorrência</h1>
       <p className="small muted">As previsões dos próximos 12 meses são geradas automaticamente.</p>
 
       <form className="card mt" onSubmit={criar}>

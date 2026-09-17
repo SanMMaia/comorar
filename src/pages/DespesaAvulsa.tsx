@@ -305,7 +305,7 @@ export function DespesaAvulsa() {
         </button>
       </div>
 
-      <h1 style={{ fontSize: 20, margin: 0 }}>{editando ? 'Editar despesa' : 'Nova despesa avulsa'}</h1>
+      <h1 className="bar-title">{editando ? 'Editar despesa' : 'Nova despesa avulsa'}</h1>
       <p className="small muted">
         {editando
           ? 'Altere os dados e o rateio deste lançamento.'

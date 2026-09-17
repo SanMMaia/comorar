@@ -72,7 +72,7 @@ export function Notificacoes() {
   return (
     <>
       <div className="row" style={{ justifyContent: 'space-between', marginTop: 44 }}>
-        <h1 style={{ fontSize: 20, margin: 0 }}>Notificações</h1>
+        <h1 className="bar-title">Notificações</h1>
         {naoLidas > 0 && (
           <button type="button" className="btn btn-sm btn-secondary" onClick={() => void marcarTodasLidas()}>
             Marcar todas como lidas
@@ -88,33 +88,35 @@ export function Notificacoes() {
           <p className="small muted">Acompanhe cobranças, pagamentos e contas a vencer por aqui.</p>
         </div>
       ) : (
-        notificacoes.map((n) => (
-          <div
-            key={n.id}
-            className={n.lida ? 'card link-card notif' : 'card link-card notif notif-naolida'}
-            onClick={() => void abrir(n)}
-            role="link"
-            tabIndex={0}
-            onKeyDown={(e) => e.key === 'Enter' && void abrir(n)}
-          >
-            <div className="row">
-              <span className="notif-emoji" aria-hidden>{emojiTipo[n.tipo] ?? '🔔'}</span>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div className="row" style={{ display: 'flex' }}>
-                  <strong style={{ flex: 1, minWidth: 0 }}>{n.titulo}</strong>
-                  <span className="small muted notif-tempo">{tempoRelativo(n.criado_em)}</span>
+        <div className="card-flush">
+          {notificacoes.map((n) => (
+            <div
+              key={n.id}
+              className={n.lida ? 'list-line clicavel' : 'list-line clicavel notif-naolida'}
+              onClick={() => void abrir(n)}
+              role="link"
+              tabIndex={0}
+              onKeyDown={(e) => e.key === 'Enter' && void abrir(n)}
+            >
+              <div className="row">
+                <span className="notif-emoji" aria-hidden>{emojiTipo[n.tipo] ?? '🔔'}</span>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div className="row" style={{ display: 'flex' }}>
+                    <strong style={{ flex: 1, minWidth: 0 }}>{n.titulo}</strong>
+                    <span className="small muted notif-tempo">{tempoRelativo(n.criado_em)}</span>
+                  </div>
+                  <div className="small" style={{ marginTop: 2 }}>{n.corpo}</div>
                 </div>
-                <div className="small" style={{ marginTop: 2 }}>{n.corpo}</div>
+                {!n.lida && <span className="notif-ponto" aria-hidden />}
+                <span className="small muted" aria-hidden>›</span>
               </div>
-              {!n.lida && <span className="notif-ponto" aria-hidden />}
-              <span className="small muted" aria-hidden>›</span>
             </div>
-          </div>
-        ))
+          ))}
+        </div>
       )}
 
       <div className="card mt-lg">
-        <h2 style={{ fontSize: 15, margin: 0 }}>Preferências</h2>
+        <h2 className="section-title">Preferências</h2>
 
         <label className="config-linha">
           <div>

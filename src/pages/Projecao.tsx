@@ -99,7 +99,7 @@ export function Projecao() {
         </Link>
       </div>
       <div className="row">
-        <h1 style={{ fontSize: 20, margin: 0 }}>Contas recorrentes</h1>
+        <h1 className="bar-title">Contas recorrentes</h1>
         <Link to="/recorrencia/nova" viewTransition className="btn btn-primary btn-sm">
           + Nova
         </Link>

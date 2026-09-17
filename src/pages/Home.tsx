@@ -72,7 +72,8 @@ export function Home() {
 
   return (
     <>
-      <h1 style={{ fontSize: 20, margin: '0 0 8px' }}>Resumo</h1>
+      <h1 className="page-title">Resumo</h1>
+      <p className="page-sub">Visão geral da casa</p>
       <div className="card saldo-card">
         <div className="linha">{mesAnoBR(new Date())} · gasto total</div>
         <div className="valor mono">{formatBR(totalMes)}</div>
@@ -93,88 +94,93 @@ export function Home() {
       {previstasMes.length > 0 && (
         <>
           <div className="row mt-lg">
-            <h2 style={{ fontSize: 16, margin: 0 }}>Contas do mês (previstas)</h2>
+            <h2 className="section-title">Contas do mês (previstas)</h2>
             <strong className="mono">{formatBR(totalPrevisto)}</strong>
           </div>
           <p className="small muted">Pagou? Use <strong>Pagar</strong> e a previsão é convertida em despesa confirmada.</p>
-          {previstasMes.map((d) => (
-            <Link to={`/despesa/${d.id}`} viewTransition key={d.id} className="card link-card">
-              <div className="row">
-                <div>
-                  <strong>{d.fornecedor}</strong>
-                  <div className="small muted">
-                    {labelCategoria(d.categoria, casa?.categorias)} · {dataBR(d.data)}
-                  </div>
-                </div>
-                <div style={{ textAlign: 'right' }}>
-                  <strong className="mono">{formatBR(d.valor)}</strong>
-                  {estaAtrasada(d.data) && (
-                    <div className="small mt">
-                      <span className="badge badge-danger">atrasado</span>
+          <div className="card-flush mt">
+            {previstasMes.map((d) => (
+              <Link to={`/despesa/${d.id}`} viewTransition key={d.id} className="list-line">
+                <div className="row">
+                  <div>
+                    <strong>{d.fornecedor}</strong>
+                    <div className="small muted">
+                      {labelCategoria(d.categoria, casa?.categorias)} · {dataBR(d.data)}
                     </div>
-                  )}
+                  </div>
+                  <div style={{ textAlign: 'right' }}>
+                    <strong className="mono">{formatBR(d.valor)}</strong>
+                    {estaAtrasada(d.data) && (
+                      <div className="small mt">
+                        <span className="badge badge-danger">atrasado</span>
+                      </div>
+                    )}
+                  </div>
+                  <span className="small muted">›</span>
                 </div>
-                <span className="small muted">›</span>
-              </div>
-            </Link>
-          ))}
+              </Link>
+            ))}
+          </div>
         </>
       )}
 
       <div className="row mt-lg">
-        <h2 style={{ fontSize: 16, margin: 0 }}>Últimas despesas</h2>
+        <h2 className="section-title">Últimas despesas</h2>
         <span className="small muted">toque em + Pagar para lançar</span>
       </div>
 
       {recentes.length === 0 ? (
         <div className="empty">
+          <div className="empty-icone" aria-hidden>🧾</div>
           <p>Nenhuma despesa ainda.</p>
           <Link to="/nova" viewTransition className="btn btn-primary btn-sm mt">Pagar a primeira</Link>
         </div>
       ) : (
-        recentes.map(({ d, minhaParte }) => (
-          <div
-            key={d.id}
-            className="card link-card"
-            onClick={() => navigate(`/despesa/${d.id}`)}
-            role="link"
-            tabIndex={0}
-            onKeyDown={(e) => e.key === 'Enter' && navigate(`/despesa/${d.id}`)}
-          >
-            <div className="row">
-              <div>
-                <strong>{d.fornecedor}</strong>
-                <div className="small muted">
-                  {nomeMorador(moradores, d.pago_por)} pagou · {labelCategoria(d.categoria, casa?.categorias)}
+        <div className="card-flush">
+          {recentes.map(({ d, minhaParte }) => (
+            <div
+              key={d.id}
+              className="list-line clicavel"
+              onClick={() => navigate(`/despesa/${d.id}`)}
+              role="link"
+              tabIndex={0}
+              onKeyDown={(e) => e.key === 'Enter' && navigate(`/despesa/${d.id}`)}
+            >
+              <div className="row">
+                <div>
+                  <strong>{d.fornecedor}</strong>
+                  <div className="small muted">
+                    {nomeMorador(moradores, d.pago_por)} pagou · {labelCategoria(d.categoria, casa?.categorias)}
+                  </div>
                 </div>
-              </div>
-              <div style={{ textAlign: 'right' }}>
-                <strong className="mono">{formatBR(d.valor)}</strong>
-                <div className="small muted">
-                  {minhaParte?.pago
-                    ? <span className="badge badge-ok">pago</span>
-                    : minhaParte
-                      ? <span className="badge badge-warn">sua parte {formatBR(minhaParte.valor_rateado)}</span>
-                      : '—'}
+                <div style={{ textAlign: 'right' }}>
+                  <strong className="mono">{formatBR(d.valor)}</strong>
+                  <div className="small muted">
+                    {minhaParte?.pago
+                      ? <span className="badge badge-ok">pago</span>
+                      : minhaParte
+                        ? <span className="badge badge-warn">sua parte {formatBR(minhaParte.valor_rateado)}</span>
+                        : '—'}
+                  </div>
                 </div>
+                {minhaParte && !minhaParte.pago && (
+                  <button
+                    type="button"
+                    className="btn btn-sm btn-secondary"
+                    disabled={mantendo}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      void marcarMinhaParte(minhaParte.id)
+                    }}
+                  >
+                    {mantendo ? '…' : 'Marcar minha parte'}
+                  </button>
+                )}
+                <span className="small muted">›</span>
               </div>
-              {minhaParte && !minhaParte.pago && (
-                <button
-                  type="button"
-                  className="btn btn-sm btn-secondary"
-                  disabled={mantendo}
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    void marcarMinhaParte(minhaParte.id)
-                  }}
-                >
-                  {mantendo ? '…' : 'Marcar minha parte'}
-                </button>
-              )}
-              <span className="small muted">›</span>
             </div>
-          </div>
-        ))
+          ))}
+        </div>
       )}
 
       <p className="center small muted mt">

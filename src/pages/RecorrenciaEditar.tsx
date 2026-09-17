@@ -147,7 +147,7 @@ export function RecorrenciaEditar() {
         </div>
       ) : (
         <>
-          <h1 style={{ fontSize: 20, margin: '0 0 4px' }}>Editar recorrência</h1>
+          <h1 className="page-title">Editar recorrência</h1>
           <div className="small muted mb-lg">
             {rec.fornecedor} · <strong className="mono">{formatBR(rec.valor_previsto)}</strong> por{' '}
             {rec.intervalo}

@@ -37,21 +37,21 @@ export function Onboarding() {
 
   return (
     <div className="content" style={{ paddingTop: 24 }}>
-      <h1 style={{ fontSize: 22 }}>Bem-vindo! 👋</h1>
-      <p className="muted">Crie uma casa para começar a dividir despesas ou entre com o código de convite dos seus moradores.</p>
+      <h1 className="page-title">Bem-vindo! 👋</h1>
+      <p className="page-sub">Crie uma casa para começar a dividir despesas ou entre com o código de convite dos seus moradores.</p>
 
-      <div className="card">
-        <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+      <div className="card-elevado">
+        <div className="seg">
           <button
             type="button"
-            className={`btn ${modo === 'criar' ? 'btn-primary' : 'btn-secondary'}`}
+            className={modo === 'criar' ? 'seg-on' : ''}
             onClick={() => setModo('criar')}
           >
             Criar casa
           </button>
           <button
             type="button"
-            className={`btn ${modo === 'entrar' ? 'btn-primary' : 'btn-secondary'}`}
+            className={modo === 'entrar' ? 'seg-on' : ''}
             onClick={() => setModo('entrar')}
           >
             Tenho um código

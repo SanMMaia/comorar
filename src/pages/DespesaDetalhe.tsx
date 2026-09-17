@@ -140,7 +140,7 @@ export function DespesaDetalhe() {
       </div>
 
       <div className="row">
-        <h1 style={{ fontSize: 20, margin: 0 }}>{despesa.fornecedor}</h1>
+        <h1 className="bar-title">{despesa.fornecedor}</h1>
         {despesa.status === 'prevista' && estaAtrasada(despesa.data) && (
           <span className="badge badge-danger">atrasada</span>
         )}

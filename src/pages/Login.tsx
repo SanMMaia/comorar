@@ -43,22 +43,22 @@ export function Login() {
   return (
     <div className="content" style={{ paddingTop: 40 }}>
       <div className="center" style={{ marginBottom: 24 }}>
-        <h1 style={{ fontSize: 28, margin: 0 }}>🏠 Comorar</h1>
+        <h1 className="page-title" style={{ fontSize: 28, margin: 0 }}>🏠 Comorar</h1>
         <p className="muted">Divida as despesas da casa de forma justa</p>
       </div>
 
-      <div className="card">
-        <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+      <div className="card-elevado">
+        <div className="seg">
           <button
             type="button"
-            className={`btn ${modo === 'entrar' ? 'btn-primary' : 'btn-secondary'}`}
+            className={modo === 'entrar' ? 'seg-on' : ''}
             onClick={() => setModo('entrar')}
           >
             Entrar
           </button>
           <button
             type="button"
-            className={`btn ${modo === 'criar' ? 'btn-primary' : 'btn-secondary'}`}
+            className={modo === 'criar' ? 'seg-on' : ''}
             onClick={() => setModo('criar')}
           >
             Criar conta

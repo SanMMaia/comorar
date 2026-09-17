@@ -384,7 +384,7 @@ export function Pagar() {
   return (
     <>
       <div className="row">
-        <h1 style={{ fontSize: 20, margin: 0 }}>Pagar</h1>
+        <h1 className="bar-title">Pagar</h1>
         <Link to="/despesa/nova" viewTransition className="btn btn-sm btn-primary">
           + Avulsa
         </Link>
@@ -422,6 +422,7 @@ export function Pagar() {
       {visao === 'mes' ? (
         doMes.length === 0 ? (
           <div className="empty">
+            <div className="empty-icone" aria-hidden>✅</div>
             <strong>Nada a pagar neste mês.</strong>
             <button type="button" className="btn btn-sm btn-secondary mt" onClick={() => setVisao('futuras')}>
               Ver próximas
@@ -440,8 +441,8 @@ export function Pagar() {
                   <span className="mono grid-valor">{formatBR(d.valor)}</span>
                   <span className="small muted">{dataBR(d.data)}</span>
                   <div className="row" style={{ flexWrap: 'wrap', gap: 4 }}>
-                    {rec && <span className="badge">recorrente</span>}
-                    {d.boleto_url && <span className="badge">boleto anexado</span>}
+                    {rec && <span className="badge badge-muted">recorrente</span>}
+                    {d.boleto_url && <span className="badge badge-muted">boleto anexado</span>}
                   </div>
                   <div className="row" style={{ gap: 4, marginTop: 8 }}>
                     <button type="button" className="btn btn-sm btn-secondary" style={{ flex: 1 }} onClick={() => void abrirBoleto(d)}>
@@ -458,6 +459,7 @@ export function Pagar() {
         )
       ) : futurasPorMes.size === 0 ? (
         <div className="empty">
+          <div className="empty-icone" aria-hidden>📅</div>
           <strong>Nenhuma conta futura.</strong>
           <Link to="/perfil/contas" viewTransition className="btn btn-sm btn-secondary mt">
             Gerenciar em Contas
@@ -467,15 +469,15 @@ export function Pagar() {
         Array.from(futurasPorMes.entries()).map(([chave, grupo]) => {
           const [ano, mes] = chave.split('-').map(Number)
           return (
-            <div className="card mt" key={chave} style={{ padding: 0 }}>
-              <div className="row" style={{ padding: 12 }}>
+            <div className="card-flush mt" key={chave}>
+              <div className="row list-line">
                 <strong>{mesAnoBR(new Date(ano, mes - 1, 1))}</strong>
                 <span className="small muted">
                   {grupo.length} conta(s) · <strong className="mono">{formatBR(grupo.reduce((a, b) => a + b.valor, 0))}</strong>
                 </span>
               </div>
               {grupo.map((d) => (
-                <div className="row" key={d.id} style={{ padding: '10px 12px', borderTop: '1px solid var(--border)' }}>
+                <div className="row list-line" key={d.id}>
                   <div className="small">
                       <Link to={`/despesa/${d.id}`} viewTransition style={{ textDecoration: 'none', color: 'inherit' }}>
                         <strong>{d.fornecedor}</strong>

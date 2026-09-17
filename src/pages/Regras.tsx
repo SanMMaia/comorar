@@ -68,7 +68,7 @@ export function Regras() {
         </button>
       </div>
 
-      <h1 style={{ fontSize: 20, margin: '0 0 4px' }}>Taxa fixa de rateio</h1>
+      <h1 className="page-title">Taxa fixa de rateio</h1>
       <p className="small muted" style={{ margin: '0 0 12px' }}>
         Percentual padrão das despesas do tipo "percentual". Somente moradores com conta podem ter
         taxa fixa.

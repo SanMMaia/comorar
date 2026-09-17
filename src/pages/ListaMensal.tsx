@@ -123,72 +123,82 @@ export function ListaMensal() {
       </div>
 
       {busca.trim() && doMes.length === 0 && (
-        <div className="empty">Nada encontrado para "{busca.trim()}" neste mês.</div>
+        <div className="empty">
+          <div className="empty-icone" aria-hidden>🔍</div>
+          <p>Nada encontrado para "{busca.trim()}" neste mês.</p>
+        </div>
       )}
       {!busca.trim() && doMes.length === 0 && (
-        <div className="empty">Nenhum lançamento neste mês.</div>
+        <div className="empty">
+          <div className="empty-icone" aria-hidden>🗓️</div>
+          <p>Nenhum lançamento neste mês.</p>
+        </div>
       )}
 
-      {doMes
-        .sort((a, b) => a.data.localeCompare(b.data))
-        .map((d) => {
-          const minhaParte = d.rateios.find((r) => r.morador_id === minhaMoradorId && !r.pago)
-          return (
-            <div
-              key={d.id}
-              className="card link-card"
-              onClick={() => navigate(`/despesa/${d.id}`)}
-              role="link"
-              tabIndex={0}
-              onKeyDown={(e) => e.key === 'Enter' && navigate(`/despesa/${d.id}`)}
-            >
-              <div className="row">
-                <div>
-                  <strong>{d.fornecedor}</strong>
-                  <div className="small muted">
-                    {labelCategoria(d.categoria, casa?.categorias)} · {dataBR(d.data)}
-                  </div>
-                  {d.status === 'confirmada' && (
-                    <div className="small muted">
-                      {nomeMorador(moradores, d.pago_por)} pagou
-                      {d.descricao ? ` · ${d.descricao}` : ''}
+      {doMes.length > 0 && (
+        <div className="card-flush mt">
+          {doMes
+            .sort((a, b) => a.data.localeCompare(b.data))
+            .map((d) => {
+              const minhaParte = d.rateios.find((r) => r.morador_id === minhaMoradorId && !r.pago)
+              return (
+                <div
+                  key={d.id}
+                  className="list-line clicavel"
+                  onClick={() => navigate(`/despesa/${d.id}`)}
+                  role="link"
+                  tabIndex={0}
+                  onKeyDown={(e) => e.key === 'Enter' && navigate(`/despesa/${d.id}`)}
+                >
+                  <div className="row">
+                    <div>
+                      <strong>{d.fornecedor}</strong>
+                      <div className="small muted">
+                        {labelCategoria(d.categoria, casa?.categorias)} · {dataBR(d.data)}
+                      </div>
+                      {d.status === 'confirmada' && (
+                        <div className="small muted">
+                          {nomeMorador(moradores, d.pago_por)} pagou
+                          {d.descricao ? ` · ${d.descricao}` : ''}
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
-                <div style={{ textAlign: 'right' }}>
-                  <strong className="mono">{formatBR(d.valor)}</strong>
-                  <div className="small mt">
-                    {d.status === 'confirmada' && d.rateios.some((r) => !r.pago) && (
-                      <span className="badge badge-warn">
-                        {d.rateios.filter((r) => !r.pago).length} pendente(s)
-                      </span>
+                    <div style={{ textAlign: 'right' }}>
+                      <strong className="mono">{formatBR(d.valor)}</strong>
+                      <div className="small mt">
+                        {d.status === 'confirmada' && d.rateios.some((r) => !r.pago) && (
+                          <span className="badge badge-warn">
+                            {d.rateios.filter((r) => !r.pago).length} pendente(s)
+                          </span>
+                        )}
+                        {d.status === 'prevista' && estaAtrasada(d.data) && (
+                          <span className="badge badge-danger">atrasado</span>
+                        )}
+                        {d.status === 'prevista' && !estaAtrasada(d.data) && (
+                          <span className="badge badge-warn">previsto</span>
+                        )}
+                      </div>
+                    </div>
+                    {minhaParte && (
+                      <button
+                        type="button"
+                        className="btn btn-sm btn-secondary"
+                        disabled={mantendo}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          void marcarMinhaParte(minhaParte.id)
+                        }}
+                      >
+                        {mantendo ? '…' : 'Marcar minha parte'}
+                      </button>
                     )}
-                    {d.status === 'prevista' && estaAtrasada(d.data) && (
-                      <span className="badge badge-danger">atrasado</span>
-                    )}
-                    {d.status === 'prevista' && !estaAtrasada(d.data) && (
-                      <span className="badge badge-warn">previsto</span>
-                    )}
+                    <span className="small muted">›</span>
                   </div>
                 </div>
-                {minhaParte && (
-                  <button
-                    type="button"
-                    className="btn btn-sm btn-secondary"
-                    disabled={mantendo}
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      void marcarMinhaParte(minhaParte.id)
-                    }}
-                  >
-                    {mantendo ? '…' : 'Marcar minha parte'}
-                  </button>
-                )}
-                <span className="small muted">›</span>
-              </div>
-            </div>
-          )
-        })}
+              )
+            })}
+        </div>
+      )}
 
       <div style={{ height: 8 }} />
     </>

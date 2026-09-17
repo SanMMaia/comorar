@@ -124,9 +124,10 @@ export function Balanco() {
 
   return (
     <>
-      <h1 style={{ fontSize: 20 }}>Balanço da casa</h1>
+      <h1 className="page-title">Balanço da casa</h1>
+      <p className="page-sub">Quem deve para quem, no total</p>
 
-      <div className="card">
+      <div className="card saldo-card">
         <div className="linha">{meuSaldo >= 0 ? 'Devem para você' : 'Você deve'}</div>
         <div className="valor mono">
           {formatBR(Math.abs(meuSaldo))}
@@ -135,25 +136,30 @@ export function Balanco() {
 
       {erro && <div className="error-box">{erro}</div>}
 
-      <h2 style={{ fontSize: 15, marginTop: 20 }}>Sugestões de pagamento</h2>
+      <h2 className="section-title" style={{ marginTop: 20 }}>Sugestões de pagamento</h2>
       {transferencias.length === 0 ? (
-        <div className="empty">Saldo zerado — nada a pagar. 🎉</div>
+        <div className="empty">
+          <div className="empty-icone" aria-hidden>🎉</div>
+          <p>Saldo zerado — nada a pagar.</p>
+        </div>
       ) : (
-        transferencias.map((t, idx) => (
-          <div className="card" key={idx}>
-            <div className="row">
-              <div>
-                <strong>{nomeMorador(moradores, t.devedor_id)}</strong>
-                <span className="muted"> paga para </span>
-                <strong>{nomeMorador(moradores, t.credor_id)}</strong>
-                <div className="small muted">{formatBR(t.valor)}</div>
+        <div className="card-flush mt">
+          {transferencias.map((t, idx) => (
+            <div className="list-line" key={idx}>
+              <div className="row">
+                <div>
+                  <strong>{nomeMorador(moradores, t.devedor_id)}</strong>
+                  <span className="muted"> paga para </span>
+                  <strong>{nomeMorador(moradores, t.credor_id)}</strong>
+                  <div className="small muted">{formatBR(t.valor)}</div>
+                </div>
+                <button type="button" className="btn btn-sm btn-secondary" onClick={() => abrirAcerto(t)}>
+                  Registrar pagamento
+                </button>
               </div>
-              <button type="button" className="btn btn-sm btn-secondary" onClick={() => abrirAcerto(t)}>
-                Registrar pagamento
-              </button>
             </div>
-          </div>
-        ))
+          ))}
+        </div>
       )}
 
       {acertando && (
