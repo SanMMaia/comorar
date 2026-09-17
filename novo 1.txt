@@ -1,0 +1,1424 @@
+# CoMorar — Design System 2026
+
+**Produto:** CoMorar
+**Slogan:** Tudo para quem divide um lar.
+**Documento:** Design System 2026
+**Finalidade:** Evolução visual e de experiência da interface existente
+**Escopo:** UI/UX
+**Status:** Diretriz de implementação
+
+---
+
+# 1. Objetivo
+
+Este documento define a evolução visual do CoMorar para uma linguagem de interface contemporânea, inspirada nos padrões de design de sistemas modernos de 2026, incluindo:
+
+* interfaces móveis atuais;
+* iOS;
+* Android / Material;
+* Windows / Fluent Design;
+* aplicações web modernas;
+* padrões de acessibilidade e design responsivo.
+
+O objetivo é **melhorar a apresentação, consistência, usabilidade e percepção de qualidade do CoMorar**, mantendo intacta a estrutura funcional já definida no projeto.
+
+Este documento é uma especificação de **UI/UX**, e não uma redefinição do produto.
+
+---
+
+# 2. REGRA FUNDAMENTAL — PRESERVAÇÃO DO PROJETO
+
+## 2.1 Este documento NÃO redefine o CoMorar
+
+A implementação deste Design System deve ser tratada como uma **migração/evolução visual**.
+
+Não utilizar este documento como justificativa para:
+
+* criar funcionalidades;
+* remover funcionalidades;
+* alterar regras de negócio;
+* alterar fluxos funcionais;
+* alterar permissões;
+* alterar autenticação;
+* alterar banco de dados;
+* alterar tabelas;
+* alterar funções;
+* alterar modelos de dados;
+* alterar nomes funcionais já definidos;
+* alterar navegação existente;
+* criar novas rotas;
+* remover rotas;
+* modificar responsabilidades dos usuários;
+* modificar regras de divisão;
+* modificar comportamento financeiro;
+* alterar decisões previamente aprovadas.
+
+Qualquer alteração funcional deve ser considerada **fora do escopo** deste documento.
+
+---
+
+# 3. Hierarquia de autoridade
+
+Em caso de conflito entre documentos ou decisões, utilizar a seguinte prioridade:
+
+1. Instrução explícita do proprietário do projeto;
+2. Requisitos funcionais aprovados;
+3. `PROJECT_SETUP.md`;
+4. documentação de regras de negócio;
+5. documentação de navegação;
+6. demais documentações técnicas;
+7. este `DESIGN_SYSTEM_2026.md`;
+8. preferências ou suposições do agente.
+
+O Design System nunca deve substituir uma decisão funcional existente.
+
+---
+
+# 4. Princípio de segurança contra regressões
+
+Antes de alterar qualquer tela, o agente deve primeiro identificar:
+
+* quais elementos existem;
+* quais ações existem;
+* quais rotas estão envolvidas;
+* quais dados são apresentados;
+* quais componentes são utilizados;
+* quais comportamentos já existem;
+* quais estados existem;
+* quais interações existem.
+
+A pergunta principal deve ser:
+
+> "Como posso melhorar a apresentação desta interface sem mudar o que ela faz?"
+
+E não:
+
+> "Como eu redesenharia esta funcionalidade?"
+
+---
+
+# 5. O que pode ser alterado
+
+O agente está autorizado a alterar, quando apropriado:
+
+* cores;
+* tipografia;
+* tamanhos;
+* espaçamentos;
+* alinhamentos;
+* bordas;
+* radius;
+* sombras;
+* elevação;
+* profundidade visual;
+* ícones;
+* aparência de botões;
+* aparência de inputs;
+* aparência de cards;
+* aparência de listas;
+* aparência de menus;
+* aparência de navegação;
+* aparência de modais;
+* aparência de bottom sheets;
+* aparência do FAB;
+* microanimações;
+* transições;
+* estados visuais;
+* responsividade;
+* densidade visual;
+* hierarquia visual;
+* acessibilidade visual.
+
+---
+
+# 6. O que NÃO pode ser alterado
+
+Sem solicitação explícita do proprietário:
+
+* regras de negócio;
+* funcionalidades;
+* navegação;
+* rotas;
+* autenticação;
+* autorização;
+* banco de dados;
+* estrutura de dados;
+* APIs;
+* persistência;
+* sincronização;
+* lógica de divisão;
+* responsabilidades dos moradores;
+* responsabilidade do administrador;
+* regras de recorrência;
+* regras de pagamentos;
+* modelo de participação;
+* comportamento offline;
+* nomenclatura funcional já aprovada.
+
+---
+
+# 7. Filosofia visual
+
+O CoMorar deve seguir uma estética:
+
+**moderna + limpa + amigável + sofisticada + funcional.**
+
+Evitar dois extremos:
+
+### Extremamente simples
+
+```text
+texto
+texto
+botão
+texto
+texto
+```
+
+Resultado:
+
+Interface sem personalidade.
+
+### Extremamente decorativa
+
+```text
+████████
+✨ CARD 3D ✨
+████████
+blur + gradiente + sombras + efeitos
+```
+
+Resultado:
+
+Interface visualmente cansativa.
+
+### Direção desejada
+
+```text
+conteúdo
+   ↓
+hierarquia
+   ↓
+superfícies
+   ↓
+profundidade sutil
+   ↓
+ação contextual
+```
+
+O visual deve parecer moderno sem parecer experimental.
+
+---
+
+# 8. Referências visuais
+
+As referências de mercado devem ser utilizadas como **inspiração de padrões**, nunca como cópia direta.
+
+## Apple / iOS
+
+Aproveitar conceitos como:
+
+* conteúdo em tela inteira;
+* camadas;
+* controles contextuais;
+* sheets;
+* navegação inferior;
+* materiais translúcidos usados com moderação;
+* animações suaves;
+* hierarquia tipográfica;
+* redução de ruído visual.
+
+Não copiar literalmente componentes ou identidade visual da Apple.
+
+---
+
+## Android / Material
+
+Aproveitar:
+
+* componentes consistentes;
+* navegação adaptativa;
+* FAB;
+* estados de componentes;
+* acessibilidade;
+* responsividade;
+* espaçamento sistemático;
+* organização de conteúdo.
+
+Não transformar o CoMorar em uma implementação genérica de Material Design.
+
+---
+
+## Windows / Fluent
+
+Aproveitar:
+
+* profundidade;
+* camadas;
+* materiais;
+* elevação;
+* superfícies;
+* organização espacial;
+* adaptação para telas grandes.
+
+---
+
+# 9. Princípio de "conteúdo primeiro"
+
+O conteúdo deve ser visualmente mais importante que os elementos decorativos.
+
+Prioridade:
+
+```text
+1. Informação
+2. Ação
+3. Contexto
+4. Navegação
+5. Decoração
+```
+
+Nunca utilizar efeitos visuais para competir com informações importantes.
+
+---
+
+# 10. Superfícies
+
+A interface deve trabalhar com diferentes níveis de superfície.
+
+## Nível 0 — Fundo
+
+Plano de fundo principal.
+
+## Nível 1 — Conteúdo
+
+Listas, seções e conteúdo principal.
+
+## Nível 2 — Superfície elevada
+
+Cards ou elementos que precisam de separação visual.
+
+## Nível 3 — Elementos flutuantes
+
+FAB, bottom sheets, menus e controles temporários.
+
+## Nível 4 — Modal
+
+Elementos que exigem foco máximo.
+
+A profundidade deve ser percebida de maneira natural.
+
+---
+
+# 11. Liquid Glass — uso controlado
+
+O conceito de materiais translúcidos pode ser utilizado em elementos funcionais, principalmente:
+
+* navegação;
+* barras;
+* controles flutuantes;
+* sheets;
+* menus;
+* elementos sobrepostos.
+
+Não utilizar vidro/blur em todos os componentes.
+
+### Regra
+
+> Se o efeito de vidro não melhorar a compreensão da interface, não utilizar.
+
+Priorizar:
+
+* legibilidade;
+* contraste;
+* desempenho;
+* simplicidade.
+
+---
+
+# 12. Cores
+
+A paleta deve possuir:
+
+* fundo;
+* superfície;
+* superfície elevada;
+* texto principal;
+* texto secundário;
+* borda/divisor;
+* cor primária;
+* estados de sucesso;
+* estados de atenção;
+* estados de erro;
+* estados informativos.
+
+As cores de estado devem possuir significado consistente.
+
+### Regra
+
+Cor não deve ser utilizada somente como decoração.
+
+---
+
+# 13. Dark Mode
+
+O Dark Mode deve ser tratado como uma interface própria, e não como simples inversão das cores.
+
+Evitar:
+
+```text
+fundo preto absoluto
++
+cards cinza aleatórios
++
+texto branco puro
+```
+
+Priorizar uma hierarquia de superfícies.
+
+Exemplo conceitual:
+
+```text
+Fundo
+  ↓
+Superfície
+  ↓
+Superfície elevada
+  ↓
+Elemento ativo
+```
+
+Garantir contraste adequado.
+
+---
+
+# 14. Tipografia
+
+A tipografia deve estabelecer uma hierarquia clara.
+
+Categorias:
+
+```text
+Display
+Título
+Subtítulo
+Seção
+Corpo
+Informação secundária
+Legenda
+```
+
+Evitar excesso de tamanhos diferentes.
+
+O peso tipográfico deve ajudar a indicar importância.
+
+---
+
+# 15. Espaçamento
+
+Utilizar uma escala consistente.
+
+Base recomendada:
+
+```text
+4px
+8px
+12px
+16px
+20px
+24px
+32px
+40px
+48px
+64px
+```
+
+Evitar valores aleatórios como:
+
+```text
+13px
+17px
+23px
+27px
+31px
+```
+
+quando não houver necessidade real.
+
+---
+
+# 16. Border Radius
+
+Utilizar cantos arredondados de forma consistente.
+
+Categorias sugeridas:
+
+```text
+Pequeno:
+6–8px
+
+Médio:
+10–14px
+
+Grande:
+16–20px
+
+Superfície especial:
+20–28px
+```
+
+Não arredondar absolutamente tudo.
+
+---
+
+# 17. Sombras
+
+Sombras devem ser:
+
+* suaves;
+* discretas;
+* coerentes;
+* utilizadas para indicar profundidade.
+
+Evitar sombras muito escuras ou exageradas.
+
+A sombra deve responder à pergunta:
+
+> "Este elemento está acima de outro?"
+
+Se a resposta for não, talvez a sombra seja desnecessária.
+
+---
+
+# 18. Ícones
+
+Os ícones devem:
+
+* possuir estilo visual consistente;
+* ter tamanho proporcional;
+* possuir área de toque adequada;
+* nunca depender exclusivamente de cor;
+* ter significado reconhecível.
+
+Evitar misturar famílias de ícones diferentes.
+
+---
+
+# 19. Botões
+
+Os botões devem possuir estados:
+
+```text
+default
+hover
+pressed
+focus
+disabled
+loading
+```
+
+Quando aplicável:
+
+```text
+primary
+secondary
+tertiary
+destructive
+```
+
+Não criar variantes novas apenas por preferência visual.
+
+---
+
+# 20. Inputs
+
+Inputs devem apresentar claramente:
+
+```text
+label
+campo
+estado
+mensagem auxiliar
+erro, quando existir
+```
+
+Estados:
+
+```text
+default
+focus
+filled
+disabled
+error
+success
+```
+
+Nunca depender apenas da cor vermelha para indicar erro.
+
+---
+
+# 21. Cards
+
+Cards devem ser utilizados quando ajudarem a agrupar informações.
+
+Não transformar toda informação em card.
+
+Preferência:
+
+```text
+conteúdo integrado
+───────────────
+item
+───────────────
+item
+───────────────
+item
+```
+
+Quando um agrupamento exigir destaque:
+
+```text
+┌──────────────────────┐
+│ conteúdo importante  │
+└──────────────────────┘
+```
+
+---
+
+# 22. Listas
+
+Listas devem possuir:
+
+* hierarquia;
+* alinhamento;
+* área de toque adequada;
+* estado selecionado;
+* estado pressionado;
+* indicação clara de ação, quando existir.
+
+Exemplo:
+
+```text
+Aluguel
+Vencimento: 10/09
+R$ 1.200,00                         ›
+────────────────────────────────────
+Energia
+Vencimento: 15/09
+R$ 180,00                           ›
+```
+
+---
+
+# 23. Bottom Sheets
+
+Bottom sheets devem ser utilizadas para ações contextuais quando isso melhorar o fluxo existente.
+
+Exemplos:
+
+* edição;
+* seleção;
+* confirmação;
+* criação de item;
+* detalhes.
+
+Não utilizar bottom sheet para esconder uma funcionalidade que deveria ser uma tela completa.
+
+O comportamento funcional existente deve ser preservado.
+
+---
+
+# 24. FAB
+
+O Floating Action Button pode representar a ação principal da tela quando já existir essa ação no fluxo atual.
+
+O FAB não deve ser utilizado para inventar novas funcionalidades.
+
+Pode possuir:
+
+```text
+compacto
+expandido
+pressionado
+disabled
+```
+
+Quando necessário, pode apresentar texto:
+
+```text
+＋ Adicionar
+```
+
+ou apenas:
+
+```text
+＋
+```
+
+A escolha é visual e contextual.
+
+---
+
+# 25. Navegação
+
+A navegação existente deve ser preservada.
+
+O Design System pode alterar:
+
+* aparência;
+* espaçamento;
+* ícones;
+* indicadores;
+* materiais;
+* animações;
+* adaptação visual.
+
+Não pode alterar:
+
+* destinos;
+* rotas;
+* ordem funcional;
+* finalidade das áreas.
+
+---
+
+# 26. Navegação adaptativa
+
+A apresentação pode mudar conforme o tamanho da tela.
+
+### Smartphone
+
+Preferência:
+
+```text
+bottom navigation
+```
+
+### Tablet
+
+Pode utilizar:
+
+```text
+navigation rail
+```
+
+### Desktop
+
+Pode utilizar:
+
+```text
+sidebar
+```
+
+Isso é uma transformação de apresentação, não uma alteração da arquitetura funcional.
+
+---
+
+# 27. Responsividade
+
+O CoMorar deve ser pensado como uma interface adaptativa.
+
+Não simplesmente:
+
+```text
+desktop reduzido
+```
+
+### Smartphone
+
+Priorizar:
+
+* uma coluna;
+* ações essenciais;
+* navegação inferior;
+* conteúdo em tela cheia;
+* interação por toque.
+
+### Tablet
+
+Permitir:
+
+* duas colunas quando apropriado;
+* maior densidade;
+* navigation rail;
+* conteúdo expandido.
+
+### Desktop
+
+Permitir:
+
+* sidebar;
+* múltiplas colunas;
+* maior densidade informacional;
+* painéis contextuais.
+
+O conteúdo e as funcionalidades permanecem os mesmos.
+
+---
+
+# 28. Densidade adaptativa
+
+A quantidade de informação apresentada pode mudar conforme o espaço disponível.
+
+Exemplo:
+
+### Mobile
+
+```text
+Gasto
+R$ 120
+```
+
+### Desktop
+
+```text
+Gasto
+Energia
+R$ 120
+10/09/2026
+Responsável: João
+```
+
+Isso não significa criar informações novas.
+
+Somente apresentar melhor informações que já existem.
+
+---
+
+# 29. Microinterações
+
+As animações devem transmitir:
+
+* continuidade;
+* confirmação;
+* mudança de estado;
+* hierarquia;
+* resposta à interação.
+
+Exemplos:
+
+```text
+tap
+↓
+pressed
+↓
+ação
+↓
+feedback
+```
+
+Evitar:
+
+* animações longas;
+* efeitos chamativos;
+* movimento constante;
+* animações decorativas sem função.
+
+---
+
+# 30. Estados obrigatórios
+
+Cada tela ou componente relevante deve considerar:
+
+```text
+loading
+loaded
+empty
+error
+disabled
+success
+offline
+syncing
+```
+
+Somente implementar estados que façam sentido para a funcionalidade existente.
+
+Não criar comportamentos funcionais novos.
+
+---
+
+# 31. Estado vazio
+
+Um estado vazio deve explicar:
+
+1. o que está vazio;
+2. por que isso pode estar acontecendo;
+3. qual ação existente pode ser realizada.
+
+Exemplo conceitual:
+
+```text
+Nenhum pagamento encontrado
+
+Quando houver pagamentos registrados,
+eles aparecerão aqui.
+
+[ ação existente ]
+```
+
+Não adicionar uma ação que não faça parte do produto.
+
+---
+
+# 32. Acessibilidade
+
+A interface deve considerar:
+
+* contraste;
+* tamanho de texto;
+* áreas de toque;
+* foco;
+* navegação por teclado;
+* leitores de tela;
+* redução de movimento;
+* diferenciação de estados sem depender somente de cor.
+
+A estética nunca deve prejudicar a acessibilidade.
+
+---
+
+# 33. Touch targets
+
+Elementos interativos devem possuir uma área de toque confortável.
+
+Não criar pequenos controles apenas porque visualmente parecem elegantes.
+
+Quando necessário, ampliar a área clicável mantendo o ícone visualmente pequeno.
+
+---
+
+# 34. Feedback visual
+
+Toda ação que já exista no sistema deve possuir feedback adequado.
+
+Exemplos:
+
+```text
+salvando
+↓
+salvo
+
+excluindo
+↓
+excluído
+
+sincronizando
+↓
+sincronizado
+```
+
+O feedback não deve alterar o funcionamento da ação.
+
+---
+
+# 35. Componentização
+
+Componentes visuais reutilizáveis devem ser priorizados.
+
+Exemplo conceitual:
+
+```text
+components/
+├── ui/
+│   ├── Button
+│   ├── Badge
+│   ├── Card
+│   ├── Avatar
+│   ├── Input
+│   ├── Select
+│   ├── Sheet
+│   ├── Dialog
+│   ├── FAB
+│   ├── Navigation
+│   └── ...
+│
+└── layout/
+    ├── MobileNavigation
+    ├── DesktopSidebar
+    ├── PageHeader
+    └── ...
+```
+
+A estrutura real do projeto deve ser respeitada.
+
+Não mover ou reorganizar arquivos sem necessidade.
+
+---
+
+# 36. Design Tokens
+
+Sempre que possível, valores visuais devem ser centralizados.
+
+Exemplo:
+
+```text
+--color-background
+--color-surface
+--color-surface-elevated
+--color-primary
+--color-text
+--color-text-secondary
+
+--radius-sm
+--radius-md
+--radius-lg
+
+--spacing-xs
+--spacing-sm
+--spacing-md
+--spacing-lg
+--spacing-xl
+
+--shadow-sm
+--shadow-md
+--shadow-lg
+```
+
+Isso facilita a manutenção e evita inconsistências.
+
+---
+
+# 37. Consistência
+
+Se dois componentes possuem a mesma finalidade, devem parecer parte do mesmo sistema.
+
+Evitar:
+
+```text
+Tela A:
+radius 12
+
+Tela B:
+radius 18
+
+Tela C:
+radius 24
+```
+
+sem justificativa.
+
+A interface deve parecer construída por um único sistema.
+
+---
+
+# 38. Não criar "redesigns isolados"
+
+Não redesenhar uma tela de maneira radicalmente diferente das demais.
+
+Antes de alterar uma tela, verificar:
+
+* componentes existentes;
+* padrões já definidos;
+* tokens;
+* outras telas;
+* navegação;
+* estados.
+
+Uma melhoria deve fortalecer o sistema inteiro.
+
+---
+
+# 39. Regra de reutilização
+
+Antes de criar um novo componente:
+
+1. verificar se já existe componente equivalente;
+2. verificar se pode ser adaptado;
+3. verificar se a diferença é apenas uma variante;
+4. somente criar outro componente se houver justificativa.
+
+Evitar duplicação.
+
+---
+
+# 40. Regra contra overengineering
+
+Não criar abstrações somente para cumprir o Design System.
+
+Exemplo:
+
+Não transformar:
+
+```text
+Button
+```
+
+em cinco componentes diferentes se uma variante resolve o problema.
+
+Priorizar código:
+
+* simples;
+* legível;
+* reutilizável;
+* previsível;
+* fácil de manter.
+
+---
+
+# 41. Regra para agentes de código
+
+Ao receber uma tarefa relacionada ao Design System:
+
+### PASSO 1 — Auditar
+
+Identificar a implementação atual.
+
+### PASSO 2 — Separar visual de funcional
+
+Classificar cada mudança como:
+
+```text
+VISUAL
+ou
+FUNCIONAL
+```
+
+Somente mudanças VISUAIS estão autorizadas.
+
+### PASSO 3 — Verificar componentes existentes
+
+Reutilizar componentes quando possível.
+
+### PASSO 4 — Implementar
+
+Aplicar o Design System sem alterar comportamento.
+
+### PASSO 5 — Verificar regressões
+
+Confirmar:
+
+* navegação;
+* rotas;
+* ações;
+* dados;
+* formulários;
+* estados;
+* responsividade.
+
+### PASSO 6 — Comparar
+
+Verificar se a tela ficou visualmente consistente com o restante do CoMorar.
+
+### PASSO 7 — Finalizar
+
+Somente considerar concluído quando:
+
+```text
+visual melhorado
++
+funcionalidade preservada
++
+navegação preservada
++
+sem regressões
+```
+
+---
+
+# 42. Regra de conflito
+
+Se durante a implementação o agente identificar:
+
+```text
+"Para aplicar este design eu precisaria alterar uma funcionalidade."
+```
+
+Então:
+
+**NÃO alterar a funcionalidade.**
+
+Aplicar a melhor solução visual possível dentro da estrutura existente.
+
+Se a alteração funcional for realmente necessária, registrar como:
+
+```text
+ALTERAÇÃO FUNCIONAL NECESSÁRIA
+```
+
+e interromper essa parte da implementação até receber autorização explícita.
+
+---
+
+# 43. Regra de escopo
+
+Uma tarefa como:
+
+> "Atualizar visualmente a tela de moradores."
+
+significa:
+
+```text
+SIM:
+✓ layout
+✓ tipografia
+✓ espaçamento
+✓ cores
+✓ componentes
+✓ ícones
+✓ estados visuais
+✓ responsividade
+✓ animações
+
+NÃO:
+✗ criar funções
+✗ remover moradores
+✗ alterar regras
+✗ mudar navegação
+✗ alterar banco
+✗ alterar permissões
+```
+
+---
+
+# 44. Ordem recomendada de implementação
+
+A atualização visual deve ocorrer progressivamente.
+
+## Fase 1 — Fundação
+
+* tokens;
+* cores;
+* tipografia;
+* espaçamento;
+* radius;
+* sombras;
+* superfícies.
+
+## Fase 2 — Componentes
+
+* Button;
+* Badge;
+* Card;
+* Input;
+* Select;
+* Avatar;
+* Dialog;
+* Sheet;
+* FAB.
+
+## Fase 3 — Navegação
+
+* mobile;
+* tablet;
+* desktop.
+
+## Fase 4 — Layout
+
+* headers;
+* containers;
+* grids;
+* listas;
+* seções.
+
+## Fase 5 — Telas
+
+Atualizar as telas existentes uma por vez.
+
+## Fase 6 — Estados
+
+* loading;
+* empty;
+* error;
+* success;
+* offline;
+* syncing.
+
+## Fase 7 — Refinamento
+
+* animações;
+* microinterações;
+* acessibilidade;
+* responsividade;
+* consistência.
+
+---
+
+# 45. Regra de atualização tela por tela
+
+Nunca atualizar todas as telas simultaneamente sem necessidade.
+
+Para cada tela:
+
+```text
+ANTES
+↓
+AUDITORIA
+↓
+APLICAÇÃO DO DESIGN SYSTEM
+↓
+TESTE
+↓
+COMPARAÇÃO
+↓
+APROVAÇÃO
+↓
+PRÓXIMA TELA
+```
+
+Isso reduz o risco de regressões.
+
+---
+
+# 46. Critério visual de qualidade
+
+Uma tela atualizada deve responder positivamente às seguintes perguntas:
+
+### Hierarquia
+
+É possível identificar rapidamente:
+
+* onde estou?
+* qual informação é importante?
+* qual é a ação principal?
+
+### Consistência
+
+A tela parece pertencer ao CoMorar?
+
+### Clareza
+
+É possível entender a interface sem precisar descobrir como ela funciona?
+
+### Espaço
+
+Existe espaço suficiente entre elementos?
+
+### Profundidade
+
+As camadas são perceptíveis sem exagero?
+
+### Responsividade
+
+A interface funciona adequadamente no tamanho de tela correspondente?
+
+### Acessibilidade
+
+O conteúdo continua legível e utilizável?
+
+---
+
+# 47. O que evitar
+
+Evitar:
+
+* excesso de gradientes;
+* excesso de blur;
+* excesso de glass;
+* sombras pesadas;
+* cards dentro de cards dentro de cards;
+* excesso de bordas;
+* excesso de cores;
+* animações exageradas;
+* textos gigantes sem necessidade;
+* ícones inconsistentes;
+* componentes visualmente diferentes para a mesma finalidade;
+* telas visualmente congestionadas;
+* aparência de template genérico;
+* copiar diretamente iOS, Android ou Windows.
+
+---
+
+# 48. Identidade do CoMorar
+
+O CoMorar deve possuir identidade própria.
+
+As referências externas servem para responder:
+
+> "Como os sistemas modernos resolvem este problema visual?"
+
+Não:
+
+> "Como podemos copiar este sistema?"
+
+O resultado final deve ser reconhecível como:
+
+**CoMorar.**
+
+---
+
+# 49. Princípio final
+
+A evolução visual deve seguir esta fórmula:
+
+```text
+PADRÕES MODERNOS
+        +
+USABILIDADE
+        +
+ACESSIBILIDADE
+        +
+RESPONSIVIDADE
+        +
+IDENTIDADE DO COMORAR
+        =
+DESIGN SYSTEM COMORAR 2026
+```
+
+E nunca:
+
+```text
+EFEITO VISUAL
+        +
+TENDÊNCIA
+        +
+EFEITO VISUAL
+        =
+DESIGN
+```
+
+---
+
+# 50. Regra definitiva para o agente
+
+> **Este documento possui autoridade somente sobre a apresentação visual e a experiência de interface do CoMorar.**
+>
+> **Não interpretar nenhuma recomendação visual como autorização para modificar funcionalidades, regras de negócio, navegação, dados, autenticação, permissões ou arquitetura.**
+>
+> **Quando houver dúvida entre uma melhoria visual e uma alteração funcional, preservar a funcionalidade existente.**
+>
+> **O objetivo é atualizar o visual do CoMorar, não criar um novo CoMorar.**
+
+---
+
+# 51. Checklist de implementação
+
+Antes de concluir qualquer alteração visual:
+
+```text
+[ ] Funcionalidades existentes foram preservadas
+[ ] Navegação existente foi preservada
+[ ] Rotas foram preservadas
+[ ] Dados foram preservados
+[ ] Regras de negócio não foram alteradas
+[ ] Componentes existentes foram reutilizados quando possível
+[ ] Tokens visuais foram utilizados
+[ ] Responsividade foi verificada
+[ ] Estados visuais foram preservados
+[ ] Acessibilidade foi considerada
+[ ] Não foram adicionadas funcionalidades não solicitadas
+[ ] Não foram removidas funcionalidades existentes
+[ ] Não houve alteração desnecessária na arquitetura
+[ ] A tela segue o Design System
+[ ] A tela continua visualmente coerente com o restante do CoMorar
+```
+
+---
+
+# 52. Resultado esperado
+
+Ao final da aplicação deste documento, o CoMorar deve continuar sendo **o mesmo produto em termos de funcionalidade**, porém apresentar:
+
+* aparência contemporânea;
+* maior consistência;
+* melhor hierarquia visual;
+* melhor aproveitamento do espaço;
+* melhor experiência em telas pequenas;
+* adaptação adequada para telas grandes;
+* profundidade visual sutil;
+* componentes consistentes;
+* navegação visualmente moderna;
+* melhor acessibilidade;
+* melhor percepção de qualidade;
+* identidade visual própria.
+
+**O produto muda visualmente.
+As decisões funcionais permanecem.**

@@ -238,18 +238,19 @@ export function Orcamento() {
               onChange={(e) => setValor(e.target.value)}
               placeholder="Ex.: 800,00"
               autoFocus
+              className={erroEdicao.toLowerCase().includes('limite') ? 'input-erro' : ''}
             />
 
             {erroEdicao && <div className="error-box">{erroEdicao}</div>}
 
             <button
               type="button"
-              className="btn btn-primary"
+              className={`btn btn-primary${salvando ? ' btn-spinner' : ''}`}
               style={{ width: '100%', marginTop: 16 }}
               disabled={salvando}
               onClick={() => void salvar()}
             >
-              {salvando ? 'Salvando…' : 'Salvar limite'}
+              {salvando ? '' : 'Salvar limite'}
             </button>
           </div>
         </div>

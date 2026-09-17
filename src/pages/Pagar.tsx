@@ -533,15 +533,29 @@ export function Pagar() {
                 </div>
 
                 <label>Valor real do boleto</label>
-                <input inputMode="decimal" value={valorReal} onChange={(e) => setValorReal(e.target.value)} />
+                <input
+                  inputMode="decimal"
+                  value={valorReal}
+                  onChange={(e) => setValorReal(e.target.value)}
+                  className={erro.startsWith('Valor inválido') ? 'input-erro' : ''}
+                />
 
                 <label>Vencimento real do boleto</label>
-                <input type="date" value={vencimento} onChange={(e) => setVencimento(e.target.value)} />
+                <input
+                  type="date"
+                  value={vencimento}
+                  onChange={(e) => setVencimento(e.target.value)}
+                  className={erro === 'Vencimento do boleto?' ? 'input-erro' : ''}
+                />
 
                 <label>Quem pagou</label>
                 <div className="field-row">
                   <div style={{ flex: 2 }}>
-                    <select value={quemPagou} onChange={(e) => setQuemPagou(e.target.value)}>
+                    <select
+                      value={quemPagou}
+                      onChange={(e) => setQuemPagou(e.target.value)}
+                      className={erro === 'Quem pagou?' ? 'input-erro' : ''}
+                    >
                       {moradores.map((m) => (
                         <option key={m.id} value={m.id}>{m.nome}</option>
                       ))}
@@ -605,11 +619,11 @@ export function Pagar() {
                   </button>
                   <button
                     type="button"
-                    className="btn btn-primary"
+                    className={`btn btn-primary${enviando ? ' btn-spinner' : ''}`}
                     disabled={enviando}
                     onClick={() => confirmarPagamento({ id: d.id })}
                   >
-                    {enviando ? '…' : 'Confirmar pagamento'}
+                    {enviando ? '' : 'Confirmar pagamento'}
                   </button>
                 </div>
               </div>

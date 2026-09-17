@@ -286,12 +286,12 @@ export function Balanco() {
 
             <button
               type="button"
-              className="btn btn-primary"
+              className={`btn btn-primary${salvando ? ' btn-spinner' : ''}`}
               style={{ width: '100%', marginTop: 16 }}
               disabled={salvando}
               onClick={() => void confirmarAcerto()}
             >
-              {salvando ? 'Salvando…' : 'Confirmar acerto'}
+              {salvando ? '' : 'Confirmar acerto'}
             </button>
           </div>
         </div>

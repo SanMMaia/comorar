@@ -322,6 +322,7 @@ export function DespesaAvulsa() {
             onClick={() => setMenuFornecedor(true)}
             onFocus={() => setMenuFornecedor(true)}
             placeholder="Ex.: Supermercado, janta…"
+            className={erro.toLowerCase().includes('fornecedor') ? 'input-erro' : ''}
           />
           <button
             type="button"
@@ -354,7 +355,14 @@ export function DespesaAvulsa() {
         <div className="field-row">
           <div>
             <label>Valor</label>
-            <input required inputMode="decimal" value={valor} onChange={(e) => setValor(e.target.value)} placeholder="0,00" />
+            <input
+              required
+              inputMode="decimal"
+              value={valor}
+              onChange={(e) => setValor(e.target.value)}
+              placeholder="0,00"
+              className={erro.toLowerCase().includes('valor inválido') ? 'input-erro' : ''}
+            />
           </div>
           <div>
             <label>Categoria</label>
@@ -369,7 +377,11 @@ export function DespesaAvulsa() {
         <div className="field-row">
           <div>
             <label>Quem pagou</label>
-            <select value={pagoPor} onChange={(e) => setPagoPor(e.target.value)}>
+            <select
+              value={pagoPor}
+              onChange={(e) => setPagoPor(e.target.value)}
+              className={erro === 'Quem pagou?' ? 'input-erro' : ''}
+            >
               {moradores.map((m) => (
                 <option key={m.id} value={m.id}>{m.nome}</option>
               ))}
