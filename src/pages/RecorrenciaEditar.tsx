@@ -7,6 +7,7 @@ import { invalidarCacheDespesas } from '../lib/dados'
 import { formatBR, parseCentavos } from '../lib/format'
 import { frmDeRec, validarFrm, type Frm } from '../lib/recorrenciaForm'
 import { CamposForm } from '../components/RecorrenciaForm'
+import { Confirmacao } from '../components/Confirmacao'
 import type { Recorrencia } from '../types'
 
 export function RecorrenciaEditar() {
@@ -17,6 +18,8 @@ export function RecorrenciaEditar() {
   const [carregado, setCarregado] = useState(false)
   const [erro, setErro] = useState('')
   const [enviando, setEnviando] = useState(false)
+  const [desativando, setDesativando] = useState(false)
+  const [confirmarExcluir, setConfirmarExcluir] = useState(false)
 
   const souOwner = moradores.find((m) => m.id === minhaMoradorId)?.role === 'owner'
 
@@ -88,19 +91,11 @@ export function RecorrenciaEditar() {
     if (!rec) return
     const novoEstado = !rec.ativa
     if (!novoEstado) {
-      if (!window.confirm(`Desativar "${rec.fornecedor}"? As previsões futuras serão removidas (os lançamentos pagos são mantidos).`))
-        return
+      setDesativando(true)
+      return
     }
     setEnviando(true)
     try {
-      if (!novoEstado) {
-        const { error: errDel } = await supabase
-          .from('despesas')
-          .delete()
-          .eq('origem_recorrencia_id', rec.id)
-          .eq('status', 'prevista')
-        if (errDel) throw errDel
-      }
       const { data: atualizada, error } = await supabase
         .from('recorrencias')
         .update({ ativa: novoEstado })
@@ -118,10 +113,34 @@ export function RecorrenciaEditar() {
     }
   }
 
-  const excluir = async () => {
+  const confirmarDesativar = async () => {
     if (!rec) return
-    if (!window.confirm(`Excluir a recorrência "${rec.fornecedor}" e suas previsões futuras? Os lançamentos já confirmados serão mantidos.`))
-      return
+    setDesativando(false)
+    setEnviando(true)
+    try {
+      const { error: errDel } = await supabase
+        .from('despesas')
+        .delete()
+        .eq('origem_recorrencia_id', rec.id)
+        .eq('status', 'prevista')
+      if (errDel) throw errDel
+      const { error } = await supabase
+        .from('recorrencias')
+        .update({ ativa: false })
+        .eq('id', rec.id)
+      if (error) throw error
+      invalidarCacheDespesas(casa?.id)
+      voltar()
+    } catch (err) {
+      setErro(err instanceof Error ? err.message : 'Erro ao desativar recorrência')
+    } finally {
+      setEnviando(false)
+    }
+  }
+
+  const confirmarExclusao = async () => {
+    setConfirmarExcluir(false)
+    if (!rec) return
     await supabase
       .from('despesas')
       .delete()
@@ -155,7 +174,7 @@ export function RecorrenciaEditar() {
         </div>
       ) : (
         <>
-          <h1 className="page-title">Editar recorrência</h1>
+          <h1 className="page-title">Editar conta que se repete</h1>
           <div className="small muted mb-lg">
             {rec.fornecedor} · <strong className="mono">{formatBR(rec.valor_previsto)}</strong> por{' '}
             {rec.intervalo}
@@ -192,10 +211,30 @@ export function RecorrenciaEditar() {
             <button type="button" className="btn btn-sm btn-secondary" disabled={enviando} onClick={() => void alternarAtiva()}>
               {enviando ? 'Salvando…' : rec.ativa ? 'Desativar' : 'Ativar'}
             </button>
-            <button type="button" className="btn btn-sm btn-danger" onClick={() => void excluir()}>
+            <button type="button" className="btn btn-sm btn-danger" onClick={() => setConfirmarExcluir(true)}>
               Excluir
             </button>
           </div>
+
+          <Confirmacao
+            aberto={desativando}
+            titulo={`Desativar "${rec.fornecedor}"?`}
+            mensagem="As próximas contas desta recorrência serão removidas. Contas já pagas são mantidas."
+            rotulo="Desativar"
+            perigoso
+            onFechar={() => setDesativando(false)}
+            onConfirmar={() => void confirmarDesativar()}
+          />
+
+          <Confirmacao
+            aberto={confirmarExcluir}
+            titulo={`Excluir "${rec.fornecedor}"?`}
+            mensagem="As próximas contas desta recorrência serão removidas. Contas já pagas são mantidas."
+            rotulo="Excluir"
+            perigoso
+            onFechar={() => setConfirmarExcluir(false)}
+            onConfirmar={() => void confirmarExclusao()}
+          />
         </>
       )}
     </>

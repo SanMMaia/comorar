@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useApp } from '../state/AppContext'
 import { useDespesas } from '../lib/dados'
@@ -7,9 +7,11 @@ import { formatBR, dataBR, mesAnoBR, estaAtrasada } from '../lib/format'
 import { labelsIntervalo } from '../lib/recorrenciaForm'
 import { labelCategoria } from '../lib/categorias'
 import type { Despesa, Recorrencia } from '../types'
+import { Confirmacao } from '../components/Confirmacao'
 
 export function Projecao() {
   const { casa } = useApp()
+  const navigate = useNavigate()
   const { despesas, recarregar, carregando } = useDespesas(casa?.id ?? null)
   const [recorrencias, setRecorrencias] = useState<Recorrencia[]>([])
 
@@ -73,8 +75,14 @@ export function Projecao() {
       .filter((d) => d.origem_recorrencia_id === recId)
       .sort((a, b) => a.data.localeCompare(b.data))
 
-  const ignorarMes = async (d: Despesa) => {
-    if (!window.confirm(`Ignorar "${d.fornecedor}" de ${dataBR(d.data)}?`)) return
+  const ignorarMes = (d: Despesa) => {
+    setIgnorando(d)
+  }
+
+  const confirmarIgnorar = async () => {
+    if (!ignorando) return
+    const d = ignorando
+    setIgnorando(null)
     await supabase.from('despesas').update({ status: 'cancelada' }).eq('id', d.id)
     setUltimaIgnorada(d)
     await recarregar()
@@ -88,6 +96,7 @@ export function Projecao() {
   }
 
   const [ultimaIgnorada, setUltimaIgnorada] = useState<Despesa | null>(null)
+  const [ignorando, setIgnorando] = useState<Despesa | null>(null)
 
   if (carregando) return <div className="empty">Carregando…</div>
 
@@ -99,17 +108,17 @@ export function Projecao() {
         </Link>
       </div>
       <div className="row">
-        <h1 className="bar-title">Contas recorrentes</h1>
+        <h1 className="bar-title">Contas que se repetem</h1>
         <Link to="/recorrencia/nova" viewTransition className="btn btn-primary btn-sm">
           + Nova
         </Link>
       </div>
-      <p className="small muted">Toque em uma conta para ver os lançamentos e gerenciar a recorrência.</p>
+      <p className="small muted">Toque em uma conta para ver as próximas contas e gerenciar a recorrência.</p>
 
       {ultimaIgnorada && (
         <div className="card row mt" style={{ borderLeft: '4px solid var(--warn, #e0a92e)' }}>
           <span className="small">
-            <strong>{ultimaIgnorada.fornecedor}</strong> ignorado.
+            <strong>{ultimaIgnorada.fornecedor}</strong> foi ignorada.
           </span>
           <button type="button" className="btn btn-sm btn-secondary" onClick={() => void desfazerIgnorar()}>
             Desfazer
@@ -120,7 +129,7 @@ export function Projecao() {
       {recorrencias.length === 0 ? (
         <div className="empty">
           <div className="empty-icone" aria-hidden>🔁</div>
-          <p>Nenhuma recorrência cadastrada.</p>
+          <p>Nenhuma conta que se repete por aqui ainda.</p>
         </div>
       ) : (
         <div className="card-flush mt">
@@ -140,7 +149,7 @@ export function Projecao() {
                   <div className="item-lado">
                     <strong className="mono">{formatBR(r.valor_previsto)}</strong>
                     {r.ativa
-                      ? <span className="badge badge-muted">{lancamentos.length} lançamento(s)</span>
+                      ? <span className="badge badge-muted">{lancamentos.length} conta(s)</span>
                       : <span className="badge badge-muted">inativa</span>}
                   </div>
                   <span className="item-seta" aria-hidden>›</span>
@@ -155,7 +164,7 @@ export function Projecao() {
       {previstas.length === 0 ? (
         <div className="empty">
           <div className="empty-icone" aria-hidden>📆</div>
-          <p>Nenhuma previsão ativa. Crie uma recorrência acima para gerar.</p>
+          <p>Nenhuma próxima conta. Crie uma conta que se repete acima para gerar.</p>
         </div>
       ) : (
         Array.from(previstasPorMes.entries()).map(([chave, grupo]) => {
@@ -180,18 +189,20 @@ export function Projecao() {
               {aberto && (
                 <div style={{ padding: '0 var(--space-4) var(--space-2)' }}>
                   {grupo.lancamentos.map((d) => (
-                    <Link
-                      to={`/despesa/${d.id}`}
-                      viewTransition
+                    <div
                       key={d.id}
+                      role="link"
+                      tabIndex={0}
+                      onClick={() => navigate(`/despesa/${d.id}`)}
+                      onKeyDown={(e) => e.key === 'Enter' && navigate(`/despesa/${d.id}`)}
                       className="row clicavel"
-                      style={{ padding: 'var(--space-2) 0', borderTop: '1px solid var(--border)', textDecoration: 'none', color: 'inherit' }}
+                      style={{ padding: 'var(--space-2) 0', borderTop: '1px solid var(--border)', cursor: 'pointer' }}
                     >
-                      <div className="small">
+                      <div className="small" style={{ flex: 1, minWidth: 0 }}>
                         <strong>{d.fornecedor}</strong>
                         <span className="muted"> · {dataBR(d.data)}</span>
                         {estaAtrasada(d.data) && (
-                          <span className="badge badge-danger">atrasado</span>
+                          <span className="badge badge-danger">Atrasada</span>
                         )}
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
@@ -200,15 +211,14 @@ export function Projecao() {
                           type="button"
                           className="btn btn-sm btn-secondary"
                           onClick={(e) => {
-                            e.preventDefault()
                             e.stopPropagation()
-                            void ignorarMes(d)
+                            ignorarMes(d)
                           }}
                         >
                           Ignorar
                         </button>
                       </div>
-                    </Link>
+                    </div>
                   ))}
                 </div>
               )}
@@ -216,6 +226,15 @@ export function Projecao() {
           )
         })
       )}
+
+      <Confirmacao
+        aberto={ignorando !== null}
+        titulo={`Ignorar "${ignorando?.fornecedor ?? ''}" de ${ignorando ? dataBR(ignorando.data) : ''}?`}
+        mensagem="Esta conta deixa de aparecer aqui, mas a recorrência continua valendo para os próximos meses."
+        rotulo="Ignorar"
+        onFechar={() => setIgnorando(null)}
+        onConfirmar={() => void confirmarIgnorar()}
+      />
     </>
   )
 }

@@ -7,8 +7,10 @@ export interface MoradorRateio {
 
 export interface ConfigRateio {
   regra: TipoRateio
-  /** user_id -> percentual (0-100). Usado em 'percentual' e opcional em 'consumo'. */
+  /** user_id -> percentual (0-100). Usado em 'percentual'. */
   percentuais?: Record<string, number>
+  /** user_id -> peso (qualquer escala, ex.: consumo kW/h). Usado em 'consumo'; supera `percentuais`. */
+  pesos?: Record<string, number>
   /** Moradores incluídos no rateio. Usado em 'consumo'. */
   incluidos?: string[]
 }
@@ -21,6 +23,26 @@ export interface ItemRateio {
 /** Arredonda e devolve em centavos para evitar erros de float. */
 function paraCentavos(valor: number): number {
   return Math.round(valor * 100)
+}
+
+/**
+ * Valida os percentuais da regra 'percentual': todos > 0 e a soma deve ser
+ * 100% (tolerância de 0,5 para fechar arredondamentos). Devolve mensagem de
+ * erro pronta para UI, ou `null` quando válido.
+ */
+export function validarPercentuais(
+  moradores: { id: string }[],
+  percentuais: Record<string, number>,
+): string | null {
+  const ativos = moradores
+    .map((m) => percentuais[m.id] || 0)
+    .filter((p) => p > 0)
+  if (ativos.length === 0) return 'Informe os percentuais de cada morador.'
+  const soma = ativos.reduce((a, b) => a + b, 0)
+  if (Math.abs(soma - 100) > 0.5) {
+    return `Percentuais somam ${soma}% — revise para 100%`
+  }
+  return null
 }
 
 /**
@@ -54,8 +76,14 @@ export function calcularRateio(
 
   if (alvos.length === 0) return []
 
+  const deConsumo = config.regra === 'consumo' && (!!config.pesos || !!config.percentuais)
   const pesos = alvos.map((m) => {
-    if (config.regra === 'percentual' || (config.regra === 'consumo' && config.percentuais)) {
+    if (deConsumo) {
+      const p = config.pesos?.[m.user_id] ?? config.percentuais?.[m.user_id] ?? 0
+      if (p <= 0) return 0
+      return p
+    }
+    if (config.regra === 'percentual') {
       const p = config.percentuais?.[m.user_id] ?? 0
       if (p <= 0) return 0
       return p / 100

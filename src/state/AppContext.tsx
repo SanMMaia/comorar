@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
 import type { Session, User } from '@supabase/supabase-js'
 import { supabase } from '../lib/supabase'
+import { invalidarCacheDespesas } from '../lib/dados'
 import type { Casa, MoradorCompleto } from '../types'
 
 interface AppState {
@@ -43,6 +44,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     })
 
     const { data: sub } = supabase.auth.onAuthStateChange((_event, s) => {
+      if (!s?.user) invalidarCacheDespesas()
       setSession(s)
       setLoading(false)
     })
@@ -119,6 +121,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, [session?.user?.id])
 
   const signOut = async () => {
+    invalidarCacheDespesas()
     await supabase.auth.signOut()
   }
 

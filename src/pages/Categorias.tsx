@@ -8,6 +8,7 @@ import {
   slugCategoria,
 } from '../lib/categorias'
 import type { CategoriaItem } from '../types'
+import { Confirmacao } from '../components/Confirmacao'
 
 export function Categorias() {
   const { casa, moradores, minhaMoradorId, refreshCasa } = useApp()
@@ -22,6 +23,8 @@ export function Categorias() {
   const [nova, setNova] = useState('')
   const [gravando, setGravando] = useState(false)
   const [erro, setErro] = useState('')
+  const [excluindo, setExcluindo] = useState<CategoriaItem | null>(null)
+  const [confirmarRestaurar, setConfirmarRestaurar] = useState(false)
 
   const gravar = async (proxima: CategoriaItem[]) => {
     if (!casa || !souOwner) return
@@ -54,8 +57,10 @@ export function Categorias() {
     await gravar(lista.map((c) => (c.id === id ? { ...c, label } : c)))
   }
 
-  const excluir = async (id: string) => {
-    if (!window.confirm('Remover essa categoria das opções?')) return
+  const confirmarExclusao = async () => {
+    if (!excluindo) return
+    const id = excluindo.id
+    setExcluindo(null)
     await gravar(lista.filter((c) => c.id !== id))
   }
 
@@ -77,7 +82,7 @@ export function Categorias() {
   }
 
   const restaurarPadrao = async () => {
-    if (!window.confirm('Restaurar a lista padrão de categorias?')) return
+    setConfirmarRestaurar(false)
     await gravar(CATEGORIAS_PADRAO)
   }
 
@@ -89,10 +94,9 @@ export function Categorias() {
         </button>
       </div>
 
-      <h1 className="page-title">Categorias de despesa</h1>
+      <h1 className="page-title">Categorias</h1>
       <p className="small muted">
-        Os nomes que aparecem nos lançamentos. Renomear ou excluir não altera
-        lançamentos antigos.
+        Nomes que aparecem nas contas. Renomear ou excluir não altera contas antigas.
       </p>
 
       {!souOwner && (
@@ -156,7 +160,7 @@ export function Categorias() {
                       <button
                         type="button"
                         className="btn btn-sm btn-secondary"
-                        onClick={() => excluir(c.id)}
+                        onClick={() => setExcluindo(c)}
                         disabled={gravando}
                         title="Remover"
                       >
@@ -203,13 +207,33 @@ export function Categorias() {
           <button
             type="button"
             className="btn btn-sm btn-secondary"
-            onClick={restaurarPadrao}
+            onClick={() => setConfirmarRestaurar(true)}
             disabled={gravando}
           >
             Restaurar categorias padrão
           </button>
         </p>
       )}
+
+      <Confirmacao
+        aberto={excluindo !== null}
+        titulo={`Remover "${excluindo?.label ?? ''}" das opções?`}
+        mensagem="Contas antigas desta categoria continuam guardadas."
+        rotulo="Remover"
+        perigoso
+        onFechar={() => setExcluindo(null)}
+        onConfirmar={() => void confirmarExclusao()}
+      />
+
+      <Confirmacao
+        aberto={confirmarRestaurar}
+        titulo="Restaurar categorias padrão?"
+        mensagem="Suas categorias personalizadas serão substituídas pela lista original."
+        rotulo="Restaurar"
+        perigoso
+        onFechar={() => setConfirmarRestaurar(false)}
+        onConfirmar={() => void restaurarPadrao()}
+      />
     </>
   )
 }

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
+import { validarPercentuais } from '../lib/rateio'
 import { useApp } from '../state/AppContext'
 import type { RegraRateio } from '../types'
 
@@ -33,16 +34,17 @@ export function Regras() {
 
   const salvar = async () => {
     if (!casa) return
-    const somaTotal = moradores
-      .filter((m) => m.user_id)
-      .reduce((acc, m) => acc + (Number(percentuais[m.id]) || 0), 0)
-    if (Math.abs(somaTotal - 100) > 0.5) {
-      setErro(somaTotal === 0 ? 'Informe os percentuais de cada morador.' : `Percentuais somam ${somaTotal}% — revise para 100%`)
+    const comConta = moradores.filter((m) => m.user_id)
+    const err = validarPercentuais(
+      comConta,
+      Object.fromEntries(comConta.map((m) => [m.id, Number(percentuais[m.id]) || 0])),
+    )
+    if (err) {
+      setErro(err)
       return
     }
     setErro('')
-    const linhas = moradores
-      .filter((m) => m.user_id)
+    const linhas = comConta
       .map((m) => ({
         casa_id: casa.id,
         user_id: m.user_id as string,

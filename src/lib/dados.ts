@@ -151,24 +151,22 @@ export function ajustesEmObrigacoes(ajustes: Ajuste[]): ObrigacaoCalculada[] {
 export function useAjustes(casaId: string | null) {
   const [ajustes, setAjustes] = useState<Ajuste[]>([])
 
-  useEffect(() => {
+  const recarregar = useCallback(async () => {
     if (!casaId) {
       setAjustes([])
       return
     }
-    let vivo = true
-    void supabase
+    const { data } = await supabase
       .from('ajustes')
       .select('*')
       .eq('casa_id', casaId)
       .order('data', { ascending: false })
-      .then(({ data }) => {
-        if (vivo) setAjustes((data ?? []) as Ajuste[])
-      })
-    return () => {
-      vivo = false
-    }
+    setAjustes((data ?? []) as Ajuste[])
   }, [casaId])
 
-  return ajustes
+  useEffect(() => {
+    void recarregar()
+  }, [recarregar])
+
+  return { ajustes, recarregar }
 }

@@ -106,17 +106,18 @@ export function ListaMensal() {
   return (
     <>
       <div className="row">
-        <button type="button" className="btn btn-secondary btn-sm" onClick={voltarMes}>←</button>
+        <button type="button" className="btn btn-secondary btn-sm" aria-label="Mês anterior" onClick={voltarMes}>←</button>
         <div style={{ textAlign: 'center' }}>
           <h1 style={{ fontSize: 'var(--text-xl)', margin: 0 }}>{mesAnoBR(new Date(ano, mes, 1))}</h1>
           <div className="small muted">
             {souOwner ? formatBR(total) : `sua parte ${formatBR(total)}`}
-            {totalPrevisto > 0 ? ` · ${formatBR(totalPrevisto)} previstos` : ''}
+            {totalPrevisto > 0 ? ` · ${formatBR(totalPrevisto)} a vencer` : ''}
           </div>
         </div>
         <button
           type="button"
           className="btn btn-secondary btn-sm"
+          aria-label="Próximo mês"
           onClick={avancarMes}
           disabled={mesIndex >= hojeIndex + 12}
         >
@@ -177,7 +178,7 @@ export function ListaMensal() {
       {!busca.trim() && doMes.length === 0 && (
         <div className="empty">
           <div className="empty-icone" aria-hidden>🗓️</div>
-          <p>Nenhum lançamento neste mês.</p>
+          <p>Nenhuma conta neste mês.</p>
         </div>
       )}
 
@@ -222,10 +223,10 @@ export function ListaMensal() {
                         </span>
                       )}
                       {d.status === 'prevista' && estaAtrasada(d.data) && (
-                        <span className="badge badge-danger">atrasado</span>
+                        <span className="badge badge-danger">Atrasada</span>
                       )}
                       {d.status === 'prevista' && !estaAtrasada(d.data) && (
-                        <span className="badge badge-warn">previsto</span>
+                        <span className="badge badge-warn">A vencer</span>
                       )}
                     </div>
                     <span className="item-seta" aria-hidden>›</span>

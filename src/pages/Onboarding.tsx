@@ -38,7 +38,7 @@ export function Onboarding() {
   return (
     <div className="content" style={{ paddingTop: 'var(--space-6)' }}>
       <h1 className="page-title">Bem-vindo! 👋</h1>
-      <p className="page-sub">Crie uma casa para começar a dividir despesas ou entre com o código de convite dos seus moradores.</p>
+      <p className="page-sub">Crie a casa e chame seus moradores, ou entre com o código de convite.</p>
 
       <div className="card-elevado">
         <div className="seg">
@@ -69,7 +69,7 @@ export function Onboarding() {
                 placeholder="Ex.: República do Centro"
               />
               <p className="small muted mt">
-                Você será o(a) responsável. Depois, compartilhe o código de convite com os outros moradores.
+                Você será o responsável. O app gera um código para os outros moradores entrarem.
               </p>
             </>
           ) : (

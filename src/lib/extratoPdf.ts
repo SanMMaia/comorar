@@ -45,7 +45,12 @@ export async function gerarExtratoPdf(opts: ExtratoOpts) {
         const meu = b.rateios.find((r) => r.morador_id === opts.minhaMoradorId)
         return a + (meu?.valor_rateado ?? 0)
       }, 0)
-  const totalPrevisto = previstas.reduce((a, b) => a + b.valor, 0)
+  const totalPrevisto = opts.souOwner
+    ? previstas.reduce((a, b) => a + b.valor, 0)
+    : previstas.reduce((a, b) => {
+        const meu = b.rateios.find((r) => r.morador_id === opts.minhaMoradorId)
+        return a + (meu?.valor_rateado ?? 0)
+      }, 0)
   const pendentes = opts.souOwner
     ? confirmadas.reduce((a, d) => a + d.rateios.filter((r) => !r.pago).length, 0)
     : confirmadas.filter(
@@ -109,7 +114,7 @@ export async function gerarExtratoPdf(opts: ExtratoOpts) {
   // despesas
   doc.setFontSize(12)
   doc.setTextColor(20, 20, 20)
-  doc.text('Lançamentos', MARGEM, y)
+  doc.text('Contas', MARGEM, y)
   y += 7
 
   doc.setFontSize(9)
@@ -124,7 +129,7 @@ export async function gerarExtratoPdf(opts: ExtratoOpts) {
   y += 5
 
   if (doMes.length === 0) {
-    linha('Nenhum lançamento neste mês.', '', 10, [120, 120, 120])
+    linha('Nenhuma conta neste mês.', '', 10, [120, 120, 120])
   }
 
   for (const d of doMes) {
@@ -133,12 +138,12 @@ export async function gerarExtratoPdf(opts: ExtratoOpts) {
     const valor = opts.souOwner ? d.valor : (meu?.valor_rateado ?? 0)
     const situacao =
       d.status === 'prevista'
-        ? 'previsto'
+        ? 'A vencer'
         : meu
           ? meu.pago
-            ? 'pago'
-            : 'pendente'
-          : 'confirmada'
+            ? 'Paga'
+            : 'Pendente'
+          : 'Confirmada'
 
     doc.setFontSize(9)
     doc.setTextColor(30, 30, 30)

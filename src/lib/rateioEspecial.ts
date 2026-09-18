@@ -39,12 +39,12 @@ export function rateioMercado(
     )
   }
   const total = itens.reduce((a, b) => a + b.valor, 0)
-  const percentuais: Record<string, number> = {}
-  for (const id of ids) percentuais[id] = (centavos[id] / 100 / total) * 100
+  const pesos: Record<string, number> = {}
+  for (const id of ids) pesos[id] = centavos[id] / 100
   return calcularRateio(total, moradores.map((m) => ({ user_id: m.id })), {
     regra: 'consumo',
     incluidos: ids,
-    percentuais,
+    pesos,
   })
 }
 
@@ -71,13 +71,13 @@ export function dividirPorMedidor(
   }
   const media =
     informadas.reduce((a, l) => a + (l.peso as number), 0) / informadas.length
-  const percentuais: Record<string, number> = {}
+  const pesos: Record<string, number> = {}
   for (const l of leituras) {
     const peso = l.peso != null && l.peso >= 0 ? l.peso : media
     if (peso <= 0) continue
-    percentuais[l.morador_id] = peso
+    pesos[l.morador_id] = peso
   }
-  const participantes = Object.keys(percentuais)
+  const participantes = Object.keys(pesos)
   if (participantes.length === 0) {
     return calcularRateio(total, leituras.map((l) => ({ user_id: l.morador_id })), {
       regra: 'igual',
@@ -86,6 +86,6 @@ export function dividirPorMedidor(
   return calcularRateio(
     total,
     leituras.map((l) => ({ user_id: l.morador_id })),
-    { regra: 'consumo', incluidos: participantes, percentuais },
+    { regra: 'consumo', incluidos: participantes, pesos },
   )
 }

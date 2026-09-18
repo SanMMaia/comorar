@@ -6,6 +6,7 @@ import { invalidarCacheDespesas } from '../lib/dados'
 import { subirComprovante, urlComprovante, removerComprovante } from '../lib/comprovante'
 import { formatBR, dataBR, estaAtrasada } from '../lib/format'
 import { labelCategoria } from '../lib/categorias'
+import { Confirmacao } from '../components/Confirmacao'
 import type { Despesa, ItensDespesa, LeituraMedidor, Parcela, Rateio } from '../types'
 
 interface Detalhe extends Despesa {
@@ -27,6 +28,8 @@ export function DespesaDetalhe() {
   const [leiturasAnteriores, setLeiturasAnteriores] = useState<Record<string, number>>({})
   const [erro, setErro] = useState('')
   const [carregando, setCarregando] = useState(true)
+  const [confirmExcluir, setConfirmExcluir] = useState(false)
+  const [confirmDesfazer, setConfirmDesfazer] = useState(false)
 
   const souOwner = moradores.find((m) => m.id === minhaMoradorId)?.role === 'owner'
 
@@ -114,7 +117,7 @@ export function DespesaDetalhe() {
 
   const excluir = async () => {
     if (!despesa) return
-    if (!window.confirm(`Excluir a despesa "${despesa.fornecedor}"?`)) return
+    setConfirmExcluir(false)
     if (despesa.comprovante_url) await removerComprovante(despesa.comprovante_url)
     const { error } = await supabase.from('despesas').delete().eq('id', despesa.id)
     if (error) return setErro(error.message)
@@ -124,7 +127,7 @@ export function DespesaDetalhe() {
 
   const desfazerPagamento = async () => {
     if (!despesa) return
-    if (!window.confirm(`Desfazer o pagamento de "${despesa.fornecedor}"? A despesa volta a ser prevista e o rateio é apagado.`)) return
+    setConfirmDesfazer(false)
     setErro('')
     try {
       const { error: errRateios } = await supabase.from('rateios').delete().eq('despesa_id', despesa.id)
@@ -192,13 +195,13 @@ export function DespesaDetalhe() {
       <div className="row">
         <h1 className="bar-title">{despesa.fornecedor}</h1>
         {despesa.status === 'prevista' && estaAtrasada(despesa.data) && (
-          <span className="badge badge-danger">atrasada</span>
+          <span className="badge badge-danger">Atrasada</span>
         )}
         {despesa.status === 'prevista' && !estaAtrasada(despesa.data) && (
-          <span className="badge badge-warn">prevista</span>
+          <span className="badge badge-warn">A vencer</span>
         )}
-        {despesa.status === 'cancelada' && <span className="badge badge-muted">cancelada</span>}
-        {despesa.status === 'confirmada' && <span className="badge badge-ok">confirmada</span>}
+        {despesa.status === 'cancelada' && <span className="badge badge-muted">Ignorada</span>}
+        {despesa.status === 'confirmada' && <span className="badge badge-ok">Paga</span>}
         {despesa.parcelada && <span className="badge badge-muted">{despesa.total_parcelas}x</span>}
         {despesa.mercado && <span className="badge badge-muted">mercado</span>}
       </div>
@@ -372,7 +375,7 @@ export function DespesaDetalhe() {
           </Link>
 
           {despesa.status === 'confirmada' && despesa.origem_recorrencia_id && (
-            <button type="button" className="btn btn-secondary mt" onClick={() => void desfazerPagamento()}>
+            <button type="button" className="btn btn-secondary mt" onClick={() => setConfirmDesfazer(true)}>
               ↩ Desfazer pagamento
             </button>
           )}
@@ -380,10 +383,30 @@ export function DespesaDetalhe() {
       )}
 
       {souOwner && despesa.status !== 'cancelada' && (
-        <button type="button" className="btn btn-danger mt" onClick={excluir}>
+        <button type="button" className="btn btn-danger mt" onClick={() => setConfirmExcluir(true)}>
           Excluir despesa
         </button>
       )}
+
+      <Confirmacao
+        aberto={confirmExcluir}
+        titulo={`Excluir a despesa "${despesa.fornecedor}"?`}
+        mensagem="Esta ação não pode ser desfeita."
+        rotulo="Excluir"
+        perigoso
+        onFechar={() => setConfirmExcluir(false)}
+        onConfirmar={() => void excluir()}
+      />
+
+      <Confirmacao
+        aberto={confirmDesfazer}
+        titulo={`Desfazer o pagamento de "${despesa.fornecedor}"?`}
+        mensagem="A conta volta a ser prevista e o rateio é apagado."
+        rotulo="Desfazer"
+        perigoso
+        onFechar={() => setConfirmDesfazer(false)}
+        onConfirmar={() => void desfazerPagamento()}
+      />
     </>
   )
 }

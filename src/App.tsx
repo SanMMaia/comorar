@@ -22,6 +22,7 @@ const Perfil = lazy(() => import('./pages/Perfil').then((m) => ({ default: m.Per
 const DespesaDetalhe = lazy(() => import('./pages/DespesaDetalhe').then((m) => ({ default: m.DespesaDetalhe })))
 const DespesaAvulsa = lazy(() => import('./pages/DespesaAvulsa').then((m) => ({ default: m.DespesaAvulsa })))
 const Notificacoes = lazy(() => import('./pages/Notificacoes').then((m) => ({ default: m.Notificacoes })))
+const Caixinhas = lazy(() => import('./pages/Caixinhas').then((m) => ({ default: m.Caixinhas })))
 
 function Rotas() {
   const { loading, user } = useApp()
@@ -74,6 +75,7 @@ function Protegido() {
         <Route path="/perfil/categorias" element={<Categorias />} />
         <Route path="/perfil/relatorios" element={<Relatorios />} />
         <Route path="/perfil/orcamento" element={<Orcamento />} />
+        <Route path="/perfil/caixinhas" element={<Caixinhas />} />
         <Route path="/recorrencia/nova" element={<RecorrenciaNova />} />
         <Route path="/recorrencia/:id" element={<RecorrenciaDetalhe />} />
         <Route path="/recorrencia/:id/editar" element={<RecorrenciaEditar />} />

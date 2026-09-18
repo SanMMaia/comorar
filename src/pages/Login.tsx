@@ -9,7 +9,27 @@ export function Login() {
   const [nome, setNome] = useState('')
   const [erro, setErro] = useState('')
   const [carregando, setCarregando] = useState(false)
+  const [mostrandoSenha, setMostrandoSenha] = useState(false)
+  const [msgRecuperar, setMsgRecuperar] = useState('')
+  const [recuperando, setRecuperando] = useState(false)
   const navigate = useNavigate()
+
+  const recuperarSenha = async () => {
+    setErro('')
+    setMsgRecuperar('')
+    if (!email.trim()) {
+      setErro('Informe seu e-mail para recuperar a senha.')
+      return
+    }
+    setRecuperando(true)
+    const { error } = await supabase.auth.resetPasswordForEmail(email.trim())
+    setRecuperando(false)
+    if (error) {
+      setErro(error.message)
+      return
+    }
+    setMsgRecuperar('Enviamos um link de recuperação para o seu e-mail.')
+  }
 
   const submit = async (e: FormEvent) => {
     e.preventDefault()
@@ -44,7 +64,7 @@ export function Login() {
     <div className="content" style={{ paddingTop: 'var(--space-10)' }}>
       <div className="center" style={{ marginBottom: 'var(--space-6)' }}>
         <h1 className="page-title" style={{ fontSize: 'var(--text-hero)', margin: 0 }}>🏠 Comorar</h1>
-        <p className="muted">Divida as despesas da casa de forma justa</p>
+        <p className="muted">Sua casa, suas contas, um app só.</p>
       </div>
 
       <div className="card-elevado">
@@ -89,15 +109,26 @@ export function Login() {
           <label htmlFor="senha">Senha</label>
           <input
             id="senha"
-            type="password"
+            type={mostrandoSenha ? 'text' : 'password'}
             required
             minLength={6}
             value={senha}
             onChange={(e) => setSenha(e.target.value)}
             placeholder="••••••••"
           />
+          <div className="row mt" style={{ justifyContent: 'space-between' }}>
+            <button type="button" className="btn-mudo" onClick={() => setMostrandoSenha((v) => !v)}>
+              {mostrandoSenha ? 'Ocultar senha' : 'Mostrar senha'}
+            </button>
+            {modo === 'entrar' && (
+              <button type="button" className="btn-mudo" onClick={() => void recuperarSenha()} disabled={recuperando}>
+                {recuperando ? 'Enviando…' : 'Esqueci a senha'}
+              </button>
+            )}
+          </div>
 
-          {erro && <div className="error-box">{erro}</div>}
+          {msgRecuperar && <div className="info-box mt">{msgRecuperar}</div>}
+          {erro && <div className="error-box mt">{erro}</div>}
 
           <button type="submit" className="btn btn-primary mt-lg" disabled={carregando}>
             {carregando ? 'Aguarde…' : modo === 'entrar' ? 'Entrar' : 'Criar conta'}

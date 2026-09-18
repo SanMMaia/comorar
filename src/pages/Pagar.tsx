@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react'
 import { Link } from 'react-router-dom'
-import { Dica } from '../components/Dica'
 import { supabase } from '../lib/supabase'
 import { useApp } from '../state/AppContext'
 import { useDespesas } from '../lib/dados'
@@ -13,6 +12,7 @@ import { formatBR, dataBR, mesAnoBR, parseCentavos, estaAtrasada } from '../lib/
 import type { Despesa, Recorrencia, RegraRateio, TipoRateio } from '../types'
 import { labelCategoria } from '../lib/categorias'
 import { DespesaAvulsa } from './DespesaAvulsa'
+import { Confirmacao } from '../components/Confirmacao'
 
 export function Pagar() {
   const { casa, user, minhaMoradorId, moradores } = useApp()
@@ -104,6 +104,7 @@ export function Pagar() {
   const [ocrStatus, setOcrStatus] = useState<'ocioso' | 'processando' | 'ok' | 'falha'>('ocioso')
   const [ocrDados, setOcrDados] = useState<ResultadoOCR | null>(null)
   const [ultimaIgnorada, setUltimaIgnorada] = useState<Despesa | null>(null)
+  const [ignorando, setIgnorando] = useState<Despesa | null>(null)
 
   const [boletoId, setBoletoId] = useState<string | null>(null)
   const [boletoArquivo, setBoletoArquivo] = useState<File | null>(null)
@@ -360,11 +361,13 @@ export function Pagar() {
     }
   }
 
-  const ignorar = async (id: string) => {
-    const d = todasPrevistas.find((p) => p.id === id)
-    if (!d) return
-    if (!window.confirm(`Ignorar "${d.fornecedor}" de ${dataBR(d.data)}? Você pode desfazer em seguida.`)) return
-    await supabase.from('despesas').update({ status: 'cancelada' }).eq('id', id)
+  const ignorar = (d: Despesa) => setIgnorando(d)
+
+  const confirmarIgnorar = async () => {
+    if (!ignorando) return
+    const d = ignorando
+    setIgnorando(null)
+    await supabase.from('despesas').update({ status: 'cancelada' }).eq('id', d.id)
     if (comprovantePath) await removerComprovante(comprovantePath)
     setComprovantePath(null)
     setPagandoId(null)
@@ -415,15 +418,11 @@ export function Pagar() {
       </div>
       <p className="small muted">Pague as contas do mês. Para adiantar uma conta futura, use a aba Próximas.</p>
 
-      <Dica chave="pagar">
-        Confirme aqui o que você pagou. Também dá pra lançar uma despesa nova com "+ Avulsa".
-      </Dica>
-
       <Link to="/perfil/contas" viewTransition className="link-row list-line mt">
         <div className="item-linha">
           <div className="item-corpo">
-            <strong>Contas recorrentes</strong>
-            <div className="small muted">Ver previsões, datas e ignorar meses</div>
+            <strong>Contas que se repetem</strong>
+            <div className="small muted">Ver próximas contas, datas e ignorar meses</div>
           </div>
           <span className="item-seta" aria-hidden>›</span>
         </div>
@@ -432,7 +431,7 @@ export function Pagar() {
       {ultimaIgnorada && (
         <div className="card row mt" style={{ borderLeft: '4px solid var(--warn, #e0a92e)' }}>
           <span className="small">
-            <strong>{ultimaIgnorada.fornecedor}</strong> ignorado.
+            <strong>{ultimaIgnorada.fornecedor}</strong> foi ignorada.
           </span>
           <button type="button" className="btn btn-sm btn-secondary" onClick={() => void desfazerIgnorar()}>
             Desfazer
@@ -536,9 +535,9 @@ export function Pagar() {
                   <div>
                     <strong>{d.fornecedor}</strong>
                     <div className="small muted">
-                      previsto {formatBR(d.valor)} · {dataBR(d.data)}
+                      prevista {formatBR(d.valor)} · {dataBR(d.data)}
                       {estaAtrasada(d.data) && (
-                        <span className="badge badge-danger">atrasado</span>
+                        <span className="badge badge-danger">Atrasada</span>
                       )}
                     </div>
                   </div>
@@ -629,7 +628,7 @@ export function Pagar() {
                 {erro && <div className="error-box">{erro}</div>}
 
                 <div className="row mt">
-                  <button type="button" className="btn btn-sm btn-secondary" onClick={() => ignorar(d.id)}>
+                  <button type="button" className="btn btn-sm btn-secondary" onClick={() => ignorar(d)}>
                     Ignorar mês
                   </button>
                   <button
@@ -658,7 +657,7 @@ export function Pagar() {
                   <div>
                     <strong>Boleto</strong>
                     <div className="small muted">
-                      {d.fornecedor} · previsão de {formatBR(d.valor)} em {dataBR(d.data)}
+                      {d.fornecedor} · prevista {formatBR(d.valor)} em {dataBR(d.data)}
                     </div>
                   </div>
                   <button type="button" className="btn btn-sm btn-secondary" onClick={fecharBoleto}>
@@ -766,8 +765,17 @@ export function Pagar() {
         })()}
 
       <p className="small muted center mt">
-        Só quem é responsável pela casa edita as contas recorrentes.
+        Só quem é responsável pela casa edita as contas que se repetem.
       </p>
+
+      <Confirmacao
+        aberto={ignorando !== null}
+        titulo={`Ignorar "${ignorando?.fornecedor ?? ''}" de ${ignorando ? dataBR(ignorando.data) : ''}?`}
+        mensagem="Esta conta deixa de aparecer aqui, mas a recorrência continua valendo para os próximos meses. Você pode desfazer."
+        rotulo="Ignorar"
+        onFechar={() => setIgnorando(null)}
+        onConfirmar={() => void confirmarIgnorar()}
+      />
     </>
   )
 }

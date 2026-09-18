@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase'
 import { formatBR, parseCentavos, mesAtual, mesAnoBR } from '../lib/format'
 import { categoriasEfetivas, labelCategoria } from '../lib/categorias'
 import type { Categoria } from '../types'
+import { Confirmacao } from '../components/Confirmacao'
 
 interface OrcamentoLinha {
   categoria: string
@@ -36,9 +37,11 @@ export function Orcamento() {
   const [carregando, setCarregando] = useState(true)
   const [erro, setErro] = useState('')
   const [editando, setEditando] = useState<Categoria | null>(null)
+  const [categoriaNova, setCategoriaNova] = useState(false)
   const [valor, setValor] = useState('')
   const [salvando, setSalvando] = useState(false)
   const [erroEdicao, setErroEdicao] = useState('')
+  const [removendo, setRemovendo] = useState<Categoria | null>(null)
 
   useEffect(() => {
     if (!casa) return
@@ -63,8 +66,22 @@ export function Orcamento() {
   const categoriaLabel = (c: Categoria) => labelCategoria(c, casa?.categorias)
 
   const abrirEdicao = (c: Categoria, limiteAtual = 0) => {
+    setCategoriaNova(false)
     setEditando(c)
     setValor(limiteAtual > 0 ? limiteAtual.toFixed(2).replace('.', ',') : '')
+    setErroEdicao('')
+  }
+
+  const abrirNova = () => {
+    const disponiveis = categorias.filter((c) => !comOrcamento.has(c.id))
+    if (disponiveis.length === 0) {
+      setErro('Todas as categorias já têm limite neste mês.')
+      return
+    }
+    setErro('')
+    setCategoriaNova(true)
+    setEditando(disponiveis[0].id)
+    setValor('')
     setErroEdicao('')
   }
 
@@ -90,8 +107,10 @@ export function Orcamento() {
     await carregar()
   }
 
-  const remover = async (c: Categoria) => {
-    if (!casa || !window.confirm(`Remover o limite de "${categoriaLabel(c)}" para ${mesAnoBR(`${mes}-01`)}?`)) return
+  const confirmarRemocao = async () => {
+    const c = removendo
+    setRemovendo(null)
+    if (!casa || !c) return
     const { error } = await supabase
       .from('orcamentos')
       .delete()
@@ -125,7 +144,7 @@ export function Orcamento() {
       </div>
 
       <div className="row">
-        <button type="button" className="btn btn-secondary btn-sm" onClick={() => setMes(deslocarMes(mes, -1))}>
+        <button type="button" className="btn btn-secondary btn-sm" aria-label="Mês anterior" onClick={() => setMes(deslocarMes(mes, -1))}>
           ←
         </button>
         <div style={{ textAlign: 'center' }}>
@@ -135,6 +154,7 @@ export function Orcamento() {
         <button
           type="button"
           className="btn btn-secondary btn-sm"
+          aria-label="Próximo mês"
           onClick={() => setMes(deslocarMes(mes, 1))}
           disabled={mesIndex >= hojeIndex + 12}
         >
@@ -176,7 +196,7 @@ export function Orcamento() {
                   <button type="button" className="btn btn-sm btn-secondary" onClick={() => abrirEdicao(l.categoria, Number(l.limite) || 0)}>
                     Editar
                   </button>
-                  <button type="button" className="btn btn-sm btn-danger" onClick={() => void remover(l.categoria)}>
+                  <button type="button" className="btn btn-sm btn-danger" onClick={() => setRemovendo(l.categoria)}>
                     Remover
                   </button>
                 </div>
@@ -184,39 +204,21 @@ export function Orcamento() {
             )
           })}
 
-          <details className="opcoes card mt">
-            <summary>
-              <span>Definir limite para outra categoria</span>
-            </summary>
-            <div className="opcoes-corpo">
-              {categorias
-                .filter((c) => !comOrcamento.has(c.id))
-                .map((c) => (
-                  <button
-                    type="button"
-                    key={c.id}
-                    className="link-row list-line"
-                    onClick={() => abrirEdicao(c.id)}
-                  >
-                    <div className="item-linha">
-                      <div className="item-corpo">
-                        <strong>{c.label}</strong>
-                      </div>
-                      <span className="item-seta" aria-hidden>›</span>
-                    </div>
-                  </button>
-                ))}
-              {categorias.filter((c) => !comOrcamento.has(c.id)).length === 0 && (
-                <div className="small muted">Todas as categorias já têm limite neste mês.</div>
-              )}
-            </div>
-          </details>
+          <button type="button" className="btn btn-secondary btn-sm mt" onClick={abrirNova}>
+            Adicionar limite
+          </button>
+
+          {linhas.length > 0 && (
+            <p className="small muted" style={{ marginTop: 'var(--space-2)' }}>
+              Categorias sem limite não aparecem aqui.
+            </p>
+          )}
 
           {linhas.length === 0 && (
             <div className="empty">
               <div className="empty-icone" aria-hidden>🎯</div>
               <p>Nenhum limite definido para este mês.</p>
-              <p className="small muted">Defina um limite por categoria e o app avisa quando passar do orçamento.</p>
+              <p className="small muted">{categorias.length === 0 ? 'Nenhuma categoria disponível.' : 'Adicione o primeiro limite e o app avisa quando passar do orçamento.'}</p>
             </div>
           )}
         </>
@@ -227,7 +229,7 @@ export function Orcamento() {
           <div className="sheet" onClick={(e) => e.stopPropagation()}>
             <div className="row">
               <div>
-                <strong>{categoriaLabel(editando)}</strong>
+                <strong>{categoriaNova ? 'Novo limite' : categoriaLabel(editando)}</strong>
                 <div className="small muted">{mesAnoBR(`${mes}-01`)}</div>
               </div>
               <button
@@ -238,6 +240,22 @@ export function Orcamento() {
                 Cancelar
               </button>
             </div>
+
+            {categoriaNova && (
+              <>
+                <label>Categoria</label>
+                <select
+                  value={editando ?? ''}
+                  onChange={(e) => setEditando(e.target.value as Categoria)}
+                >
+                  {categorias
+                    .filter((c) => !comOrcamento.has(c.id))
+                    .map((c) => (
+                      <option key={c.id} value={c.id}>{c.label}</option>
+                    ))}
+                </select>
+              </>
+            )}
 
             <label>Limite do mês</label>
             <input
@@ -263,6 +281,16 @@ export function Orcamento() {
           </div>
         </div>
       )}
+
+      <Confirmacao
+        aberto={removendo !== null}
+        titulo={`Remover o limite de ${removendo ? categoriaLabel(removendo) : ''}?`}
+        mensagem={`O limite deste mês será apagado. A categoria continua aparecendo nas contas.`}
+        rotulo="Remover"
+        perigoso
+        onFechar={() => setRemovendo(null)}
+        onConfirmar={() => void confirmarRemocao()}
+      />
     </>
   )
 }

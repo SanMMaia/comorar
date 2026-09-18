@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useApp } from '../state/AppContext'
 import { useDespesas, invalidarCacheDespesas } from '../lib/dados'
-import { calcularRateio } from '../lib/rateio'
+import { calcularRateio, validarPercentuais } from '../lib/rateio'
 import {
   removerComprovante,
   subirComprovante,
@@ -414,8 +414,11 @@ export function DespesaAvulsa() {
       if (tipoRateio === 'consumo' && incluidos.size === 0)
         return setErro('Selecione ao menos um morador participante')
       if (tipoRateio === 'percentual') {
-        const soma = Object.values(percentuais).reduce((acc, v) => acc + (Number(v) || 0), 0)
-        if (Math.abs(soma - 100) > 0.5) return setErro(`Percentuais somam ${soma}% — revise para 100%`)
+        const err = validarPercentuais(
+          moradores,
+          Object.fromEntries(Object.entries(percentuais).map(([k, v]) => [k, Number(v) || 0])),
+        )
+        if (err) return setErro(err)
       }
       itens = calcularRateio(valorNum, moradores.map((m) => ({ user_id: m.id })), {
         regra: tipoRateio,

@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { Dica } from '../components/Dica'
 import { useApp, nomeMorador } from '../state/AppContext'
 import { useDespesas, useMeuSaldo } from '../lib/dados'
 import { supabase } from '../lib/supabase'
@@ -27,25 +26,17 @@ export function Home() {
       .then(({ data }) => setRecorrencias((data ?? []) as Recorrencia[]))
   }, [casa])
 
-  const { totalMes, vcDeve, devemAVoce } = useMemo(() => {
+  const { vcDeve, devemAVoce } = useMemo(() => {
     const uid = minhaMoradorId
-    let totalMes = 0
     let vcDeve = 0
     let devemAVoce = 0
     for (const d of despesas) {
       if (d.status !== 'confirmada') continue
       if (mesChave(d.data) !== chaveAtual) continue
-      if (souOwner) totalMes += d.valor
       const aberto = d.rateios.filter((r) => !r.pago)
       for (const r of aberto) {
         if (uid && r.morador_id === uid) vcDeve += r.valor_rateado
         if (uid && d.pago_por === uid) devemAVoce += r.valor_rateado
-      }
-      // morador: mostra a própria parte no mês, não o gasto total da casa
-      if (!souOwner && uid) {
-        totalMes += d.rateios
-          .filter((r) => r.morador_id === uid)
-          .reduce((a, r) => a + r.valor_rateado, 0)
       }
     }
     if (!souOwner) {
@@ -57,7 +48,6 @@ export function Home() {
         .reduce((a, s) => a + Number(s.valor), 0)
     }
     return {
-      totalMes,
       vcDeve: Math.round(vcDeve * 100) / 100,
       devemAVoce: Math.round(devemAVoce * 100) / 100,
     }
@@ -110,57 +100,43 @@ export function Home() {
 
   return (
     <>
-      <h1 className="page-title">Início</h1>
-      <p className="page-sub">Visão geral da casa</p>
-      <Dica chave="inicio">
-        Aqui você vê o quanto a casa gastou no mês e quanto falta acertar. Toque numa despesa
-        para ver a sua parte.
-      </Dica>
+      <h1 className="page-title">Seu mês</h1>
+      <p className="page-sub">{mesAnoBR(new Date())}</p>
+
       <div className="card saldo-card">
-        <div className="linha">
-          {mesAnoBR(new Date())} · {souOwner ? 'gasto total' : 'sua parte'}
-        </div>
-        <div className="valor mono">{formatBR(totalMes)}</div>
+        <div className="linha">Você deve por enquanto</div>
+        <div className="valor mono">{formatBR(vcDeve)}</div>
         <div className="row mt">
           <div className="linha">
-            Você deve
-            <br />
-            <strong>{formatBR(vcDeve)}</strong>
+            Devem a você <strong>{formatBR(devemAVoce)}</strong>
           </div>
-          <div className="linha" style={{ textAlign: 'right' }}>
-            Devem a você
-            <br />
-            <strong>{formatBR(devemAVoce)}</strong>
-          </div>
+          <Link
+            to="/balanco"
+            viewTransition
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 4,
+              fontSize: 'var(--text-sm)',
+              fontWeight: 600,
+              color: 'var(--on-accent)',
+              textDecoration: 'none',
+              padding: '6px 12px',
+              border: '1px solid color-mix(in srgb, var(--on-accent) 35%, transparent)',
+              borderRadius: 999,
+            }}
+          >
+            Ver acerto ›
+          </Link>
         </div>
-        <Link
-          to="/balanco"
-          viewTransition
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 4,
-            marginTop: 'var(--space-3)',
-            fontSize: 'var(--text-sm)',
-            fontWeight: 600,
-            color: 'var(--on-accent)',
-            textDecoration: 'none',
-            padding: '6px 12px',
-            border: '1px solid color-mix(in srgb, var(--on-accent) 35%, transparent)',
-            borderRadius: 999,
-          }}
-        >
-          Ver acerto ›
-        </Link>
       </div>
 
       {previstasMes.length > 0 && (
         <>
           <div className="row mt-lg">
-            <h2 className="section-title">Contas do mês (previstas)</h2>
+            <h2 className="section-title">Contas do mês para pagar</h2>
             <strong className="mono">{formatBR(totalPrevisto)}</strong>
           </div>
-          <p className="small muted">Pagou? Use <strong>Pagar</strong> e a previsão é convertida em despesa confirmada.</p>
           <div className="card-flush mt">
             {previstasMes.map((d) => (
               <Link to={`/despesa/${d.id}`} viewTransition key={d.id} className="list-line">
@@ -174,7 +150,7 @@ export function Home() {
                   <div className="item-lado">
                     <strong className="mono">{formatBR(d.valor)}</strong>
                     {estaAtrasada(d.data) && (
-                      <span className="badge badge-danger">atrasado</span>
+                      <span className="badge badge-danger">Atrasada</span>
                     )}
                   </div>
                   <span className="item-seta" aria-hidden>›</span>
@@ -186,22 +162,13 @@ export function Home() {
       )}
 
       <div className="row mt-lg">
-        <h2 className="section-title">Últimas despesas</h2>
-        <span className="small muted">em + Pagar dá pra pagar ou lançar</span>
+        <h2 className="section-title">Acabou de pagar</h2>
       </div>
 
       {recentes.length === 0 ? (
         <div className="empty">
-          <div className="empty-icone" aria-hidden>🧾</div>
-          <p>Nenhuma despesa ainda.</p>
-          <div style={{ display: 'flex', gap: 8, justifyContent: 'center', marginTop: 'var(--space-3)' }}>
-            <Link to="/nova" viewTransition className="btn btn-primary btn-sm">
-              Pagar conta
-            </Link>
-            <Link to="/avulsa" viewTransition className="btn btn-secondary btn-sm">
-              Lançar despesa
-            </Link>
-          </div>
+          <p>Nenhuma conta por aqui ainda. Toque em <strong>+ Pagar</strong> para registrar a primeira.</p>
+          <Link to="/nova" viewTransition className="btn btn-primary mt">Pagar conta</Link>
         </div>
       ) : (
         <div className="card-flush">
@@ -249,13 +216,6 @@ export function Home() {
             </div>
           ))}
         </div>
-      )}
-
-      {souOwner && (
-        <p className="center small muted mt">
-          Cadastre <Link to="/perfil/contas" viewTransition>contas recorrentes</Link> para as próximas contas
-          aparecerem aqui automaticamente.
-        </p>
       )}
     </>
   )

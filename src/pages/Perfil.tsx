@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase'
 import { useApp, nomeMorador } from '../state/AppContext'
 import { lerTemaPref, salvarTema, type TemaPref } from '../lib/tema'
 import { exportarBackup, restaurarBackup } from '../lib/backup'
+import { Confirmacao } from '../components/Confirmacao'
 
 const linkApp = 'https://comorar.vercel.app'
 
@@ -35,6 +36,11 @@ export function Perfil() {
   const [salvandoPix, setSalvandoPix] = useState(false)
   const [msgPixCopia, setMsgPixCopia] = useState(false)
   const [erroPix, setErroPix] = useState('')
+
+  const [removerIdPendente, setRemoverIdPendente] = useState<string | null>(null)
+  const [confirmSaindo, setConfirmSaindo] = useState(false)
+  const [arquivoPendente, setArquivoPendente] = useState<File | null>(null)
+  const [confirmRestaurar, setConfirmRestaurar] = useState(false)
 
   const copiarTexto = async (texto: string) => {
     try {
@@ -123,16 +129,19 @@ export function Perfil() {
     await refreshCasa()
   }
 
-  const removerMorador = async (id: string) => {
-    const nome = moradores.find((m) => m.id === id)?.nome ?? ''
-    if (!window.confirm(`Remover "${nome}" da casa?`)) return
-    const { error } = await supabase.from('casa_morador').update({ ativo: false }).eq('id', id)
+  const confirmarRemocao = async () => {
+    if (!removerIdPendente) return
+    const { error } = await supabase
+      .from('casa_morador')
+      .update({ ativo: false })
+      .eq('id', removerIdPendente)
+    setRemoverIdPendente(null)
     if (!error) await refreshCasa()
   }
 
-  const sairDaCasa = async () => {
+  const confirmarSairDaCasa = async () => {
+    setConfirmSaindo(false)
     if (!casa || !user) return
-    if (!window.confirm(`Sair da casa "${casa.nome}"? Você precisará de um novo convite para voltar.`)) return
     await supabase.from('casa_morador').update({ ativo: false }).eq('casa_id', casa.id).eq('user_id', user.id)
     await refreshCasa()
     navigate('/onboarding')
@@ -158,13 +167,16 @@ export function Perfil() {
     }
   }
 
-  const enviarBackup = async (arquivo: File) => {
-    if (
-      !window.confirm(
-        'Restaurar este backup criará uma casa NOVA com os dados do arquivo. Deseja continuar?',
-      )
-    )
-      return
+  const pedirRestauracao = (arquivo: File) => {
+    setArquivoPendente(arquivo)
+    setConfirmRestaurar(true)
+  }
+
+  const confirmarRestauracao = async () => {
+    const arquivo = arquivoPendente
+    setConfirmRestaurar(false)
+    setArquivoPendente(null)
+    if (!arquivo) return
     setErroBackup('')
     setMsgBackup('')
     setRestaurando(true)
@@ -181,11 +193,14 @@ export function Perfil() {
 
   if (!casa) return <div className="empty">Sem casa vinculada.</div>
 
+  const moradorPendente = removerIdPendente ? moradores.find((m) => m.id === removerIdPendente) : null
+
   return (
     <>
       <h1 className="page-title">{casa.nome}</h1>
       <p className="page-sub center">{nomeMorador(moradores, minhaMoradorId)} · {souOwner ? 'responsável' : 'morador'}</p>
 
+      <h2 className="section-title">Sua casa</h2>
       <div className="card">
         <div className="row">
           <div>
@@ -206,47 +221,11 @@ export function Perfil() {
         </button>
         <p className="small muted mt" style={{ marginBottom: 0 }}>
           Envie o código <strong>{casa.codigo_convite}</strong> para outra pessoa. Ela entra em{' '}
-          <strong>Onboarding → “Já tenho código”</strong> no app.
+          <strong>Bem-vindo → “Tenho um código”</strong> no app.
         </p>
       </div>
 
-      {souOwner && (
-        <>
-          <Link to="/perfil/contas" viewTransition className="card mt" style={{ display: 'block' }}>
-            <div className="item-linha">
-              <div className="item-corpo">
-                <strong>Contas recorrentes</strong>
-                <div className="small muted">Gerencie recorrências e lançamentos previstos</div>
-              </div>
-              <span className="item-seta" aria-hidden>›</span>
-            </div>
-          </Link>
-
-          <div className="card-flush mt">
-            <Link to="/perfil/relatorios" viewTransition className="list-line">
-              <div className="item-linha">
-                <div className="item-corpo">
-                  <strong>Relatórios</strong>
-                  <div className="small muted">Comparativo mês a mês da casa</div>
-                </div>
-                <span className="item-seta" aria-hidden>›</span>
-              </div>
-            </Link>
-            <Link to="/perfil/orcamento" viewTransition className="list-line">
-              <div className="item-linha">
-                <div className="item-corpo">
-                  <strong>Orçamento</strong>
-                  <div className="small muted">Limites por categoria e aviso de estouro</div>
-                </div>
-                <span className="item-seta" aria-hidden>›</span>
-              </div>
-            </Link>
-          </div>
-        </>
-      )}
-
-      <h2 className="section-title" style={{ marginTop: 'var(--space-5)' }}>Moradores</h2>
-      <div className="card-flush">
+      <div className="card-flush mt">
         {moradores.map((m) => (
           <div className="list-line" key={m.id}>
             <div className="item-linha">
@@ -258,50 +237,6 @@ export function Perfil() {
                   <span className="badge badge-muted" style={{ marginLeft: 'var(--space-2)' }}>responsável</span>
                 )}
                 {m.email && <div className="small muted">{m.email}</div>}
-                {m.id === minhaMoradorId && (
-                  <div style={{ marginTop: 'var(--space-3)' }}>
-                    <div className="small" style={{ fontWeight: 600 }}>Chave Pix (para receber acertos)</div>
-                    {editandoPix ? (
-                      <>
-                        <input
-                          value={chavePixBox}
-                          onChange={(e) => setChavePixBox(e.target.value)}
-                          placeholder="Ex.: (11) 99999-9999, email ou CPF"
-                        />
-                        {erroPix && <div className="erro-text">{erroPix}</div>}
-                        <button
-                          type="button"
-                          className={`btn btn-sm btn-primary mt${salvandoPix ? ' btn-spinner' : ''}`}
-                          disabled={salvandoPix}
-                          onClick={() => void salvarPix()}
-                        >
-                          {salvandoPix ? '' : 'Salvar'}
-                        </button>
-                      </>
-                    ) : (
-                      <div className="row mt" style={{ gap: 'var(--space-2)' }}>
-                        <span className="small muted" style={{ wordBreak: 'break-all', flex: 1 }}>
-                          {minhaChave || 'Nenhuma chave cadastrada'}
-                        </span>
-                        {minhaChave && (
-                          <button type="button" className="btn btn-sm btn-secondary" onClick={() => void copiarTexto(minhaChave)}>
-                            {msgPixCopia ? 'Copiado ✓' : 'Copiar'}
-                          </button>
-                        )}
-                        <button
-                          type="button"
-                          className="btn btn-sm btn-secondary"
-                          onClick={() => {
-                            setChavePixBox(minhaChave)
-                            setEditandoPix(true)
-                          }}
-                        >
-                          {minhaChave ? 'Editar' : 'Adicionar'}
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                )}
                 {m.id !== minhaMoradorId && m.chave_pix && (
                   <div className="small mt" style={{ marginTop: 'var(--space-2)' }}>
                     <span className="muted" style={{ wordBreak: 'break-all' }}>Pix: {m.chave_pix}</span>{' '}
@@ -312,7 +247,7 @@ export function Perfil() {
                 )}
               </div>
               {souOwner && m.id !== minhaMoradorId && (
-                <button type="button" className="btn btn-sm btn-secondary" onClick={() => removerMorador(m.id)}>
+                <button type="button" className="btn btn-sm btn-secondary" onClick={() => setRemoverIdPendente(m.id)}>
                   Remover
                 </button>
               )}
@@ -340,6 +275,76 @@ export function Perfil() {
         </div>
       )}
 
+      {souOwner && (
+        <div className="card-flush mt">
+          <Link to="/perfil/categorias" viewTransition className="list-line">
+            <div className="item-linha">
+              <div className="item-corpo">
+                <strong>Categorias de despesa</strong>
+                <div className="small muted">Adicione, renomeie ou remova categorias</div>
+              </div>
+              <span className="item-seta" aria-hidden>›</span>
+            </div>
+          </Link>
+          <Link to="/perfil/regras" viewTransition className="list-line">
+            <div className="item-linha">
+              <div className="item-corpo">
+                <strong>Taxa fixa de rateio (%)</strong>
+                <div className="small muted">Percentual padrão das despesas do tipo "percentual"</div>
+              </div>
+              <span className="item-seta" aria-hidden>›</span>
+            </div>
+          </Link>
+        </div>
+      )}
+
+      <h2 className="section-title" style={{ marginTop: 'var(--space-5)' }}>Minhas coisas</h2>
+      <div className="card">
+        <h2 className="section-title">Chave Pix</h2>
+        <p className="small muted" style={{ margin: 'var(--space-2) 0 0' }}>
+          Para receber acertos: use celular, e-mail ou CPF.
+        </p>
+        {editandoPix ? (
+          <>
+            <input
+              value={chavePixBox}
+              onChange={(e) => setChavePixBox(e.target.value)}
+              placeholder="Ex.: (11) 99999-9999, email ou CPF"
+            />
+            {erroPix && <div className="erro-text">{erroPix}</div>}
+            <button
+              type="button"
+              className={`btn btn-sm btn-primary mt${salvandoPix ? ' btn-spinner' : ''}`}
+              disabled={salvandoPix}
+              onClick={() => void salvarPix()}
+            >
+              {salvandoPix ? '' : 'Salvar'}
+            </button>
+          </>
+        ) : (
+          <div className="row mt" style={{ gap: 'var(--space-2)' }}>
+            <span className="small muted" style={{ wordBreak: 'break-all', flex: 1 }}>
+              {minhaChave || 'Nenhuma chave cadastrada'}
+            </span>
+            {minhaChave && (
+              <button type="button" className="btn btn-sm btn-secondary" onClick={() => void copiarTexto(minhaChave)}>
+                {msgPixCopia ? 'Copiado ✓' : 'Copiar'}
+              </button>
+            )}
+            <button
+              type="button"
+              className="btn btn-sm btn-secondary"
+              onClick={() => {
+                setChavePixBox(minhaChave)
+                setEditandoPix(true)
+              }}
+            >
+              {minhaChave ? 'Editar' : 'Adicionar'}
+            </button>
+          </div>
+        )}
+      </div>
+
       <div className="card mt">
         <h2 className="section-title">Aparência</h2>
         <p className="small muted" style={{ margin: 'var(--space-2) 0 var(--space-3)' }}>
@@ -364,71 +369,93 @@ export function Perfil() {
       </div>
 
       {souOwner && (
-        <div className="card-flush mt">
-          <Link to="/perfil/categorias" viewTransition className="list-line">
+        <>
+          <h2 className="section-title" style={{ marginTop: 'var(--space-5)' }}>Gestão</h2>
+          <Link to="/perfil/contas" viewTransition className="card" style={{ display: 'block' }}>
             <div className="item-linha">
               <div className="item-corpo">
-                <strong>Categorias de despesa</strong>
-                <div className="small muted">Adicione, renomeie ou remova categorias</div>
+                <strong>Contas que se repetem</strong>
+                <div className="small muted">Aluguel, internet e outras contas mensais automáticas</div>
               </div>
               <span className="item-seta" aria-hidden>›</span>
             </div>
           </Link>
-          <Link to="/perfil/regras" viewTransition className="list-line">
-            <div className="item-linha">
-              <div className="item-corpo">
-                <strong>Taxa fixa de rateio (%)</strong>
-                <div className="small muted">Percentual padrão das despesas do tipo "percentual"</div>
+          <div className="card-flush mt">
+            <Link to="/perfil/relatorios" viewTransition className="list-line">
+              <div className="item-linha">
+                <div className="item-corpo">
+                  <strong>Relatórios</strong>
+                  <div className="small muted">Comparativo mês a mês da casa</div>
+                </div>
+                <span className="item-seta" aria-hidden>›</span>
               </div>
-              <span className="item-seta" aria-hidden>›</span>
-            </div>
-          </Link>
-        </div>
-      )}
-
-      {souOwner && (
-        <div className="card mt">
-          <h2 className="section-title">Backup e restauração</h2>
-          <p className="small muted" style={{ margin: 'var(--space-2) 0 0' }}>
-            Baixe uma cópia de tudo (moradores, recorrências, despesas e rateios) em um arquivo
-            JSON. Restaurar cria uma casa nova a partir do arquivo.
-          </p>
-          {msgBackup && <div className="info-box mt">{msgBackup}</div>}
-          {erroBackup && <div className="error-box mt">{erroBackup}</div>}
-          <input
-            ref={inputBackup}
-            type="file"
-            accept="application/json,.json"
-            style={{ display: 'none' }}
-            onChange={(e) => {
-              const f = e.target.files?.[0]
-              if (f) void enviarBackup(f)
-              e.target.value = ''
-            }}
-          />
-          <div className="row mt" style={{ gap: 'var(--space-2)' }}>
-            <button
-              type="button"
-              className="btn btn-secondary btn-sm"
-              onClick={() => void baixarBackup()}
-              disabled={exportando || restaurando}
-            >
-              {exportando ? 'Gerando…' : 'Exportar backup'}
-            </button>
-            <button
-              type="button"
-              className="btn btn-secondary btn-sm"
-              onClick={() => inputBackup.current?.click()}
-              disabled={exportando || restaurando}
-            >
-              {restaurando ? 'Restaurando…' : 'Restaurar'}
-            </button>
+            </Link>
+            <Link to="/perfil/orcamento" viewTransition className="list-line">
+              <div className="item-linha">
+                <div className="item-corpo">
+                  <strong>Orçamento</strong>
+                  <div className="small muted">Limites por categoria e aviso de estouro</div>
+                </div>
+                <span className="item-seta" aria-hidden>›</span>
+              </div>
+            </Link>
+            <Link to="/perfil/caixinhas" viewTransition className="list-line">
+              <div className="item-linha">
+                <div className="item-corpo">
+                  <strong>Caixinhas</strong>
+                  <div className="small muted">Dinheiro comum da casa</div>
+                </div>
+                <span className="item-seta" aria-hidden>›</span>
+              </div>
+            </Link>
           </div>
-        </div>
+
+          <div className="card mt">
+            <h2 className="section-title">Backup e restauração</h2>
+            <p className="small muted" style={{ margin: 'var(--space-2) 0 0' }}>
+              Baixe uma cópia de tudo (moradores, recorrências, despesas e rateios) em um arquivo
+              JSON. Restaurar cria uma casa nova a partir do arquivo.
+            </p>
+            {msgBackup && <div className="info-box mt">{msgBackup}</div>}
+            {erroBackup && <div className="error-box mt">{erroBackup}</div>}
+            <input
+              ref={inputBackup}
+              type="file"
+              accept="application/json,.json"
+              style={{ display: 'none' }}
+              onChange={(e) => {
+                const f = e.target.files?.[0]
+                if (f) pedirRestauracao(f)
+                e.target.value = ''
+              }}
+            />
+            <div className="row mt" style={{ gap: 'var(--space-2)' }}>
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                onClick={() => void baixarBackup()}
+                disabled={exportando || restaurando}
+              >
+                {exportando ? 'Gerando…' : 'Exportar backup'}
+              </button>
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                onClick={() => inputBackup.current?.click()}
+                disabled={exportando || restaurando}
+              >
+                {restaurando ? 'Restaurando…' : 'Restaurar'}
+              </button>
+            </div>
+          </div>
+        </>
       )}
 
-      <div className="mt-lg">
-        <button type="button" className="btn btn-secondary" onClick={sairDaCasa}>Sair da casa</button>
+      <h2 className="section-title" style={{ marginTop: 'var(--space-5)' }}>Minha conta</h2>
+      <div className="mt">
+        <button type="button" className="btn btn-secondary" onClick={() => setConfirmSaindo(true)}>
+          Sair da casa
+        </button>
       </div>
 
       {user && (
@@ -440,6 +467,40 @@ export function Perfil() {
           </button>
         </p>
       )}
+
+      <Confirmacao
+        aberto={removerIdPendente !== null}
+        titulo={`Remover "${moradorPendente?.nome ?? ''}" da casa?`}
+        mensagem="Ele não poderá mais ver as contas nem o saldo da casa."
+        rotulo="Remover"
+        perigoso
+        onFechar={() => setRemoverIdPendente(null)}
+        onConfirmar={() => void confirmarRemocao()}
+      />
+
+      <Confirmacao
+        aberto={confirmSaindo}
+        titulo={`Sair da casa "${casa.nome}"?`}
+        mensagem="Você precisará de um novo convite para voltar."
+        rotulo="Sair da casa"
+        perigoso
+        onFechar={() => setConfirmSaindo(false)}
+        onConfirmar={() => void confirmarSairDaCasa()}
+      />
+
+      <Confirmacao
+        aberto={confirmRestaurar}
+        titulo="Restaurar backup?"
+        mensagem="Isto cria uma casa NOVA com os dados do arquivo. A casa atual continua como está."
+        rotulo="Restaurar"
+        perigoso
+        carregando={restaurando}
+        onFechar={() => {
+          setConfirmRestaurar(false)
+          setArquivoPendente(null)
+        }}
+        onConfirmar={() => void confirmarRestauracao()}
+      />
     </>
   )
 }

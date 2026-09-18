@@ -69,6 +69,32 @@ export function Notificacoes() {
     navigate(n.link_destino)
   }
 
+  const novas = notificacoes.filter((n) => !n.lida)
+  const lidas = notificacoes.filter((n) => n.lida)
+
+  const Item = ({ n }: { n: Notificacao }) => (
+    <div
+      className={n.lida ? 'list-line clicavel' : 'list-line clicavel notif-naolida'}
+      onClick={() => void abrir(n)}
+      role="link"
+      tabIndex={0}
+      onKeyDown={(e) => e.key === 'Enter' && void abrir(n)}
+    >
+      <div className="item-linha">
+        <span className="notif-emoji" aria-hidden>{emojiTipo[n.tipo] ?? '🔔'}</span>
+        <div className="item-corpo">
+          <div className="item-titulo">
+            <strong>{n.titulo}</strong>
+            <span className="small muted notif-tempo">{tempoRelativo(n.criado_em)}</span>
+          </div>
+          <div className="small muted" style={{ marginTop: 'var(--space-1)' }}>{n.corpo}</div>
+        </div>
+        {!n.lida && <span className="notif-ponto" aria-hidden />}
+        <span className="item-seta" aria-hidden>›</span>
+      </div>
+    </div>
+  )
+
   return (
     <>
       <div className="row" style={{ justifyContent: 'space-between', marginTop: 'var(--space-12)' }}>
@@ -84,35 +110,25 @@ export function Notificacoes() {
         <div className="empty">Carregando…</div>
       ) : notificacoes.length === 0 ? (
         <div className="empty">
+          <div className="empty-icone" aria-hidden>🔔</div>
           <p>Nenhuma notificação por enquanto.</p>
-          <p className="small muted">Acompanhe cobranças, pagamentos e contas a vencer por aqui.</p>
+          <p className="small muted">Cobranças, pagamentos e contas a vencer aparecem aqui.</p>
         </div>
       ) : (
-        <div className="card-flush">
-          {notificacoes.map((n) => (
-            <div
-              key={n.id}
-              className={n.lida ? 'list-line clicavel' : 'list-line clicavel notif-naolida'}
-              onClick={() => void abrir(n)}
-              role="link"
-              tabIndex={0}
-              onKeyDown={(e) => e.key === 'Enter' && void abrir(n)}
-            >
-              <div className="item-linha">
-                <span className="notif-emoji" aria-hidden>{emojiTipo[n.tipo] ?? '🔔'}</span>
-                <div className="item-corpo">
-                  <div className="item-titulo">
-                    <strong>{n.titulo}</strong>
-                    <span className="small muted notif-tempo">{tempoRelativo(n.criado_em)}</span>
-                  </div>
-                  <div className="small muted" style={{ marginTop: 'var(--space-1)' }}>{n.corpo}</div>
-                </div>
-                {!n.lida && <span className="notif-ponto" aria-hidden />}
-                <span className="item-seta" aria-hidden>›</span>
-              </div>
-            </div>
-          ))}
-        </div>
+        <>
+          {novas.length > 0 && (
+            <>
+              <h2 className="section-title" style={{ marginTop: 'var(--space-5)' }}>Novas</h2>
+              <div className="card-flush">{novas.map((n) => <Item key={n.id} n={n} />)}</div>
+            </>
+          )}
+          {lidas.length > 0 && (
+            <>
+              <h2 className="section-title" style={{ marginTop: 'var(--space-5)' }}>Lidas</h2>
+              <div className="card-flush">{lidas.map((n) => <Item key={n.id} n={n} />)}</div>
+            </>
+          )}
+        </>
       )}
 
       <div className="card mt-lg">
@@ -148,9 +164,6 @@ export function Notificacoes() {
         </label>
 
         {falhaPref && <div className="error-box">{falhaPref}</div>}
-        <p className="small muted" style={{ marginBottom: 0 }}>
-          Hoje as notificações chegam por aqui mesmo (inbox). Notificações por push e e-mail ficam para uma próxima versão.
-        </p>
       </div>
     </>
   )

@@ -88,7 +88,7 @@ export function RecorrenciaDetalhe() {
                 </div>
                 {rec.descricao && <div className="small mt">{rec.descricao}</div>}
                 <div className="small muted mt">
-                  Rateio: <strong>{labelsRateio[rec.tipo_rateio]}</strong>
+                  Divisão: <strong>{labelsRateio[rec.tipo_rateio]}</strong>
                   <br />
                   Pagador padrão: <strong>{rec.pagador_padrao ? nomeMorador(moradores, rec.pagador_padrao) : 'definir depois'}</strong>
                   <br />
@@ -97,7 +97,7 @@ export function RecorrenciaDetalhe() {
               </div>
               <div style={{ textAlign: 'right' }}>
                 <strong className="mono" style={{ fontSize: 'var(--text-2xl)' }}>{formatBR(rec.valor_previsto)}</strong>
-                <div className="small muted">valor previsto</div>
+                <div className="small muted">próximo valor</div>
                 <div className="small" style={{ color: 'var(--accent)', marginTop: 'var(--space-2)' }}>
                   ✎ editar ›
                 </div>
@@ -105,11 +105,11 @@ export function RecorrenciaDetalhe() {
             </div>
           </Link>
 
-          <h2 className="section-title" style={{ marginTop: 'var(--space-5)' }}>Lançamentos</h2>
+          <h2 className="section-title" style={{ marginTop: 'var(--space-5)' }}>Contas</h2>
           {lancamentos.length === 0 ? (
             <div className="empty">
               <div className="empty-icone" aria-hidden>🧾</div>
-              <p>Nenhum lançamento ainda.</p>
+              <p>Nenhuma conta ainda.</p>
             </div>
           ) : (
             <div className="card-flush mt">
@@ -118,13 +118,13 @@ export function RecorrenciaDetalhe() {
                   <div className="item-linha">
                     <div className="item-corpo small">
                       <strong>{dataBR(d.data)}</strong>{' '}
-                      {d.status === 'confirmada' && <span className="badge badge-ok">pago</span>}
-                      {d.status === 'cancelada' && <span className="badge badge-muted">ignorado</span>}
+                      {d.status === 'confirmada' && <span className="badge badge-ok">Paga</span>}
+                      {d.status === 'cancelada' && <span className="badge badge-muted">Ignorada</span>}
                       {d.status === 'prevista' && estaAtrasada(d.data) && (
-                        <span className="badge badge-danger">atrasado</span>
+                        <span className="badge badge-danger">Atrasada</span>
                       )}
                       {d.status === 'prevista' && !estaAtrasada(d.data) && (
-                        <span className="badge badge-warn">previsto</span>
+                        <span className="badge badge-warn">A vencer</span>
                       )}
                     </div>
                     <div className="item-lado">
