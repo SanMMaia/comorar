@@ -64,6 +64,74 @@ export interface Despesa {
   comprovante_url: string | null
   boleto_url: string | null
   ocr_resultado: Record<string, unknown> | null
+  mercado: boolean
+  parcelada: boolean
+  total_parcelas: number | null
+  criado_em: string
+}
+
+export interface ItensDespesa {
+  id: string
+  despesa_id: string
+  descricao: string
+  valor: number
+  donos: string[]
+  criado_em: string
+}
+
+export interface Parcela {
+  id: string
+  despesa_id: string
+  numero: number
+  valor: number
+  data_vencimento: string
+  paga: boolean
+  criado_em: string
+}
+
+export interface Ajuste {
+  id: string
+  casa_id: string
+  de_morador: string
+  para_morador: string
+  valor: number
+  motivo: string | null
+  data: string
+  pago: boolean
+  pago_em: string | null
+  confirmado_por: string | null
+  cancelado: boolean
+  criado_em: string
+}
+
+export interface Caixinha {
+  id: string
+  casa_id: string
+  nome: string
+  saldo: number
+  regra: 'igual' | 'percentual'
+  ativa: boolean
+  criado_em: string
+}
+
+export interface MovimentoCaixinha {
+  id: string
+  caixinha_id: string
+  morador_id: string
+  tipo: 'entrada' | 'saida'
+  valor: number
+  descricao: string | null
+  data: string
+  criado_em: string
+}
+
+export interface LeituraMedidor {
+  id: string
+  casa_id: string
+  tipo: 'agua' | 'luz'
+  morador_id: string
+  leitura: number
+  data_leitura: string
   criado_em: string
 }
 

@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useState } from 'react'
 import { supabase } from './supabase'
-import type { Despesa, Rateio } from '../types'
+import type { Ajuste, Despesa, ItensDespesa, Parcela, Rateio } from '../types'
 
 export interface DespesaComRateios extends Despesa {
   rateios: Rateio[]
+  itens_despesa?: ItensDespesa[]
+  parcelas?: Parcela[]
 }
 
 const cacheDespesas = new Map<string, { despesas: DespesaComRateios[]; ts: number }>()
@@ -42,7 +44,7 @@ export function useDespesas(casaId: string | null) {
       }
       const { data, error } = await supabase
         .from('despesas')
-        .select('*, rateios(*)')
+        .select('*, rateios(*), itens_despesa(*), parcelas(*)')
         .eq('casa_id', casaId)
         .order('data', { ascending: false })
 
@@ -127,4 +129,46 @@ export function obrigacoesDe(
     }
   }
   return lista
+}
+
+/** Ajustes (IOU) abertos como obrigações devedor→credor. */
+export function ajustesEmObrigacoes(ajustes: Ajuste[]): ObrigacaoCalculada[] {
+  const lista: ObrigacaoCalculada[] = []
+  for (const a of ajustes) {
+    if (a.pago || a.cancelado) continue
+    lista.push({
+      devedor_id: a.de_morador,
+      credor_id: a.para_morador,
+      valor: a.valor,
+      despesa_id: '',
+      rateio_id: a.id,
+    })
+  }
+  return lista
+}
+
+/** Lista os ajustes (IOU) da casa. */
+export function useAjustes(casaId: string | null) {
+  const [ajustes, setAjustes] = useState<Ajuste[]>([])
+
+  useEffect(() => {
+    if (!casaId) {
+      setAjustes([])
+      return
+    }
+    let vivo = true
+    void supabase
+      .from('ajustes')
+      .select('*')
+      .eq('casa_id', casaId)
+      .order('data', { ascending: false })
+      .then(({ data }) => {
+        if (vivo) setAjustes((data ?? []) as Ajuste[])
+      })
+    return () => {
+      vivo = false
+    }
+  }, [casaId])
+
+  return ajustes
 }

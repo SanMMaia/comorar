@@ -6,10 +6,12 @@ import { invalidarCacheDespesas } from '../lib/dados'
 import { subirComprovante, urlComprovante, removerComprovante } from '../lib/comprovante'
 import { formatBR, dataBR, estaAtrasada } from '../lib/format'
 import { labelCategoria } from '../lib/categorias'
-import type { Despesa, Rateio } from '../types'
+import type { Despesa, ItensDespesa, LeituraMedidor, Parcela, Rateio } from '../types'
 
 interface Detalhe extends Despesa {
   rateios: Rateio[]
+  itens_despesa?: ItensDespesa[]
+  parcelas?: Parcela[]
 }
 
 export function DespesaDetalhe() {
@@ -21,19 +23,32 @@ export function DespesaDetalhe() {
 
   const [despesa, setDespesa] = useState<Detalhe | null>(null)
   const [foto, setFoto] = useState<string | null>(null)
+  const [leituras, setLeituras] = useState<LeituraMedidor[]>([])
+  const [leiturasAnteriores, setLeiturasAnteriores] = useState<Record<string, number>>({})
   const [erro, setErro] = useState('')
   const [carregando, setCarregando] = useState(true)
 
   const souOwner = moradores.find((m) => m.id === minhaMoradorId)?.role === 'owner'
 
+  const detalheDe = async (despesaId: string) => {
+    const { data } = await supabase
+      .from('despesas')
+      .select('*, rateios(*), itens_despesa(*), parcelas(*)')
+      .eq('id', despesaId)
+      .single()
+    if (data) setDespesa(data as unknown as Detalhe)
+  }
+
   useEffect(() => {
     if (!id) return
+    let ativo = true
     supabase
       .from('despesas')
-      .select('*, rateios(*)')
+      .select('*, rateios(*), itens_despesa(*), parcelas(*)')
       .eq('id', id)
       .single()
       .then(async ({ data, error }) => {
+        if (!ativo) return
         setCarregando(false)
         if (error || !data) {
           setErro(error?.message ?? 'Despesa não encontrada')
@@ -44,8 +59,37 @@ export function DespesaDetalhe() {
         if (d.comprovante_url) {
           setFoto(await urlComprovante(d.comprovante_url))
         }
+        if ((d.categoria === 'agua' || d.categoria === 'luz') && casa?.id) {
+          const tipo = d.categoria as 'agua' | 'luz'
+          const dataLeitura = d.data.slice(0, 10)
+          const [{ data: leiturasHoje }, { data: anteriores }] = await Promise.all([
+            supabase
+              .from('leituras_medidor')
+              .select('*')
+              .eq('casa_id', casa.id)
+              .eq('tipo', tipo)
+              .eq('data_leitura', dataLeitura),
+            supabase
+              .from('leituras_medidor')
+              .select('*')
+              .eq('casa_id', casa.id)
+              .eq('tipo', tipo)
+              .lt('data_leitura', dataLeitura)
+              .order('data_leitura', { ascending: false }),
+          ])
+          if (!ativo) return
+          const mapaPrev: Record<string, number> = {}
+          for (const l of (anteriores ?? []) as LeituraMedidor[]) {
+            if (mapaPrev[l.morador_id] === undefined) mapaPrev[l.morador_id] = l.leitura
+          }
+          setLeiturasAnteriores(mapaPrev)
+          setLeituras((leiturasHoje ?? []) as LeituraMedidor[])
+        }
       })
-  }, [id])
+    return () => {
+      ativo = false
+    }
+  }, [id, casa?.id])
 
   const marcarPago = async (r: Rateio) => {
     await supabase
@@ -54,12 +98,18 @@ export function DespesaDetalhe() {
       .eq('id', r.id)
       .eq('pago', false)
     invalidarCacheDespesas(casa?.id)
-    const { data } = await supabase
-      .from('despesas')
-      .select('*, rateios(*)')
-      .eq('id', id!)
-      .single()
-    if (data) setDespesa(data as unknown as Detalhe)
+    await detalheDe(id!)
+  }
+
+  const alternarParcela = async (p: Parcela) => {
+    if (!despesa) return
+    const { error } = await supabase
+      .from('parcelas')
+      .update({ paga: !p.paga })
+      .eq('id', p.id)
+    if (error) return setErro(error.message)
+    invalidarCacheDespesas(casa?.id)
+    await detalheDe(despesa.id)
   }
 
   const excluir = async () => {
@@ -86,12 +136,7 @@ export function DespesaDetalhe() {
         .eq('id', despesa.id)
       if (errUpd) throw errUpd
       invalidarCacheDespesas(casa?.id)
-      const { data } = await supabase
-        .from('despesas')
-        .select('*, rateios(*)')
-        .eq('id', id!)
-        .single()
-      if (data) setDespesa(data as unknown as Detalhe)
+      await detalheDe(despesa.id)
       setFoto(null)
     } catch (err) {
       setErro(err instanceof Error ? err.message : 'Erro ao desfazer o pagamento')
@@ -154,6 +199,8 @@ export function DespesaDetalhe() {
         )}
         {despesa.status === 'cancelada' && <span className="badge badge-muted">cancelada</span>}
         {despesa.status === 'confirmada' && <span className="badge badge-ok">confirmada</span>}
+        {despesa.parcelada && <span className="badge badge-muted">{despesa.total_parcelas}x</span>}
+        {despesa.mercado && <span className="badge badge-muted">mercado</span>}
       </div>
 
       <div className="card mt">
@@ -206,6 +253,82 @@ export function DespesaDetalhe() {
               </div>
             ))}
           </div>
+
+          {despesa.itens_despesa && despesa.itens_despesa.length > 0 && (
+            <>
+              <h2 className="section-title" style={{ marginTop: 20 }}>Itens</h2>
+              <div className="card-flush mt">
+                {despesa.itens_despesa.map((it) => (
+                  <div className="list-line" key={it.id}>
+                    <div className="item-linha">
+                      <div className="item-corpo">
+                        <strong>{it.descricao}</strong>
+                        <div className="small muted">
+                          {it.donos.length === 0
+                            ? 'comum (todos)'
+                            : it.donos.map((moId) => nomeMorador(moradores, moId)).join(', ')}
+                        </div>
+                      </div>
+                      <div className="mono">{formatBR(it.valor)}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+
+          {leituras.length > 0 && (
+            <>
+              <h2 className="section-title" style={{ marginTop: 20 }}>Leitura do medidor</h2>
+              <div className="card-flush mt">
+                {leituras.map((l) => {
+                  const anterior = leiturasAnteriores[l.morador_id] ?? 0
+                  const consumo = Math.max(0, Math.round((l.leitura - anterior) * 10) / 10)
+                  const rateio = despesa.rateios.find((r) => r.morador_id === l.morador_id)
+                  return (
+                    <div className="list-line" key={l.id}>
+                      <div className="item-linha">
+                        <div className="item-corpo">
+                          <strong>{nomeMorador(moradores, l.morador_id)}</strong>
+                          <div className="small muted">
+                            leitura {l.leitura.toLocaleString('pt-BR')} · consumo {consumo.toLocaleString('pt-BR')}
+                          </div>
+                        </div>
+                        <div className="mono">{formatBR(rateio?.valor_rateado ?? 0)}</div>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </>
+          )}
+
+          {despesa.parcelas && despesa.parcelas.length > 0 && (
+            <>
+              <h2 className="section-title" style={{ marginTop: 20 }}>Parcelas</h2>
+              <div className="card-flush mt">
+                {despesa.parcelas.map((p) => (
+                  <div className="list-line" key={p.id}>
+                    <div className="item-linha">
+                      <div className="item-corpo">
+                        <strong>Parcela {p.numero} de {despesa.total_parcelas}</strong>
+                        <div className="small muted">{dataBR(p.data_vencimento)} · {formatBR(p.valor)}</div>
+                      </div>
+                      <div className="item-lado">
+                        {p.paga ? (
+                          <span className="badge badge-ok">paga</span>
+                        ) : (
+                          <button type="button" className="btn btn-sm btn-secondary" onClick={() => void alternarParcela(p)}>
+                            Marcar paga
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
         </>
       )}
 
