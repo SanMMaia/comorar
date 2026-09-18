@@ -80,3 +80,10 @@ export function inferirCategoriaDoTexto(texto: string): Categoria | undefined {
   }
   return undefined
 }
+
+/** True se o texto parece se referir a mercado/supermercado (para sugerir rateio por itens). */
+export function pareceMercado(texto: string): boolean {
+  const t = texto.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+  const palavras = PALAVRAS_CATEGORIA.find(([c]) => c === 'mercado')?.[1] ?? []
+  return palavras.some((p) => t.includes(p))
+}

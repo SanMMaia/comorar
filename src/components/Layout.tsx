@@ -60,8 +60,8 @@ function Icone({ nome }: { nome: Icone }) {
 }
 
 const rotas: { to: string; label: string; icone: Icone; end?: boolean }[] = [
-  { to: '/', label: 'Resumo', icone: 'casa', end: true },
-  { to: '/mes', label: 'Extrato', icone: 'despesas' },
+  { to: '/', label: 'Início', icone: 'casa', end: true },
+  { to: '/mes', label: 'Gastos', icone: 'despesas' },
   { to: '/balanco', label: 'Meu saldo', icone: 'balanco' },
   { to: '/perfil', label: 'Perfil', icone: 'perfil' },
 ]

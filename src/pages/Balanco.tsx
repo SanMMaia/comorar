@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { Dica } from '../components/Dica'
 import { useApp, nomeMorador } from '../state/AppContext'
 import { useDespesas, obrigacoesDe, useMeuSaldo } from '../lib/dados'
 import { saldosPorPessoa, compactarTransferencias, planejarAcerto, type Obrigacao, type PrevisaoAcerto } from '../lib/balanco'
@@ -152,6 +153,10 @@ export function Balanco() {
       <p className="page-sub">
         {souOwner ? 'Saldos e sugestões de pagamento de toda a casa' : 'Suas pendências e o que devem para você'}
       </p>
+
+      <Dica chave="meu-saldo">
+        Aqui ficam os acertos: o que devem para você e o que você deve.
+      </Dica>
 
       <div className="card saldo-card">
         <div className="linha">{meuSaldo >= 0 ? 'Devem para você' : 'Você deve'}</div>

@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { Dica } from '../components/Dica'
 import { useApp, nomeMorador } from '../state/AppContext'
 import { useDespesas } from '../lib/dados'
 import { supabase } from '../lib/supabase'
@@ -122,6 +123,11 @@ export function ListaMensal() {
           →
         </button>
       </div>
+
+      <Dica chave="gastos">
+        Toque em qualquer despesa para ver o detalhe e o que cabe a você. Use a busca para achar
+        rápido.
+      </Dica>
 
       <input
         type="search"

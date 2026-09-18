@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useApp } from '../state/AppContext'
 import { supabase } from '../lib/supabase'
 import { formatBR, parseCentavos, mesAtual, mesAnoBR } from '../lib/format'
@@ -29,6 +30,7 @@ function corPct(pct: number): string {
 
 export function Orcamento() {
   const { casa } = useApp()
+  const navigate = useNavigate()
   const [mes, setMes] = useState(() => mesAtual())
   const [linhas, setLinhas] = useState<OrcamentoLinha[]>([])
   const [carregando, setCarregando] = useState(true)
@@ -116,6 +118,12 @@ export function Orcamento() {
 
   return (
     <>
+      <div className="nav-back">
+        <button type="button" onClick={() => navigate(-1)}>
+          <span aria-hidden>‹</span> Voltar
+        </button>
+      </div>
+
       <div className="row">
         <button type="button" className="btn btn-secondary btn-sm" onClick={() => setMes(deslocarMes(mes, -1))}>
           ←

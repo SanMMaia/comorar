@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react'
 import { Link } from 'react-router-dom'
+import { Dica } from '../components/Dica'
 import { supabase } from '../lib/supabase'
 import { useApp } from '../state/AppContext'
 import { useDespesas } from '../lib/dados'
@@ -414,6 +415,20 @@ export function Pagar() {
       </div>
       <p className="small muted">Pague as contas do mês. Para adiantar uma conta futura, use a aba Próximas.</p>
 
+      <Dica chave="pagar">
+        Confirme aqui o que você pagou. Também dá pra lançar uma despesa nova com "+ Avulsa".
+      </Dica>
+
+      <Link to="/perfil/contas" viewTransition className="link-row list-line mt">
+        <div className="item-linha">
+          <div className="item-corpo">
+            <strong>Contas recorrentes</strong>
+            <div className="small muted">Ver previsões, datas e ignorar meses</div>
+          </div>
+          <span className="item-seta" aria-hidden>›</span>
+        </div>
+      </Link>
+
       {ultimaIgnorada && (
         <div className="card row mt" style={{ borderLeft: '4px solid var(--warn, #e0a92e)' }}>
           <span className="small">
@@ -751,10 +766,7 @@ export function Pagar() {
         })()}
 
       <p className="small muted center mt">
-        Gerencie recorrências (editar, datas, ignorar) em{' '}
-        <Link to="/perfil/contas" viewTransition className="btn btn-sm btn-secondary">
-          Contas
-        </Link>
+        Só quem é responsável pela casa edita as contas recorrentes.
       </p>
     </>
   )

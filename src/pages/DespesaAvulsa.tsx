@@ -11,7 +11,7 @@ import {
 } from '../lib/comprovante'
 import { parseCentavos, formatBR } from '../lib/format'
 import { lerBoletoLocal, onOcrCarregamento } from '../lib/ocr-local'
-import { categoriasEfetivas } from '../lib/categorias'
+import { categoriasEfetivas, pareceMercado } from '../lib/categorias'
 import { rateioMercado, dividirPorMedidor, type ItemMercadoInput } from '../lib/rateioEspecial'
 import type { ResultadoOCR } from '../lib/ocr'
 import type { Categoria, Despesa, ItensDespesa, LeituraMedidor, Rateio, Recorrencia, RegraRateio, TipoRateio } from '../types'
@@ -88,6 +88,7 @@ export function DespesaAvulsa() {
     { id: string; descricao: string; valor: string; donos: Set<string> }[]
   >([])
   const [parcelaTotal, setParcelaTotal] = useState('1')
+  const [abrirDivisao, setAbrirDivisao] = useState(false)
 
   const novoId = () => Math.random().toString(36).slice(2)
 
@@ -99,6 +100,16 @@ export function DespesaAvulsa() {
       ...prev,
       { id: novoId(), descricao: '', valor: '', donos: new Set<string>() },
     ])
+
+  const ativarMercado = () => {
+    setEspecial('mercado')
+    setErro('')
+    setItensMercado((prev) =>
+      prev.length
+        ? prev
+        : [{ id: novoId(), descricao: '', valor: '', donos: new Set<string>() }],
+    )
+  }
 
   const alternarDonoItem = (itemId: string, moradorId: string) =>
     setItensMercado((prev) =>
@@ -209,6 +220,37 @@ export function DespesaAvulsa() {
       return next
     })
   }
+
+  const ultima = useMemo(() => {
+    const confirmadas = despesas.filter((d) => d.status === 'confirmada')
+    if (confirmadas.length === 0) return null
+    return (
+      confirmadas
+        .slice()
+        .sort((a, b) => b.data.localeCompare(a.data) || b.id.localeCompare(a.id))[0] ?? null
+    )
+  }, [despesas])
+
+  const usarDadosUltima = () => {
+    if (!ultima) return
+    setFornecedor(ultima.fornecedor)
+    setCategoria((ultima.categoria ?? 'outro') as Categoria)
+    setTipoRateio((ultima.tipo_rateio ?? 'igual') as TipoRateio)
+    setIncluidos(new Set(ultima.rateios.map((r) => r.morador_id)))
+    setTipoMedidor('luz')
+    const pct: Record<string, string> = {}
+    for (const r of ultima.rateios) {
+      const p = ultima.valor > 0 ? (r.valor_rateado / ultima.valor) * 100 : 0
+      pct[r.morador_id] = String(Math.round(p * 10) / 10)
+    }
+    setPercentuais(pct)
+    setEspecial('normal')
+  }
+
+  const pareceCompraDeMercado = useMemo(
+    () => especial === 'normal' && !editando && pareceMercado(fornecedor),
+    [especial, fornecedor, editando],
+  )
 
   useEffect(() => {
     if (!id || !casa) return
@@ -552,6 +594,17 @@ export function DespesaAvulsa() {
       </p>
 
       <form className="card mt" onSubmit={salvar}>
+        {!editando && ultima && (
+          <div className="row" style={{ gap: 'var(--space-2)', marginBottom: 'var(--space-3)' }}>
+            <span className="small muted" style={{ flex: 1, minWidth: 0 }}>
+              Última despesa: <strong>{ultima.fornecedor}</strong>
+            </span>
+            <button type="button" className="btn btn-sm btn-secondary" onClick={usarDadosUltima}>
+              Usar dados
+            </button>
+          </div>
+        )}
+
         <label>Tipo de lançamento</label>
         <div style={{ display: 'flex', gap: 'var(--space-2)', flexWrap: 'wrap' }}>
           <button
@@ -564,15 +617,7 @@ export function DespesaAvulsa() {
           <button
             type="button"
             className={`chip${especial === 'mercado' ? ' chip-ativo' : ''}`}
-            onClick={() => {
-              setEspecial('mercado')
-              setErro('')
-              setItensMercado((prev) =>
-                prev.length
-                  ? prev
-                  : [{ id: novoId(), descricao: '', valor: '', donos: new Set<string>() }],
-              )
-            }}
+            onClick={ativarMercado}
           >
             Mercado com itens
           </button>
@@ -622,6 +667,15 @@ export function DespesaAvulsa() {
             </div>
           )}
         </div>
+
+        {pareceCompraDeMercado && (
+          <div className="info-box mt">
+            <div className="small">Parece compra de mercado — quer dividir por itens?</div>
+            <button type="button" className="btn btn-sm btn-primary mt" onClick={ativarMercado}>
+              Dividir por itens
+            </button>
+          </div>
+        )}
 
         {especial === 'normal' && (
           <div className="field-row">
@@ -773,57 +827,76 @@ export function DespesaAvulsa() {
 
         {especial === 'normal' && (
           <>
-            <label>Como dividir?</label>
-            <select value={tipoRateio} onChange={(e) => setTipoRateio(e.target.value as TipoRateio)}>
-              <option value="igual">Igual para todos</option>
-              <option value="percentual">Por percentual</option>
-              <option value="consumo">Só quem consumiu</option>
-            </select>
+            <details
+              className="opcoes"
+              open={abrirDivisao}
+              onToggle={(e) => setAbrirDivisao((e.target as HTMLDetailsElement).open)}
+            >
+              <summary>
+                <span>
+                  {tipoRateio === 'igual'
+                    ? 'Divisão igual para todos'
+                    : tipoRateio === 'percentual'
+                      ? 'Divisão por percentual'
+                      : 'Só quem consumiu'}
+                  {' · '}
+                  {parcelaTotal === '1' ? 'à vista' : `${parcelaTotal} parcelas`}
+                </span>
+              </summary>
+              <div className="opcoes-corpo">
+                <label>Como dividir?</label>
+                <select value={tipoRateio} onChange={(e) => setTipoRateio(e.target.value as TipoRateio)}>
+                  <option value="igual">Igual para todos</option>
+                  <option value="percentual">Por percentual</option>
+                  <option value="consumo">Só quem consumiu</option>
+                </select>
 
-            {tipoRateio === 'consumo' && (
-              <div className="card mt">
-                {moradores.map((m) => (
-                  <label key={m.id} style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', fontWeight: 400, margin: 'var(--space-1)' }}>
-                    <input
-                      type="checkbox"
-                      checked={incluidos.has(m.id)}
-                      onChange={() => toggleIncluido(m.id)}
-                      style={{ width: 'auto' }}
-                    />
-                    {m.nome}
-                  </label>
-                ))}
-              </div>
-            )}
-
-            {tipoRateio === 'percentual' && (
-              <div className="card mt">
-                {moradores.map((m) => (
-                  <div className="row" key={m.id} style={{ margin: 'var(--space-2) 0' }}>
-                    <span className="small">{m.nome}</span>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
-                      <input
-                        type="text"
-                        inputMode="numeric"
-                        style={{ width: 80 }}
-                        value={percentuais[m.id] ?? percentuaisPorMorador[m.id] ?? ''}
-                        onChange={(e) =>
-                          setPercentuais((prev) => ({ ...prev, [m.id]: e.target.value.replace(/[^\d.]/g, '') }))
-                        }
-                      />
-                      <span className="muted">%</span>
-                    </div>
+                {tipoRateio === 'consumo' && (
+                  <div className="card mt">
+                    {moradores.map((m) => (
+                      <label key={m.id} style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', fontWeight: 400, margin: 'var(--space-1)' }}>
+                        <input
+                          type="checkbox"
+                          checked={incluidos.has(m.id)}
+                          onChange={() => toggleIncluido(m.id)}
+                          style={{ width: 'auto' }}
+                        />
+                        {m.nome}
+                      </label>
+                    ))}
                   </div>
-                ))}
-              </div>
-            )}
+                )}
 
-            <label>Parcelar em</label>
-            <select value={parcelaTotal} onChange={(e) => setParcelaTotal(e.target.value)}>
-              {Array.from({ length: 12 }, (_, i) => i + 1).map((n) => (
-                <option key={n} value={String(n)}>{n === 1 ? 'À vista' : `${n} parcelas`}</option>
-              ))}
-            </select>
+                {tipoRateio === 'percentual' && (
+                  <div className="card mt">
+                    {moradores.map((m) => (
+                      <div className="row" key={m.id} style={{ margin: 'var(--space-2) 0' }}>
+                        <span className="small">{m.nome}</span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
+                          <input
+                            type="text"
+                            inputMode="numeric"
+                            style={{ width: 80 }}
+                            value={percentuais[m.id] ?? percentuaisPorMorador[m.id] ?? ''}
+                            onChange={(e) =>
+                              setPercentuais((prev) => ({ ...prev, [m.id]: e.target.value.replace(/[^\d.]/g, '') }))
+                            }
+                          />
+                          <span className="muted">%</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <label>Parcelar em</label>
+                <select value={parcelaTotal} onChange={(e) => setParcelaTotal(e.target.value)}>
+                  {Array.from({ length: 12 }, (_, i) => i + 1).map((n) => (
+                    <option key={n} value={String(n)}>{n === 1 ? 'À vista' : `${n} parcelas`}</option>
+                  ))}
+                </select>
+              </div>
+            </details>
           </>
         )}
 

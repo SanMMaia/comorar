@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { Dica } from '../components/Dica'
 import { useApp, nomeMorador } from '../state/AppContext'
 import { useDespesas, useMeuSaldo } from '../lib/dados'
 import { supabase } from '../lib/supabase'
@@ -109,8 +110,12 @@ export function Home() {
 
   return (
     <>
-      <h1 className="page-title">Resumo</h1>
+      <h1 className="page-title">Início</h1>
       <p className="page-sub">Visão geral da casa</p>
+      <Dica chave="inicio">
+        Aqui você vê o quanto a casa gastou no mês e quanto falta acertar. Toque numa despesa
+        para ver a sua parte.
+      </Dica>
       <div className="card saldo-card">
         <div className="linha">
           {mesAnoBR(new Date())} · {souOwner ? 'gasto total' : 'sua parte'}
@@ -128,6 +133,25 @@ export function Home() {
             <strong>{formatBR(devemAVoce)}</strong>
           </div>
         </div>
+        <Link
+          to="/balanco"
+          viewTransition
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 4,
+            marginTop: 'var(--space-3)',
+            fontSize: 'var(--text-sm)',
+            fontWeight: 600,
+            color: 'var(--on-accent)',
+            textDecoration: 'none',
+            padding: '6px 12px',
+            border: '1px solid color-mix(in srgb, var(--on-accent) 35%, transparent)',
+            borderRadius: 999,
+          }}
+        >
+          Ver acerto ›
+        </Link>
       </div>
 
       {previstasMes.length > 0 && (
@@ -163,14 +187,21 @@ export function Home() {
 
       <div className="row mt-lg">
         <h2 className="section-title">Últimas despesas</h2>
-        <span className="small muted">toque em + Pagar para lançar</span>
+        <span className="small muted">em + Pagar dá pra pagar ou lançar</span>
       </div>
 
       {recentes.length === 0 ? (
         <div className="empty">
           <div className="empty-icone" aria-hidden>🧾</div>
           <p>Nenhuma despesa ainda.</p>
-          <Link to="/nova" viewTransition className="btn btn-primary btn-sm mt">Pagar a primeira</Link>
+          <div style={{ display: 'flex', gap: 8, justifyContent: 'center', marginTop: 'var(--space-3)' }}>
+            <Link to="/nova" viewTransition className="btn btn-primary btn-sm">
+              Pagar conta
+            </Link>
+            <Link to="/avulsa" viewTransition className="btn btn-secondary btn-sm">
+              Lançar despesa
+            </Link>
+          </div>
         </div>
       ) : (
         <div className="card-flush">

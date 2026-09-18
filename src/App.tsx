@@ -81,6 +81,7 @@ function Protegido() {
         <Route path="/perfil" element={<Perfil />} />
         <Route path="/despesa/:id/editar" element={<DespesaAvulsa />} />
         <Route path="/despesa/:id" element={<DespesaDetalhe />} />
+        <Route path="/avulsa" element={<DespesaAvulsa />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
       </Routes>

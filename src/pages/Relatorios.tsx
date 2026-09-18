@@ -132,7 +132,7 @@ export function Relatorios() {
       )}
 
       <p className="small muted mt-lg" style={{ marginBottom: 0 }}>
-        Comparativo cobre as despesas da casa. Navegue para um mês em "Extrato" e veja a lista completa de lançamentos.
+        Comparativo cobre as despesas da casa. Navegue para um mês em "Gastos" e veja a lista completa de lançamentos.
       </p>
     </>
   )
