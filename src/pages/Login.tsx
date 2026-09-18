@@ -41,9 +41,9 @@ export function Login() {
   }
 
   return (
-    <div className="content" style={{ paddingTop: 40 }}>
-      <div className="center" style={{ marginBottom: 24 }}>
-        <h1 className="page-title" style={{ fontSize: 28, margin: 0 }}>🏠 Comorar</h1>
+    <div className="content" style={{ paddingTop: 'var(--space-10)' }}>
+      <div className="center" style={{ marginBottom: 'var(--space-6)' }}>
+        <h1 className="page-title" style={{ fontSize: 'var(--text-hero)', margin: 0 }}>🏠 Comorar</h1>
         <p className="muted">Divida as despesas da casa de forma justa</p>
       </div>
 

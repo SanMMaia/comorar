@@ -74,7 +74,7 @@ export function CamposForm({
             <button
               type="button"
               className="btn-secondary btn-sm"
-              style={{ marginTop: 4 }}
+              style={{ marginTop: 'var(--space-1)' }}
               onClick={() => onChange({ dataFim: '' })}
             >
               Remover

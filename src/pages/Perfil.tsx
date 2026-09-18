@@ -190,7 +190,7 @@ export function Perfil() {
         <div className="row">
           <div>
             <div className="small muted">Código de convite</div>
-            <strong className="mono" style={{ fontSize: 22 }}>{casa.codigo_convite}</strong>
+            <strong className="mono" style={{ fontSize: 'var(--text-2xl)' }}>{casa.codigo_convite}</strong>
           </div>
           <button type="button" className="btn btn-secondary btn-sm" onClick={copiar}>
             {msgCopia ? 'Copiado ✓' : 'Copiar'}
@@ -245,21 +245,21 @@ export function Perfil() {
         </>
       )}
 
-      <h2 className="section-title" style={{ marginTop: 20 }}>Moradores</h2>
+      <h2 className="section-title" style={{ marginTop: 'var(--space-5)' }}>Moradores</h2>
       <div className="card-flush">
         {moradores.map((m) => (
           <div className="list-line" key={m.id}>
             <div className="item-linha">
               <div className="item-corpo">
                 <strong>{m.nome}</strong>
-                {m.user_id === user?.id && <span className="badge badge-ok" style={{ marginLeft: 6 }}>você</span>}
-                {m.tipo === 'extra' && <span className="badge badge-muted" style={{ marginLeft: 6 }}>sem app</span>}
+                {m.user_id === user?.id && <span className="badge badge-ok" style={{ marginLeft: 'var(--space-2)' }}>você</span>}
+                {m.tipo === 'extra' && <span className="badge badge-muted" style={{ marginLeft: 'var(--space-2)' }}>sem app</span>}
                 {m.role === 'owner' && m.user_id !== user?.id && (
-                  <span className="badge badge-muted" style={{ marginLeft: 6 }}>responsável</span>
+                  <span className="badge badge-muted" style={{ marginLeft: 'var(--space-2)' }}>responsável</span>
                 )}
                 {m.email && <div className="small muted">{m.email}</div>}
                 {m.id === minhaMoradorId && (
-                  <div style={{ marginTop: 10 }}>
+                  <div style={{ marginTop: 'var(--space-3)' }}>
                     <div className="small" style={{ fontWeight: 600 }}>Chave Pix (para receber acertos)</div>
                     {editandoPix ? (
                       <>
@@ -279,7 +279,7 @@ export function Perfil() {
                         </button>
                       </>
                     ) : (
-                      <div className="row mt" style={{ gap: 8 }}>
+                      <div className="row mt" style={{ gap: 'var(--space-2)' }}>
                         <span className="small muted" style={{ wordBreak: 'break-all', flex: 1 }}>
                           {minhaChave || 'Nenhuma chave cadastrada'}
                         </span>
@@ -303,7 +303,7 @@ export function Perfil() {
                   </div>
                 )}
                 {m.id !== minhaMoradorId && m.chave_pix && (
-                  <div className="small mt" style={{ marginTop: 6 }}>
+                  <div className="small mt" style={{ marginTop: 'var(--space-2)' }}>
                     <span className="muted" style={{ wordBreak: 'break-all' }}>Pix: {m.chave_pix}</span>{' '}
                     <button type="button" className="btn btn-sm btn-secondary" onClick={() => void copiarTexto(m.chave_pix ?? '')}>
                       {msgPixCopia ? 'Copiado ✓' : 'Copiar'}
@@ -324,7 +324,7 @@ export function Perfil() {
       {souOwner && (
         <div className="card mt">
           <h2 className="section-title">Adicionar morador sem app</h2>
-          <p className="small muted" style={{ margin: '6px 0 0' }}>
+          <p className="small muted" style={{ margin: 'var(--space-2) 0 0' }}>
             Para quem divide a casa mas não vai instalar o app (o saldo dele também fica no Balanço).
           </p>
           <form onSubmit={criarMoradorSemApp}>
@@ -342,7 +342,7 @@ export function Perfil() {
 
       <div className="card mt">
         <h2 className="section-title">Aparência</h2>
-        <p className="small muted" style={{ margin: '6px 0 12px' }}>
+        <p className="small muted" style={{ margin: 'var(--space-2) 0 var(--space-3)' }}>
           Escolha o tema do app ou acompanhe o do sistema.
         </p>
         <div className="seg seg-3">
@@ -389,7 +389,7 @@ export function Perfil() {
       {souOwner && (
         <div className="card mt">
           <h2 className="section-title">Backup e restauração</h2>
-          <p className="small muted" style={{ margin: '6px 0 0' }}>
+          <p className="small muted" style={{ margin: 'var(--space-2) 0 0' }}>
             Baixe uma cópia de tudo (moradores, recorrências, despesas e rateios) em um arquivo
             JSON. Restaurar cria uma casa nova a partir do arquivo.
           </p>
@@ -406,7 +406,7 @@ export function Perfil() {
               e.target.value = ''
             }}
           />
-          <div className="row mt" style={{ gap: 8 }}>
+          <div className="row mt" style={{ gap: 'var(--space-2)' }}>
             <button
               type="button"
               className="btn btn-secondary btn-sm"

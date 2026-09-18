@@ -107,7 +107,7 @@ export function ListaMensal() {
       <div className="row">
         <button type="button" className="btn btn-secondary btn-sm" onClick={voltarMes}>←</button>
         <div style={{ textAlign: 'center' }}>
-          <h1 style={{ fontSize: 18, margin: 0 }}>{mesAnoBR(new Date(ano, mes, 1))}</h1>
+          <h1 style={{ fontSize: 'var(--text-xl)', margin: 0 }}>{mesAnoBR(new Date(ano, mes, 1))}</h1>
           <div className="small muted">
             {souOwner ? formatBR(total) : `sua parte ${formatBR(total)}`}
             {totalPrevisto > 0 ? ` · ${formatBR(totalPrevisto)} previstos` : ''}
@@ -131,7 +131,7 @@ export function ListaMensal() {
         onChange={(e) => setBusca(e.target.value)}
       />
 
-      <div className="row mt" style={{ gap: 6, flexWrap: 'wrap' }}>
+      <div className="row mt" style={{ gap: 'var(--space-2)', flexWrap: 'wrap' }}>
         <button
           type="button"
           className={categoriaSel === '' ? 'chip chip-ativo' : 'chip'}
@@ -245,7 +245,7 @@ export function ListaMensal() {
         </div>
       )}
 
-      <div style={{ height: 8 }} />
+      <div style={{ height: 'var(--space-2)' }} />
     </>
   )
 }

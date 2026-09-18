@@ -151,7 +151,7 @@ export function Projecao() {
         </div>
       )}
 
-      <h2 className="section-title" style={{ marginTop: 24 }}>Próximas contas</h2>
+      <h2 className="section-title" style={{ marginTop: 'var(--space-6)' }}>Próximas contas</h2>
       {previstas.length === 0 ? (
         <div className="empty">
           <div className="empty-icone" aria-hidden>📆</div>
@@ -178,14 +178,14 @@ export function Projecao() {
               </button>
 
               {aberto && (
-                <div style={{ padding: '0 14px 8px' }}>
+                <div style={{ padding: '0 var(--space-4) var(--space-2)' }}>
                   {grupo.lancamentos.map((d) => (
                     <Link
                       to={`/despesa/${d.id}`}
                       viewTransition
                       key={d.id}
                       className="row clicavel"
-                      style={{ padding: '6px 0', borderTop: '1px solid var(--border)', textDecoration: 'none', color: 'inherit' }}
+                      style={{ padding: 'var(--space-2) 0', borderTop: '1px solid var(--border)', textDecoration: 'none', color: 'inherit' }}
                     >
                       <div className="small">
                         <strong>{d.fornecedor}</strong>
@@ -194,7 +194,7 @@ export function Projecao() {
                           <span className="badge badge-danger">atrasado</span>
                         )}
                       </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
                         <strong className="mono small">{formatBR(d.valor)}</strong>
                         <button
                           type="button"

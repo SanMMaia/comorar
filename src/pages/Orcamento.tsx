@@ -143,28 +143,28 @@ export function Orcamento() {
           {linhas.map((l) => {
             const pct = Number(l.pct) || 0
             return (
-              <div className="card" key={l.categoria} style={{ marginTop: 12 }}>
+              <div className="card" key={l.categoria} style={{ marginTop: 'var(--space-3)' }}>
                 <div className="row">
                   <strong>{categoriaLabel(l.categoria)}</strong>
                   <span className={`badge badge-${corPct(pct)}`}>
                     {pct >= 100 ? 'estourou' : pct >= 80 ? 'quase no limite' : 'dentro'}
                   </span>
                 </div>
-                <div className="row small muted" style={{ marginTop: 6, marginBottom: 4 }}>
+                <div className="row small muted" style={{ marginTop: 'var(--space-2)', marginBottom: 'var(--space-1)' }}>
                   <span>{formatBR(Number(l.usado) || 0)} de {formatBR(Number(l.limite) || 0)}</span>
                   <span>{pct.toFixed(0)}%</span>
                 </div>
                 <div className="barra" aria-hidden>
                   <div className={`barra-fill ${corPct(pct)}`} style={{ width: `${Math.min(100, pct)}%` }} />
                 </div>
-                <div className="row small muted" style={{ marginTop: 6 }}>
+                <div className="row small muted" style={{ marginTop: 'var(--space-2)' }}>
                   <span>
                     {Number(l.restante) >= 0
                       ? `Restam ${formatBR(Number(l.restante))}`
                       : `Excedeu ${formatBR(Math.abs(Number(l.restante)))}`}
                   </span>
                 </div>
-                <div className="row" style={{ marginTop: 10 }}>
+                <div className="row" style={{ marginTop: 'var(--space-3)' }}>
                   <button type="button" className="btn btn-sm btn-secondary" onClick={() => abrirEdicao(l.categoria, Number(l.limite) || 0)}>
                     Editar
                   </button>
@@ -246,7 +246,7 @@ export function Orcamento() {
             <button
               type="button"
               className={`btn btn-primary${salvando ? ' btn-spinner' : ''}`}
-              style={{ width: '100%', marginTop: 16 }}
+              style={{ width: '100%', marginTop: 'var(--space-4)' }}
               disabled={salvando}
               onClick={() => void salvar()}
             >

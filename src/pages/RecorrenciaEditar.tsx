@@ -186,7 +186,7 @@ export function RecorrenciaEditar() {
 
           <div
             className="row mt"
-            style={{ gap: 8, flexWrap: 'wrap' }}
+            style={{ gap: 'var(--space-2)', flexWrap: 'wrap' }}
             onClick={(e) => e.stopPropagation()}
           >
             <button type="button" className="btn btn-sm btn-secondary" disabled={enviando} onClick={() => void alternarAtiva()}>

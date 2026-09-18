@@ -74,7 +74,7 @@ export function RecorrenciaDetalhe() {
           >
             <div className="row">
               <div>
-                <div className="row" style={{ gap: 8, marginBottom: 4 }}>
+                <div className="row" style={{ gap: 'var(--space-2)', marginBottom: 'var(--space-1)' }}>
                   <h1 className="bar-title">{rec.fornecedor}</h1>
                   {rec.ativa ? (
                     <span className="badge badge-ok">ativa</span>
@@ -96,16 +96,16 @@ export function RecorrenciaDetalhe() {
                 </div>
               </div>
               <div style={{ textAlign: 'right' }}>
-                <strong className="mono" style={{ fontSize: 20 }}>{formatBR(rec.valor_previsto)}</strong>
+                <strong className="mono" style={{ fontSize: 'var(--text-2xl)' }}>{formatBR(rec.valor_previsto)}</strong>
                 <div className="small muted">valor previsto</div>
-                <div className="small" style={{ color: 'var(--accent)', marginTop: 8 }}>
+                <div className="small" style={{ color: 'var(--accent)', marginTop: 'var(--space-2)' }}>
                   ✎ editar ›
                 </div>
               </div>
             </div>
           </Link>
 
-          <h2 className="section-title" style={{ marginTop: 20 }}>Lançamentos</h2>
+          <h2 className="section-title" style={{ marginTop: 'var(--space-5)' }}>Lançamentos</h2>
           {lancamentos.length === 0 ? (
             <div className="empty">
               <div className="empty-icone" aria-hidden>🧾</div>

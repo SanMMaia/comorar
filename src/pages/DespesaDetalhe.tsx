@@ -213,7 +213,7 @@ export function DespesaDetalhe() {
             </div>
           </div>
           <div style={{ textAlign: 'right' }}>
-            <div className="valor mono" style={{ fontSize: 22, fontWeight: 700 }}>
+            <div className="valor mono" style={{ fontSize: 'var(--text-2xl)', fontWeight: 700 }}>
               {formatBR(despesa.valor)}
             </div>
           </div>
@@ -222,16 +222,16 @@ export function DespesaDetalhe() {
 
       {foto && (
         <div className="card mt">
-          <div className="small muted" style={{ marginBottom: 8 }}>Comprovante</div>
+          <div className="small muted" style={{ marginBottom: 'var(--space-2)' }}>Comprovante</div>
           <a href={foto} target="_blank" rel="noreferrer">
-            <img src={foto} alt="Comprovante" style={{ width: '100%', borderRadius: 8, display: 'block' }} />
+            <img src={foto} alt="Comprovante" style={{ width: '100%', borderRadius: 'var(--radius-sm)', display: 'block' }} />
           </a>
         </div>
       )}
 
       {despesa.status === 'confirmada' && (
         <>
-          <h2 className="section-title" style={{ marginTop: 20 }}>Rateio</h2>
+          <h2 className="section-title" style={{ marginTop: 'var(--space-5)' }}>Rateio</h2>
           <div className="card-flush mt">
             {despesa.rateios.map((r) => (
               <div className="list-line" key={r.id}>
@@ -256,7 +256,7 @@ export function DespesaDetalhe() {
 
           {despesa.itens_despesa && despesa.itens_despesa.length > 0 && (
             <>
-              <h2 className="section-title" style={{ marginTop: 20 }}>Itens</h2>
+              <h2 className="section-title" style={{ marginTop: 'var(--space-5)' }}>Itens</h2>
               <div className="card-flush mt">
                 {despesa.itens_despesa.map((it) => (
                   <div className="list-line" key={it.id}>
@@ -279,7 +279,7 @@ export function DespesaDetalhe() {
 
           {leituras.length > 0 && (
             <>
-              <h2 className="section-title" style={{ marginTop: 20 }}>Leitura do medidor</h2>
+              <h2 className="section-title" style={{ marginTop: 'var(--space-5)' }}>Leitura do medidor</h2>
               <div className="card-flush mt">
                 {leituras.map((l) => {
                   const anterior = leiturasAnteriores[l.morador_id] ?? 0
@@ -305,7 +305,7 @@ export function DespesaDetalhe() {
 
           {despesa.parcelas && despesa.parcelas.length > 0 && (
             <>
-              <h2 className="section-title" style={{ marginTop: 20 }}>Parcelas</h2>
+              <h2 className="section-title" style={{ marginTop: 'var(--space-5)' }}>Parcelas</h2>
               <div className="card-flush mt">
                 {despesa.parcelas.map((p) => (
                   <div className="list-line" key={p.id}>
@@ -348,7 +348,7 @@ export function DespesaDetalhe() {
             e.target.value = ''
           }}
         />
-        <div className="row mt" style={{ gap: 8 }}>
+        <div className="row mt" style={{ gap: 'var(--space-2)' }}>
           <button type="button" className="btn btn-sm btn-secondary" onClick={() => inputBoleto.current?.click()}>
             {despesa.comprovante_url ? 'Substituir boleto' : 'Anexar boleto'}
           </button>

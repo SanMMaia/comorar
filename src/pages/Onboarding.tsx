@@ -36,7 +36,7 @@ export function Onboarding() {
   }
 
   return (
-    <div className="content" style={{ paddingTop: 24 }}>
+    <div className="content" style={{ paddingTop: 'var(--space-6)' }}>
       <h1 className="page-title">Bem-vindo! 👋</h1>
       <p className="page-sub">Crie uma casa para começar a dividir despesas ou entre com o código de convite dos seus moradores.</p>
 

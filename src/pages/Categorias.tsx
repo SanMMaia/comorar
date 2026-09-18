@@ -142,7 +142,7 @@ export function Categorias() {
                   <div className="small muted">{c.id}</div>
                 </div>
                 {souOwner && (
-                  <div className="row" style={{ flex: 'none', gap: 8 }}>
+                  <div className="row" style={{ flex: 'none', gap: 'var(--space-2)' }}>
                     <button
                       type="button"
                       className="btn btn-sm btn-secondary"

@@ -69,7 +69,7 @@ export function Regras() {
       </div>
 
       <h1 className="page-title">Taxa fixa de rateio</h1>
-      <p className="small muted" style={{ margin: '0 0 12px' }}>
+      <p className="small muted" style={{ margin: '0 0 var(--space-3)' }}>
         Percentual padrão das despesas do tipo "percentual". Somente moradores com conta podem ter
         taxa fixa.
       </p>
@@ -82,9 +82,9 @@ export function Regras() {
         ) : (
           <>
             {moradores.map((m) => (
-              <div className="row" key={m.id} style={{ marginTop: 8 }}>
+              <div className="row" key={m.id} style={{ marginTop: 'var(--space-2)' }}>
                 <span className="small">{m.nome}</span>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
                   <input
                     type="text"
                     inputMode="numeric"

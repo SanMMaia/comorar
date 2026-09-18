@@ -553,7 +553,7 @@ export function DespesaAvulsa() {
 
       <form className="card mt" onSubmit={salvar}>
         <label>Tipo de lançamento</label>
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: 'var(--space-2)', flexWrap: 'wrap' }}>
           <button
             type="button"
             className={`chip${especial === 'normal' ? ' chip-ativo' : ''}`}
@@ -649,10 +649,10 @@ export function DespesaAvulsa() {
 
         {especial === 'mercado' && (
           <div className="card mt">
-            <div className="small" style={{ fontWeight: 600, marginBottom: 8 }}>Itens da nota</div>
+            <div className="small" style={{ fontWeight: 600, marginBottom: 'var(--space-2)' }}>Itens da nota</div>
             {itensMercado.map((it) => (
               <div key={it.id}>
-                <div style={{ display: 'flex', gap: 6, margin: '6px 0' }}>
+                <div style={{ display: 'flex', gap: 'var(--space-2)', margin: 'var(--space-2) 0' }}>
                   <input
                     value={it.descricao}
                     onChange={(e) =>
@@ -679,7 +679,7 @@ export function DespesaAvulsa() {
                   <summary>{it.donos.size > 0 ? `${it.donos.size} ${it.donos.size === 1 ? 'consome' : 'consomem'}` : 'consumo comum'}</summary>
                   <div className="opcoes-corpo">
                     {moradores.map((m) => (
-                      <label key={m.id} style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 400, margin: 4 }}>
+                      <label key={m.id} style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', fontWeight: 400, margin: 'var(--space-1)' }}>
                         <input
                           type="checkbox"
                           style={{ width: 'auto' }}
@@ -725,11 +725,11 @@ export function DespesaAvulsa() {
               </div>
             </div>
             <div className="card mt">
-              <div className="small" style={{ fontWeight: 600, marginBottom: 8 }}>Leitura atual de cada morador</div>
+              <div className="small" style={{ fontWeight: 600, marginBottom: 'var(--space-2)' }}>Leitura atual de cada morador</div>
               {moradores.map((m) => {
                 const anterior = leiturasAnteriores[m.id]
                 return (
-                  <div className="row" key={m.id} style={{ margin: '6px 0' }}>
+                  <div className="row" key={m.id} style={{ margin: 'var(--space-2) 0' }}>
                     <span className="small" style={{ flex: 1 }}>
                       {m.nome}
                       {anterior !== undefined && <span className="muted"> (anterior: {anterior})</span>}
@@ -783,7 +783,7 @@ export function DespesaAvulsa() {
             {tipoRateio === 'consumo' && (
               <div className="card mt">
                 {moradores.map((m) => (
-                  <label key={m.id} style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 400, margin: 4 }}>
+                  <label key={m.id} style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', fontWeight: 400, margin: 'var(--space-1)' }}>
                     <input
                       type="checkbox"
                       checked={incluidos.has(m.id)}
@@ -799,9 +799,9 @@ export function DespesaAvulsa() {
             {tipoRateio === 'percentual' && (
               <div className="card mt">
                 {moradores.map((m) => (
-                  <div className="row" key={m.id} style={{ margin: '6px 0' }}>
+                  <div className="row" key={m.id} style={{ margin: 'var(--space-2) 0' }}>
                     <span className="small">{m.nome}</span>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
                       <input
                         type="text"
                         inputMode="numeric"
@@ -852,7 +852,7 @@ export function DespesaAvulsa() {
               </button>
             </div>
             {comprovanteUrl && (
-              <img src={comprovanteUrl} alt="Comprovante" style={{ width: '100%', borderRadius: 8, marginTop: 8, display: 'block' }} />
+              <img src={comprovanteUrl} alt="Comprovante" style={{ width: '100%', borderRadius: 'var(--radius-sm)', marginTop: 'var(--space-2)', display: 'block' }} />
             )}
             {ocrStatus === 'processando' && ocrBaixando && (
               <p className="small muted mt">⬇️ Baixando leitor de comprovante (1ª vez)…</p>
@@ -882,7 +882,7 @@ export function DespesaAvulsa() {
                 <img
                   src={comprovanteUrlExistente}
                   alt="Boleto atual"
-                  style={{ width: '100%', borderRadius: 8, display: 'block' }}
+                  style={{ width: '100%', borderRadius: 'var(--radius-sm)', display: 'block' }}
                 />
                 <button
                   type="button"

@@ -71,7 +71,7 @@ export function Notificacoes() {
 
   return (
     <>
-      <div className="row" style={{ justifyContent: 'space-between', marginTop: 44 }}>
+      <div className="row" style={{ justifyContent: 'space-between', marginTop: 'var(--space-12)' }}>
         <h1 className="bar-title">Notificações</h1>
         {naoLidas > 0 && (
           <button type="button" className="btn btn-sm btn-secondary" onClick={() => void marcarTodasLidas()}>
@@ -105,7 +105,7 @@ export function Notificacoes() {
                     <strong>{n.titulo}</strong>
                     <span className="small muted notif-tempo">{tempoRelativo(n.criado_em)}</span>
                   </div>
-                  <div className="small muted" style={{ marginTop: 2 }}>{n.corpo}</div>
+                  <div className="small muted" style={{ marginTop: 'var(--space-1)' }}>{n.corpo}</div>
                 </div>
                 {!n.lida && <span className="notif-ponto" aria-hidden />}
                 <span className="item-seta" aria-hidden>›</span>
@@ -130,7 +130,7 @@ export function Notificacoes() {
           />
         </label>
 
-        <label className="config-linha" style={{ borderTop: '1px solid var(--border)', paddingTop: 12 }}>
+        <label className="config-linha" style={{ borderTop: '1px solid var(--border)', paddingTop: 'var(--space-3)' }}>
           <div>
             <strong>Lembrar vencimentos com</strong>
             <div className="small muted">Antecedência para as contas recorrentes</div>

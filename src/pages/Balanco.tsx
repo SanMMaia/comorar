@@ -162,7 +162,7 @@ export function Balanco() {
 
       {erro && <div className="error-box">{erro}</div>}
 
-      <h2 className="section-title" style={{ marginTop: 20 }}>
+      <h2 className="section-title" style={{ marginTop: 'var(--space-5)' }}>
         {souOwner ? 'Sugestões de pagamento' : 'Você deve'}
       </h2>
       {transferencias.length === 0 ? (
@@ -205,7 +205,7 @@ export function Balanco() {
 
       {!souOwner && aReceber.length > 0 && (
         <>
-          <h2 className="section-title" style={{ marginTop: 20 }}>Devem a você</h2>
+          <h2 className="section-title" style={{ marginTop: 'var(--space-5)' }}>Devem a você</h2>
           <div className="card-flush">
             {aReceber.map((s, idx) => (
               <div className="list-line" key={idx}>
@@ -241,7 +241,7 @@ export function Balanco() {
               </button>
             </div>
 
-            <div className="small muted mt" style={{ marginTop: 12 }}>
+            <div className="small muted mt" style={{ marginTop: 'var(--space-3)' }}>
               {acertando.devedor_id === minhaMoradorId
                 ? 'Você paga agora. O valor será abatido das despesas em que deve.'
                 : `${nomeMorador(moradores, acertando.devedor_id)} paga agora. O valor é abatido das despesas em que deve.`}
@@ -249,9 +249,9 @@ export function Balanco() {
 
             {acertando.devedor_id === minhaMoradorId &&
               moradores.find((m) => m.id === acertando.credor_id)?.chave_pix && (
-                <div className="card mt" style={{ padding: 10 }}>
+                <div className="card mt" style={{ padding: 'var(--space-3)' }}>
                   <div className="small" style={{ fontWeight: 600 }}>Pix de {nomeMorador(moradores, acertando.credor_id)}</div>
-                  <div className="row mt" style={{ gap: 8 }}>
+                  <div className="row mt" style={{ gap: 'var(--space-2)' }}>
                     <span className="small mono" style={{ wordBreak: 'break-all', flex: 1 }}>
                       {moradores.find((m) => m.id === acertando.credor_id)?.chave_pix}
                     </span>
@@ -281,12 +281,12 @@ export function Balanco() {
             />
 
             {planoAcerto && (planoAcerto.quitar.length > 0 || planoAcerto.dividir) && (
-              <div className="card mt" style={{ padding: 10 }}>
-                <div className="small muted" style={{ marginBottom: 6 }}>Prévia do que será quitado:</div>
+              <div className="card mt" style={{ padding: 'var(--space-3)' }}>
+                <div className="small muted" style={{ marginBottom: 'var(--space-2)' }}>Prévia do que será quitado:</div>
                 {planoAcerto.quitar.map((q) => {
                   const det = detalheRateio(q.rateio_id)
                   return (
-                    <div className="row small" key={q.rateio_id} style={{ padding: '2px 0' }}>
+                    <div className="row small" key={q.rateio_id} style={{ padding: 'var(--space-1) 0' }}>
                       <span>
                         {det.fornecedor || 'Rateio'}
                         <span className="muted"> · {formatBR(det.valor)}</span>
@@ -296,7 +296,7 @@ export function Balanco() {
                   )
                 })}
                 {planoAcerto.dividir && (
-                  <div className="row small" style={{ padding: '2px 0' }}>
+                  <div className="row small" style={{ padding: 'var(--space-1) 0' }}>
                     <span>
                       {detalheRateio(planoAcerto.dividir.rateio_id).fornecedor || 'Rateio'}
                       <span className="muted"> · {formatBR(planoAcerto.dividir.valor_pago)} paga + {formatBR(planoAcerto.dividir.valor_restante)} fica</span>
@@ -313,7 +313,7 @@ export function Balanco() {
             <button
               type="button"
               className={`btn btn-primary${salvando ? ' btn-spinner' : ''}`}
-              style={{ width: '100%', marginTop: 16 }}
+              style={{ width: '100%', marginTop: 'var(--space-4)' }}
               disabled={salvando}
               onClick={() => void confirmarAcerto()}
             >

@@ -446,7 +446,7 @@ export function Pagar() {
                   <span className="small muted">{labelCategoria(d.categoria, casa?.categorias)}</span>
                   <span className="mono grid-valor">{formatBR(d.valor)}</span>
                   <span className="small muted">{dataBR(d.data)}</span>
-                  <div className="row" style={{ flexWrap: 'wrap', gap: 4 }}>
+                  <div className="row" style={{ flexWrap: 'wrap', gap: 'var(--space-1)' }}>
                     {rec && <span className="badge badge-muted">recorrente</span>}
                     {d.boleto_url && <span className="badge badge-muted">boleto anexado</span>}
                   </div>
@@ -589,7 +589,7 @@ export function Pagar() {
                   </button>
                 </div>
                 {comprovanteUrl && (
-                  <img src={comprovanteUrl} alt="Comprovante" style={{ width: '100%', borderRadius: 8, marginTop: 8, display: 'block' }} />
+                  <img src={comprovanteUrl} alt="Comprovante" style={{ width: '100%', borderRadius: 'var(--radius-sm)', marginTop: 'var(--space-2)', display: 'block' }} />
                 )}
                 {ocrStatus === 'processando' && ocrBaixando && <p className="small muted mt">⬇️ Baixando leitor de boleto (1ª vez)…</p>}
                   {ocrStatus === 'processando' && !ocrBaixando && <p className="small muted mt">🔎 Lendo boleto no aparelho…</p>}
@@ -657,13 +657,13 @@ export function Pagar() {
                 </p>
 
                 {d.boleto_url && !boletoArquivo && (
-                  <div className="card mt" style={{ padding: 8 }}>
+                  <div className="card mt" style={{ padding: 'var(--space-2)' }}>
                     <div className="small">Boleto salvo:</div>
                     {boletoUrlExistente && (
                       <img
                         src={boletoUrlExistente}
                         alt="Boleto salvo"
-                        style={{ width: '100%', borderRadius: 6, display: 'block', margin: '6px 0' }}
+                        style={{ width: '100%', borderRadius: 'var(--radius-sm)', display: 'block', margin: 'var(--space-2) 0' }}
                       />
                     )}
                     <button type="button" className="btn btn-sm btn-secondary" onClick={() => void removerBoleto()}>
@@ -695,7 +695,7 @@ export function Pagar() {
                   <img
                     src={boletoUrlNova}
                     alt="Boleto novo"
-                    style={{ width: '100%', borderRadius: 8, marginTop: 8, display: 'block' }}
+                    style={{ width: '100%', borderRadius: 'var(--radius-sm)', marginTop: 'var(--space-2)', display: 'block' }}
                   />
                 )}
                 {boletoOcrStatus === 'processando' && !boletoPix && !ocrBaixando && <p className="small muted mt">🔎 Lendo boleto no aparelho…</p>}
@@ -713,7 +713,7 @@ export function Pagar() {
                   </p>
                 )}
                 {boletoOcrStatus === 'ok' && boletoOcrDados && (
-                  <div className="card mt" style={{ padding: 8 }}>
+                  <div className="card mt" style={{ padding: 'var(--space-2)' }}>
                     <div className="small">
                       ✓ Lido: valor <strong className="mono">{formatBR(boletoOcrDados.valor ?? d.valor)}</strong>
                       {boletoOcrDados.data && (

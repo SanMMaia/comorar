@@ -93,11 +93,11 @@ export function Relatorios() {
                 </div>
                 <span>
                   {l.num_confirmadas > 0 && <span className="badge badge-ok">{l.num_confirmadas}</span>}
-                  {l.num_previstas > 0 && <span className="badge badge-warn" style={{ marginLeft: 4 }}>{l.num_previstas} prev.</span>}
+                  {l.num_previstas > 0 && <span className="badge badge-warn" style={{ marginLeft: 'var(--space-1)' }}>{l.num_previstas} prev.</span>}
                 </span>
               </summary>
               <div className="opcoes-corpo">
-                <div className="row small" style={{ marginBottom: 4 }}>
+                <div className="row small" style={{ marginBottom: 'var(--space-1)' }}>
                   <span>Confirmado</span>
                   <strong className="mono">{formatBR(l.total_confirmado)}</strong>
                 </div>
@@ -106,7 +106,7 @@ export function Relatorios() {
                 </div>
                 {l.total_previsto > 0 && (
                   <>
-                    <div className="row small" style={{ marginTop: 10, marginBottom: 4 }}>
+                    <div className="row small" style={{ marginTop: 'var(--space-3)', marginBottom: 'var(--space-1)' }}>
                       <span>Previsto</span>
                       <strong className="mono">{formatBR(l.total_previsto)}</strong>
                     </div>
@@ -116,9 +116,9 @@ export function Relatorios() {
                   </>
                 )}
                 {categoriasDestaque.length > 0 && (
-                  <div className="mt" style={{ marginBottom: 4 }}>
+                  <div className="mt" style={{ marginBottom: 'var(--space-1)' }}>
                     {categoriasDestaque.map((c) => (
-                      <div className="row small" key={c.cat} style={{ padding: '4px 0' }}>
+                      <div className="row small" key={c.cat} style={{ padding: 'var(--space-1) 0' }}>
                         <span>{labelCategoria(c.cat, casa?.categorias)}</span>
                         <span className="mono">{formatBR(c.tot)}</span>
                       </div>

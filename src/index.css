@@ -27,6 +27,7 @@
   --shadow-accent-lg: 0 10px 30px rgba(15, 118, 110, 0.28);
 
   --radius-sm: 8px;
+  --radius-md: 12px;
   --radius: 16px;
   --radius-lg: 22px;
   --shadow-sm: 0 1px 2px rgba(16, 24, 40, 0.05), 0 1px 1px rgba(16, 24, 40, 0.03);
@@ -58,6 +59,8 @@
   --space-6: 24px;
   --space-8: 32px;
   --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
 
   --info: #0369a1;
   --info-soft: #e0f2fe;
@@ -126,6 +129,21 @@ textarea:focus {
   outline: none;
   border-color: var(--accent);
   box-shadow: var(--ring);
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--text-muted);
+  opacity: 0.75;
+}
+
+input:disabled:not([type='checkbox']):not([type='radio']),
+select:disabled,
+textarea:disabled {
+  background: var(--surface-2);
+  color: var(--text-muted);
+  cursor: not-allowed;
+  opacity: 1;
 }
 
 .input-erro,
@@ -543,7 +561,7 @@ a.list-line:active,
   justify-content: center;
   gap: 6px;
   padding: 12px 18px;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   font-weight: 600;
   font-size: 15px;
   width: 100%;
@@ -1186,7 +1204,7 @@ h1, h2, h3 {
 
 /* ---------- navegação adaptativa (desktop) ---------- */
 
-@media (min-width: 1024px) {
+@media (min-width: 768px) {
   #root {
     max-width: none;
   }
@@ -1219,6 +1237,12 @@ h1, h2, h3 {
     min-height: 48px;
   }
 
+  .grid-cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1024px) {
   .grid-cards {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
